@@ -1,0 +1,113 @@
+services:
+  # 메인 취약 서버
+  victim-main:
+    build:
+      context: .
+      dockerfile: Dockerfile.victim
+    container_name: victim-main-server
+    hostname: victim.local
+    ports:
+      - "8080:80"      # Apache
+      - "8081:8080"    # Nginx  
+      - "3306:3306"    # MySQL
+      - "2222:22"      # SSH
+      - "2121:21"      # FTP
+      - "1161:161/udp" # SNMP
+      - "6379:6379"    # Redis
+      - "9999:9999"    # Custom vulnerable server
+    volumes:
+      - ./logs:/var/log
+      - ./victim-configs:/etc/victim-configs:ro
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+  # WordPress 구 버전
+  wordpress-vuln:
+    image: wordpress:4.7.1
+    container_name: victim-wordpress
+    ports:
+      - "8082:80"
+    environment:
+      WORDPRESS_DB_HOST: mysql-wp:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    depends_on:
+      - mysql-wp
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+  # MySQL for WordPress
+  mysql-wp:
+    image: mysql:5.6
+    container_name: victim-mysql-wp
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - victim-net
+    restart: unless-stopped
+    command: --sql_mode="" --default-authentication-plugin=mysql_native_password
+
+  # Drupal 구 버전
+  drupal-vuln:
+    image: drupal:7.67
+    container_name: victim-drupal
+    ports:
+      - "8083:80"
+    environment:
+      DRUPAL_DATABASE_HOST: postgres-drupal
+      DRUPAL_DATABASE_PORT: 5432
+      DRUPAL_DATABASE_NAME: drupal
+      DRUPAL_DATABASE_USERNAME: drupal
+      DRUPAL_DATABASE_PASSWORD: drupal
+    depends_on:
+      - postgres-drupal
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+  # PostgreSQL for Drupal
+  postgres-drupal:
+    image: postgres:9.6
+    container_name: victim-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: drupal
+      POSTGRES_USER: drupal
+      POSTGRES_PASSWORD: drupal
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+  # 로그 뷰어
+  log-viewer:
+    image: nginx:alpine
+    container_name: victim-logs
+    ports:
+      - "8084:80"
+    volumes:
+      - ./logs:/usr/share/nginx/html/logs:ro
+      - ./log-viewer.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+networks:
+  victim-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+
+volumes:
+  victim-data:
+  mysql-data:
+  postgres-data:
