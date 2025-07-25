@@ -1,7 +1,7 @@
 #  Hacklipse Victim Environment
 
 ## 개요
-OSINT 도구 테스트를 위한 완전한 다중 취약 서비스 환경입니다.
+OSINT 도구 테스트를 위한 다중 취약 서비스 환경입니다.
 
 ##  빠른 시작
 ```bash
@@ -40,8 +40,8 @@ whatweb http://localhost:8080
 # 취약점 스캔  
 nuclei -u http://localhost:8082 -t cves/
 
-# 우리 OSINT 수집기 테스트
-python3 osint_collector.py http://localhost:8080
+# OSINT 수집기 테스트
+python3 pipe.py localhost
 ```
 
 ##  예상 탐지 결과
