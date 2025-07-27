@@ -1,5 +1,6 @@
 # Claude Code 설정 디렉토리 (권한 오류 방지)
 .claude/
+CLAUDE.md
 
 # SecLists는 용량이 크므로 제외 (필요시 주석 처리)
 SecLists/
@@ -27,3 +28,5 @@ Thumbs.db
 
 # Docker 관련
 .dockerignore
+
+

@@ -31,12 +31,126 @@ class OSINTStager:
         Args:
             target (str): 스캔할 대상 IP 주소 또는 도메인명
         """
-        self.target = target              # 스캔 대상 (IP 또는 도메인)
+        self.original_target = target     # 원본 대상 (사용자 입력)
+        self.target_ip = None            # 대상의 실제 IP 주소
+        self.target = self._process_target(target)  # 처리된 최종 대상 (도메인으로 변환 가능)
         self.nmap_results = None          # nmap 스캔 결과 저장
         self.discovered_ports = {}        # 발견된 포트와 서비스 정보 딕셔너리
         self.web_urls = []               # 발견된 웹 서비스 URL 리스트
         self.temp_files = []             # 생성된 임시 파일들 추적 (정리용)
         self.seclists_path = None        # SecLists 워드리스트 경로 캐싱
+        
+    def _process_target(self, target: str) -> str:
+        """대상 처리: IP인 경우 도메인으로 변환하고 /etc/hosts 업데이트
+        
+        Args:
+            target (str): 원본 대상 (IP 또는 도메인)
+            
+        Returns:
+            str: 처리된 대상 (항상 도메인 형태)
+        """
+        if self._is_ip_address(target):
+            print(f"IP 주소 감지: {target}")
+            self.target_ip = target
+            # IP를 도메인으로 매핑
+            domain_name = self._generate_domain_name(target)
+            success = self._update_hosts_file(target, domain_name)
+            if success:
+                print(f"도메인 매핑 완료: {target} -> {domain_name}")
+                return domain_name
+            else:
+                print(f"도메인 매핑 실패, 원본 IP 사용: {target}")
+                return target
+        else:
+            print(f"도메인 감지: {target}")
+            self.target_ip = target  # 도메인인 경우 target_ip도 동일하게 설정
+            return target
+    
+    def _is_ip_address(self, target: str) -> bool:
+        """IP 주소 여부 검사
+        
+        Args:
+            target (str): 검사할 대상 문자열
+            
+        Returns:
+            bool: IP 주소이면 True, 아니면 False
+        """
+        import re
+        # IPv4 주소 패턴 (간단한 검증)
+        ipv4_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+        if re.match(ipv4_pattern, target):
+            # 각 옥텟이 0-255 범위인지 검증
+            octets = target.split('.')
+            return all(0 <= int(octet) <= 255 for octet in octets)
+        return False
+    
+    def _generate_domain_name(self, ip: str) -> str:
+        """IP 주소를 기반으로 도메인명 생성
+        
+        Args:
+            ip (str): IP 주소
+            
+        Returns:
+            str: 생성된 도메인명
+        """
+        # IP 주소의 점을 하이픈으로 변경하여 도메인명 생성
+        # 예: 192.168.1.100 -> target-192-168-1-100.local
+        sanitized_ip = ip.replace('.', '-')
+        return f"target-{sanitized_ip}.local"
+    
+    def _update_hosts_file(self, ip: str, domain: str) -> bool:
+        """/etc/hosts 파일에 IP-도메인 매핑 추가
+        
+        Args:
+            ip (str): IP 주소
+            domain (str): 매핑할 도메인명
+            
+        Returns:
+            bool: 성공하면 True, 실패하면 False
+        """
+        hosts_file = '/etc/hosts'
+        mapping_line = f"{ip} {domain}"
+        
+        try:
+            # 기존 매핑이 있는지 확인
+            with open(hosts_file, 'r') as f:
+                content = f.read()
+                if mapping_line in content:
+                    print(f"이미 매핑됨: {mapping_line}")
+                    return True
+                    
+                # 같은 도메인의 다른 IP 매핑이 있는지 확인
+                lines = content.split('\n')
+                for i, line in enumerate(lines):
+                    if domain in line and not line.strip().startswith('#'):
+                        print(f"기존 매핑 발견, 교체: {line.strip()} -> {mapping_line}")
+                        lines[i] = mapping_line
+                        updated_content = '\n'.join(lines)
+                        break
+                else:
+                    # 새로운 매핑 추가
+                    updated_content = content.rstrip() + f"\n{mapping_line}\n"
+            
+            # /etc/hosts 파일 업데이트 (sudo 권한 필요)
+            import subprocess
+            echo_process = subprocess.Popen(['echo', updated_content], stdout=subprocess.PIPE)
+            tee_process = subprocess.Popen(['sudo', 'tee', hosts_file], 
+                                         stdin=echo_process.stdout, 
+                                         stdout=subprocess.DEVNULL, 
+                                         stderr=subprocess.PIPE)
+            echo_process.stdout.close()
+            _, stderr = tee_process.communicate()
+            
+            if tee_process.returncode == 0:
+                print(f"/etc/hosts 업데이트 성공")
+                return True
+            else:
+                print(f"/etc/hosts 업데이트 실패: {stderr.decode('utf-8', errors='ignore')}")
+                return False
+                
+        except Exception as e:
+            print(f"/etc/hosts 업데이트 중 오류: {e}")
+            return False
         
     async def find_seclists_path(self) -> Optional[str]:
         """SecLists 워드리스트 설치 경로 자동 탐지
@@ -79,7 +193,7 @@ class OSINTStager:
                 continue  # 오류 발생시 다음 경로로
         
         # 일반적인 경로에서 못 찾으면 전체 시스템 검색 (시간 소요)
-        print("   일반적인 경로에서 찾지 못함, 전체 시스템 검색 중...")
+        print("일반적인 경로에서 찾지 못함, 전체 시스템 검색 중...")
         try:
             # find 명령어로 전체 파일시스템에서 SecLists 디렉토리 검색
             process = await asyncio.create_subprocess_exec(
@@ -105,14 +219,12 @@ class OSINTStager:
                     return path
                     
         except asyncio.TimeoutError:  # 전체 시스템 검색 타임아웃
-            print("   전체 시스템 검색 타임아웃")
+            print("전체 시스템 검색 타임아웃")
         except Exception as e:  # 기타 오류 발생
-            print(f"   시스템 검색 중 오류: {e}")
+            print(f"시스템 검색 중 오류: {e}")
         
         # SecLists를 찾지 못한 경우 사용자에게 설치 안내
         print("SecLists를 찾을 수 없습니다.")
-        print("   다음 명령어로 설치하세요:")
-        print("   git clone https://github.com/danielmiessler/SecLists.git")
         return None
         
     async def run_command(self, name: str, command: List[str], timeout: int = 300) -> Optional[str]:
@@ -207,7 +319,6 @@ class OSINTStager:
             self._print_discovery_summary() # 요약 정보 출력
         else:  # 스캔 실패
             print("nmap 스캔 실패")
-            print("수동으로 테스트해보세요:")
             print(f"   {' '.join(command)}")
         
         return self.nmap_results
@@ -276,7 +387,7 @@ class OSINTStager:
                 print(f"  - {url}")
     
     async def stage2_specialized_scans(self) -> Dict[str, str]:
-        """단계 2: nmap 결과를 기반으로 전문 보안 도구들을 병렬 실행
+        """단계 2: nmap 결과를 기반으로 보안 도구들을 병렬 실행
         
         1단계에서 발견된 서비스들을 분석하여 적절한 전문 도구들을 선택하고
         비동기적으로 병렬 실행하여 상세한 취약점 정보를 수집합니다.
@@ -290,6 +401,11 @@ class OSINTStager:
         
         tasks = []       # 비동기 작업 리스트
         task_names = []  # 작업 이름 리스트 (결과 매칭용)
+        
+        # 모든 대상에 대해 서브도메인 퍼징 실행 (IP든 도메인이든 무조건)
+        print("서브도메인 브루트포싱 실행 (모든 대상)")
+        tasks.append(self.run_subdomain_ffuf())
+        task_names.append("subdomain_ffuf")
         
         # 웹 서비스 발견 시 웹 전용 보안 도구들 실행
         if self.web_urls:
@@ -598,7 +714,7 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
             '-u', url, 
             '-t', 'cves/',              # CVE 템플릿
             '-t', 'vulnerabilities/',   # 일반 취약점 템플릿
-            '-json',                    # JSON 출력 형식
+            '-jsonl',                   # JSONL 출력 형식 (v3.4.7에서 -json 대신 사용)
             '-o', f'nuclei_{self.target.replace(".", "_")}.json'  # 결과 저장
         ]
         return await self.run_command(f"nuclei ({url})", command, timeout=300)
@@ -620,6 +736,79 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
         """
         command = ['enum4linux', '-a', self.target]  # 모든 정보 열거
         return await self.run_command("enum4linux", command, timeout=120)
+    
+    async def run_subdomain_ffuf(self) -> str:
+        """ffuf를 이용한 서브도메인 브루트포싱
+        
+        SecLists의 서브도메인 워드리스트를 사용하여 서브도메인을 탐지합니다.
+        IP 대상의 경우 미리 생성된 도메인명을 사용합니다.
+        
+        Returns:
+            str: 서브도메인 스캔 결과를 JSON 형식으로 반환
+        """
+        print(f"[{time.strftime('%H:%M:%S')}] 서브도메인 브루트포싱 시작 ({self.target})")
+        
+        # SecLists 서브도메인 워드리스트 경로 확인
+        seclists_path = await self.find_seclists_path()
+        if not seclists_path:
+            print("SecLists 워드리스트가 없어서 서브도메인 스캔을 건너뜁니다.")
+            return "SecLists not found - subdomain scan skipped"
+        
+        # 사용할 서브도메인 워드리스트 파일들 (우선순위 순)
+        subdomain_wordlists = [
+            f"{seclists_path}/Discovery/DNS/subdomains-top1million-5000.txt",
+            f"{seclists_path}/Discovery/DNS/subdomains-top1million-20000.txt", 
+            f"{seclists_path}/Discovery/DNS/fierce-hostlist.txt",
+            f"{seclists_path}/Discovery/DNS/namelist.txt"
+        ]
+        
+        # 실제 존재하는 워드리스트 찾기
+        selected_wordlist = None
+        for wordlist_path in subdomain_wordlists:
+            if os.path.exists(wordlist_path):
+                selected_wordlist = wordlist_path
+                print(f"서브도메인 워드리스트 선택: {os.path.basename(wordlist_path)}")
+                break
+        
+        if not selected_wordlist:
+            print("서브도메인 워드리스트를 찾을 수 없습니다.")
+            return "No subdomain wordlist found"
+        
+        # 결과 저장 파일명
+        output_file = f"subdomain_ffuf_{self.target.replace('.', '_').replace(':', '_')}.json"
+        self.temp_files.append(output_file)
+        
+        # ffuf 서브도메인 브루트포싱 명령어
+        command = [
+            'ffuf',
+            '-w', selected_wordlist,              # 서브도메인 워드리스트
+            '-u', f'http://FUZZ.{self.target}',   # FUZZ를 서브도메인으로 치환
+            '-mc', '200,204,301,302,307,401,403', # 매치할 상태 코드
+            '-fc', '404,500',                     # 필터링할 상태 코드  
+            '-t', '50',                           # 동시 스레드 수
+            '-timeout', '10',                     # 각 요청의 타임아웃 (초)
+            '-o', output_file,                    # 결과 저장 파일
+            '-of', 'json',                        # JSON 출력 형식
+            '-v'                                  # 상세 출력
+        ]
+        
+        try:
+            # 서브도메인 스캔 실행 (10분 타임아웃)
+            result = await self.run_command(f"서브도메인 ffuf ({self.target})", command, timeout=600)
+            
+            # 결과 파일 읽기
+            if os.path.exists(output_file):
+                with open(output_file, 'r') as f:
+                    scan_results = f.read()
+                    print(f"서브도메인 스캔 완료: {len(scan_results)} bytes")
+                    return scan_results
+            else:
+                print("서브도메인 스캔 결과 파일을 찾을 수 없습니다.")
+                return result
+                
+        except Exception as e:
+            print(f"서브도메인 스캔 중 오류: {e}")
+            return None
     
     def cleanup_temp_files(self):
         """스캔 과정에서 생성된 모든 임시 파일들을 정리
@@ -792,7 +981,7 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
                 except Exception as e:
                     sections.append(f"ffuf 결과 파싱 중 오류: {e}")
 
-        # 시스템 환경 분석 (추론 없이 팩트만)
+        # 시스템 환경 분석 
         sections.append("\n## 시스템 환경 정보")
         
         port_info = []
@@ -976,7 +1165,7 @@ async def main():
         
         print(f"\n결과가 {output_file}에 저장되었습니다.")
         
-        # 자연어 보고서도 별도 저장 (AI 학습용)
+        # 자연어 보고서 저장 (AI 학습용)
         if 'natural_language_context' in results:
             report_file = os.path.join(
                 args.output,
@@ -1004,6 +1193,30 @@ async def main():
     finally:
         # 항상 임시 파일 정리 (보안과 디스크 공간을 위해)
         scanner.cleanup_temp_files()
+
+def print_banner():
+    """Hacklipse OSINT 파이프라인 시작 배너 출력"""
+    banner = r"""
+    __  _____   ________ __ __    ________  _____ ______
+   / / / /   | / ____/ //_// /   /  _/ __ \/ ___// ____/
+  / /_/ / /| |/ /   / ,<  / /    / // /_/ /\__ \/ __/   
+ / __  / ___ / /___/ /| |/ /____/ // ____/___/ / /___   
+/_/ /_/_/  |_\____/_/ |_/_____/___/_/    /____/_____/   
+                                                        
+  ___  ___ ___ _  _ _____   ___ _           _ _          
+ / _ \/ __|_ _| \| |_   _| | _ (_)_ __  ___| (_)_ _  ___ 
+| (_) \__ \| || .` | | |   |  _/ | '_ \/ -_) | | ' \/ -_)
+ \___/|___/___|_|\_| |_|   |_| |_| .__/\___|_|_|_||_\___|
+                                 |_|                     
+"""
+    
+    print(banner)
+    print("2025 인공지능빅데이터센터 연구과제")
+    print("방어적 보안 연구용 - 로컬호스트 테스트 전용")
+    print("AI 학습용 데이터 수집 및 분석 자동화")
+    print()
+    print("=" * 60)
+    print()
 
 def check_sudo_privileges():
     """sudo 권한 확인 및 자동 상승
@@ -1087,8 +1300,8 @@ if __name__ == "__main__":
     """메인 실행 진입점"""
     import sys
     
-    print("OSINT 자동화 도구 시작")
-    print("=" * 50)
+    # 멋진 배너 출력
+    print_banner()
     
     # 1. sudo 권한 확인 및 자동 상승
     check_sudo_privileges()
@@ -1097,7 +1310,8 @@ if __name__ == "__main__":
     if not check_required_tools():
         sys.exit(1)
     
-    print("모든 준비 완료, 스캔 시작!\n")
+    print("모든 준비 완료, OSINT 파이프라인 시작...")
+    print()
     
     # 3. 메인 파이프라인 실행
     try:
