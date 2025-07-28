@@ -527,7 +527,7 @@ echo "시작 시간: $(date)"
 if [ -f "$SEC_PATH/Discovery/Web-Content/directory-list-2.3-medium.txt" ]; then
     ffuf \\
         -w "$SEC_PATH/Discovery/Web-Content/directory-list-2.3-medium.txt" \\
-        -u "{url}/FUZZ" \\
+        -u "http://{url}/FUZZ" \\
         -recursion \\              # 발견된 디렉토리에서 재귀적 탐색
         -recursion-depth 3 \\      # 최대 3단계까지 깊이 탐색
         -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
@@ -546,7 +546,7 @@ echo "시작 시간: $(date)"
 if [ -f "$SEC_PATH/Discovery/Web-Content/common.txt" ]; then
     ffuf \\
         -w "$SEC_PATH/Discovery/Web-Content/common.txt" \\  # 일반적인 파일명 리스트
-        -u "{url}/FUZZ" \\
+        -u "http://{url}/FUZZ" \\
         -mc 200,204,301,302,307,401,403 \\
         -fc 404,500 \\
         -t 100 \\                 # 일반 파일이므로 빠른 스캔
@@ -563,7 +563,7 @@ echo "시작 시간: $(date)"
 if [ -f "$SEC_PATH/Discovery/Web-Content/common.txt" ]; then
     ffuf \\
         -w "$SEC_PATH/Discovery/Web-Content/common.txt" \\
-        -u "{url}/FUZZ" \\
+        -u "http://{url}/FUZZ" \\
         -e .php,.html,.js,.txt,.xml,.json,.log,.bak,.backup,.old,.tmp \\  # 주요 확장자들
         -mc 200,204,301,302,307,401,403 \\
         -fc 404,500 \\
@@ -581,7 +581,7 @@ echo "시작 시간: $(date)"
 if [ -f "$SEC_PATH/Discovery/Web-Content/api/api-endpoints.txt" ]; then
     ffuf \\
         -w "$SEC_PATH/Discovery/Web-Content/api/api-endpoints.txt" \\
-        -u "{url}/FUZZ" \\
+        -u "http://{url}/FUZZ" \\
         -mc 200,204,301,302,307,401,403 \\
         -fc 404,500 \\
         -t 100 \\
@@ -598,7 +598,7 @@ echo "시작 시간: $(date)"
 if [ -f "$SEC_PATH/Discovery/Web-Content/common.txt" ]; then
     ffuf \\
         -w "$SEC_PATH/Discovery/Web-Content/common.txt" \\
-        -u "{url}/FUZZ" \\
+        -u "http://{url}/FUZZ" \\
         -e .config,.conf,.cfg,.ini,.env,.bak,.backup,.old,.orig,.swp,.tmp \\  # 설정/백업 확장자
         -mc 200,204,301,302,307,401,403 \\
         -fc 404,500 \\
@@ -608,6 +608,43 @@ if [ -f "$SEC_PATH/Discovery/Web-Content/common.txt" ]; then
 else
     echo "경고: common.txt 파일을 찾을 수 없습니다."
     touch "$OUTPUT_DIR/05_backup.json"
+fi
+
+echo -e "\\n==================== 6단계: 서브도메인 퍼징 ===================="
+echo "시작 시간: $(date)"
+if [ -f "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" ]; then
+    ffuf \\
+        -w "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" \\
+        -u "http://FUZZ.{target}" \\
+        -H "Host: FUZZ.{target}" \\
+        -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
+        -fc 404,500 \\             # 오류 코드 필터링
+        -fs 0 \\                   # 크기 0인 응답 필터링 (일반적으로 빈 응답)
+        -t 50 \\                   # 동시 스레드 수 (속도 vs 안정성 균형)
+        -o "$OUTPUT_DIR/06_subdomains.json" -of json \\  # JSON 형식으로 결과 저장
+        -v
+else
+    echo "경고: subdomains-top1million-5000.txt 파일을 찾을 수 없습니다."
+    touch "$OUTPUT_DIR/06_subdomails.json" -of json \\
+fi
+
+echo -e "\\n==================== 7단계: VHost 퍼징 ===================="
+echo "시작 시간: $(date)"
+if [ -f "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" ]; then
+    ffuf \\
+        -w "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" \\
+        -u "https://{target}" \\
+        -H "Host: FUZZ.{target}" \\
+        -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \\
+        -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
+        -fc 404,500 \\             # 오류 코드 필터링
+        -t 50 \\                   # 동시 스레드 수
+        -ac \\                     # 자동 칼리브레이션 (기본 응답 자동 필터링)
+        -o "$OUTPUT_DIR/07_vhosts.json" -of json \\  # JSON 형식으로 결과 저장
+        -v
+else
+    echo "경고: subdomains-top1million-5000.txt 파일을 찾을 수 없습니다."
+    touch "$OUTPUT_DIR/07_vhosts.json" -of json \\
 fi
 
 echo -e "\\n모든 ffuf 단계 완료!"
