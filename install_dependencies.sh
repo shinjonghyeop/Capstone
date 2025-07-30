@@ -96,7 +96,7 @@ fi
 
 # searchsploit (exploitdb) 설치
 if ! check_tool searchsploit; then
-    sudo apt install -y exploitdb
+    sudo snap install searchsploit
     success_msg "searchsploit 설치 완료"
 fi
 
@@ -108,7 +108,7 @@ fi
 
 # enum4linux 설치
 if ! check_tool enum4linux; then
-    sudo apt install -y enum4linux
+    sudo snap install enum4linux
     success_msg "enum4linux 설치 완료"
 fi
 
@@ -122,10 +122,11 @@ subprocess32>=3.5.4
 typing>=3.7.4
 glob2>=0.7
 datetime>=4.3
-shutil>=1.0.0
 EOF
 
-pip3 install -r requirements.txt --user
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt 
 success_msg "Python 라이브러리 설치 완료"
 
 echo -e "\n5. SecLists 워드리스트 설치 (선택사항)..."
@@ -155,9 +156,9 @@ echo -e "\n설치된 도구 버전:"
 echo "- Python: $(python3 --version)"
 echo "- nmap: $(nmap --version | head -1)"
 echo "- whatweb: $(whatweb --version 2>/dev/null | head -1 || echo 'whatweb installed')"
-echo "- nikto: $(nikto -Version 2>/dev/null | head -1 || echo 'nikto installed')"
+echo "- nikto: $(nikto -Version 2>/dev/null | grep "Nikto main" || echo 'nikto installed')"
 echo "- ffuf: $(ffuf -V 2>/dev/null || echo 'ffuf installed')"
-echo "- searchsploit: $(searchsploit --version 2>/dev/null | head -1 || echo 'searchsploit installed')"
+echo "- searchsploit: $(snap info searchsploit 2>/dev/null | head -1 || echo 'searchsploit installed')"
 echo "- ssh-audit: $(ssh-audit --version 2>/dev/null | head -1 || echo 'ssh-audit installed')"
 echo "- enum4linux: $(enum4linux -h 2>/dev/null | head -1 || echo 'enum4linux installed')"
 

@@ -295,7 +295,7 @@ class OSINTStager:
                 '-sV',                    # 서비스 버전 탐지
                 '-sC',                    # 기본 NSE 스크립트 실행
                 '--script=banner,http-title',  # 배너 및 HTTP 제목 수집
-                '-oN', nmap_output_file,  # 일반 형식으로 결과 저장
+                '-oX', nmap_output_file,  # 일반 형식으로 결과 저장
                 self.target
             ]
         else:  # 원격 대상 스캔
@@ -304,7 +304,7 @@ class OSINTStager:
                 '-sS', '-sV', '-sC',      # 기본 스캔 옵션
                 '-O',                     # 운영체제 탐지
                 '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
-                '-oN', nmap_output_file,
+                '-oX', nmap_output_file,
                 self.target
             ]
         

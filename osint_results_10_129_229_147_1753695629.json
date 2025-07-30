@@ -1,0 +1,68 @@
+{
+  "target": "target-10-129-229-147.local",
+  "execution_time": "688.11초",
+  "discovered_ports": {
+    "21": {
+      "service": "ftp",
+      "version": "vsftpd 3.0.3"
+    },
+    "22": {
+      "service": "ssh",
+      "version": "OpenSSH 8.2p1 Ubuntu 4ubuntu0.5 (Ubuntu Linux; protocol 2.0)"
+    },
+    "25": {
+      "service": "smtp",
+      "version": "Postfix smtpd"
+    },
+    "53": {
+      "service": "domain",
+      "version": "(unknown banner: 1337_HTB_DNS)"
+    },
+    "80": {
+      "service": "http",
+      "version": "Apache httpd 2.4.41 ((Ubuntu))"
+    },
+    "110": {
+      "service": "pop3",
+      "version": "Dovecot pop3d"
+    },
+    "111": {
+      "service": "rpcbind",
+      "version": "2-4 (RPC #100000)"
+    },
+    "143": {
+      "service": "imap",
+      "version": "Dovecot imapd (Ubuntu)"
+    },
+    "993": {
+      "service": "ssl/imap",
+      "version": "Dovecot imapd (Ubuntu)"
+    },
+    "995": {
+      "service": "ssl/pop3",
+      "version": "Dovecot pop3d"
+    },
+    "8080": {
+      "service": "http",
+      "version": "Apache httpd 2.4.41 ((Ubuntu))"
+    }
+  },
+  "web_urls": [
+    "http://target-10-129-229-147.local",
+    "http://target-10-129-229-147.local:8080"
+  ],
+  "nmap_output": "Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-07-28 09:29 UTC\nNmap scan report for target-10-129-229-147.local (10.129.229.147)\nHost is up (0.20s latency).\nNot shown: 989 closed tcp ports (reset)\nPORT     STATE SERVICE  VERSION\n21/tcp   open  ftp      vsftpd 3.0.3\n|_banner: 220 (vsFTPd 3.0.3)\n22/tcp   open  ssh      OpenSSH 8.2p1 Ubuntu 4ubuntu0.5 (Ubuntu Linux; protocol 2.0)\n|_banner: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.5\n25/tcp   open  smtp     Postfix smtpd\n|_banner: 220 ubuntu ESMTP Postfix (Ubuntu)\n53/tcp   open  domain   (unknown banner: 1337_HTB_DNS)\n| fingerprint-strings: \n|   DNSVersionBindReqTCP: \n|     version\n|     bind\n|_    1337_HTB_DNS\n80/tcp   open  http     Apache httpd 2.4.41 ((Ubuntu))\n|_http-server-header: Apache/2.4.41 (Ubuntu)\n|_http-title: Inlanefreight\n110/tcp  open  pop3     Dovecot pop3d\n| ssl-cert: Subject: commonName=ubuntu\n| Subject Alternative Name: DNS:ubuntu\n| Issuer: commonName=ubuntu\n| Public Key type: rsa\n| Public Key bits: 2048\n| Signature Algorithm: sha256WithRSAEncryption\n| Not valid before: 2022-05-30T17:15:40\n| Not valid after:  2032-05-27T17:15:40\n| MD5:   4e55:2702:8511:a09e:2f3f:3346:fd3e:3133\n|_SHA-1: 0dbc:8f42:0dbc:6557:9534:9efc:6a3e:2962:2e2f:d5e6\n|_banner: +OK Dovecot (Ubuntu) ready.\n111/tcp  open  rpcbind  2-4 (RPC #100000)\n| rpcinfo: \n|   program version    port/proto  service\n|   100000  2,3,4        111/tcp   rpcbind\n|   100000  2,3,4        111/udp   rpcbind\n|   100000  3,4          111/tcp6  rpcbind\n|_  100000  3,4          111/udp6  rpcbind\n143/tcp  open  imap     Dovecot imapd (Ubuntu)\n| banner: * OK [CAPABILITY IMAP4rev1 SASL-IR LOGIN-REFERRALS ID ENABLE ID\n|_LE LITERAL+ STARTTLS LOGINDISABLED] Dovecot (Ubuntu) ready.\n| ssl-cert: Subject: commonName=ubuntu\n| Subject Alternative Name: DNS:ubuntu\n| Issuer: commonName=ubuntu\n| Public Key type: rsa\n| Public Key bits: 2048\n| Signature Algorithm: sha256WithRSAEncryption\n| Not valid before: 2022-05-30T17:15:40\n| Not valid after:  2032-05-27T17:15:40\n| MD5:   4e55:2702:8511:a09e:2f3f:3346:fd3e:3133\n|_SHA-1: 0dbc:8f42:0dbc:6557:9534:9efc:6a3e:2962:2e2f:d5e6\n993/tcp  open  ssl/imap Dovecot imapd (Ubuntu)\n| banner: * OK [CAPABILITY IMAP4rev1 SASL-IR LOGIN-REFERRALS ID ENABLE ID\n|_LE LITERAL+ AUTH=PLAIN] Dovecot (Ubuntu) ready.\n| ssl-cert: Subject: commonName=ubuntu\n| Subject Alternative Name: DNS:ubuntu\n| Issuer: commonName=ubuntu\n| Public Key type: rsa\n| Public Key bits: 2048\n| Signature Algorithm: sha256WithRSAEncryption\n| Not valid before: 2022-05-30T17:15:40\n| Not valid after:  2032-05-27T17:15:40\n| MD5:   4e55:2702:8511:a09e:2f3f:3346:fd3e:3133\n|_SHA-1: 0dbc:8f42:0dbc:6557:9534:9efc:6a3e:2962:2e2f:d5e6\n995/tcp  open  ssl/pop3 Dovecot pop3d\n| ssl-cert: Subject: commonName=ubuntu\n| Subject Alternative Name: DNS:ubuntu\n| Issuer: commonName=ubuntu\n| Public Key type: rsa\n| Public Key bits: 2048\n| Signature Algorithm: sha256WithRSAEncryption\n| Not valid before: 2022-05-30T17:15:40\n| Not valid after:  2032-05-27T17:15:40\n| MD5:   4e55:2702:8511:a09e:2f3f:3346:fd3e:3133\n|_SHA-1: 0dbc:8f42:0dbc:6557:9534:9efc:6a3e:2962:2e2f:d5e6\n|_banner: +OK Dovecot (Ubuntu) ready.\n8080/tcp open  http     Apache httpd 2.4.41 ((Ubuntu))\n|_http-title: Support Center\n|_http-server-header: Apache/2.4.41 (Ubuntu)\n1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :\nSF-Port53-TCP:V=7.94SVN%I=7%D=7/28%Time=688742EA%P=aarch64-unknown-linux-g\nSF:nu%r(DNSVersionBindReqTCP,39,\"\\x007\\0\\x06\\x85\\0\\0\\x01\\0\\x01\\0\\0\\0\\0\\x07\nSF:version\\x04bind\\0\\0\\x10\\0\\x03\\xc0\\x0c\\0\\x10\\0\\x03\\0\\0\\0\\0\\0\\r\\x0c1337_H\nSF:TB_DNS\");\nNo exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).\nTCP/IP fingerprint:\nOS:SCAN(V=7.94SVN%E=4%D=7/28%OT=21%CT=1%CU=43502%PV=Y%DS=3%DC=I%G=Y%TM=6887\nOS:4331%P=aarch64-unknown-linux-gnu)SEQ(SP=104%GCD=2%ISR=10E%TI=I%CI=RI%II=\nOS:I%SS=O%TS=U)SEQ(SP=106%GCD=1%ISR=107%TI=I%CI=RI%II=I%SS=O%TS=U)SEQ(SP=10\nOS:6%GCD=1%ISR=10D%TI=I%CI=RI%II=I%SS=O%TS=U)SEQ(SP=106%GCD=1%ISR=10F%TI=I%\nOS:CI=RI%II=I%TS=U)SEQ(SP=F9%GCD=1%ISR=109%TI=RD%CI=RI%TS=U)OPS(O1=M5B4%O2=\nOS:M5B4%O3=M5B4%O4=M5B4%O5=M5B4%O6=M5B4)WIN(W1=FAF0%W2=FAF0%W3=FAF0%W4=FAF0\nOS:%W5=FAF0%W6=FAF0)ECN(R=Y%DF=N%T=82%W=FAF0%O=M5B4%CC=N%Q=)T1(R=Y%DF=N%T=8\nOS:2%S=O%A=S+%F=AS%RD=0%Q=)T2(R=N)T3(R=Y%DF=N%T=82%W=FAF0%S=O%A=S+%F=AS%O=M\nOS:5B4%RD=0%Q=)T4(R=Y%DF=N%T=82%W=7FFF%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=Y%DF=N%T\nOS:=82%W=FAF0%S=O%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=N%T=82%W=7FFF%S=A%A=Z%F=R%\nOS:O=%RD=0%Q=)T7(R=N)U1(R=Y%DF=N%T=82%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=I%RUC\nOS:K=G%RUD=G)IE(R=Y%DFI=N%T=82%CD=S)\n\nNetwork Distance: 3 hops\nService Info: Host:  ubuntu; OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel\n\nOS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .\nNmap done: 1 IP address (1 host up) scanned in 84.43 seconds\n",
+  "specialized_scans": {
+    "subdomain_ffuf": null,
+    "ffuf_http://target-10-129-229-147.local": null,
+    "whatweb_http://target-10-129-229-147.local": "\n",
+    "nikto_http://target-10-129-229-147.local": null,
+    "nuclei_http://target-10-129-229-147.local": "nuclei not installed",
+    "ffuf_http://target-10-129-229-147.local:8080": null,
+    "whatweb_http://target-10-129-229-147.local:8080": "\n",
+    "nikto_http://target-10-129-229-147.local:8080": null,
+    "nuclei_http://target-10-129-229-147.local:8080": "nuclei not installed",
+    "ssh_audit": null
+  },
+  "natural_language_context": "# 보안 정찰 정보 보고서\n\n**대상**: target-10-129-229-147.local\n**스캔 일시**: 2025년 07월 28일 09:40  \n**실행 시간**: 688.11초\n\n다음은 target-10-129-229-147.local에 대한 OSINT 수집 결과입니다. 이 정보를 바탕으로 공격 시나리오를 분석해주세요.\n\n## 포트 스캔 결과 (nmap)\n\n총 11개 포트가 열려있음:\n\n- **포트 21**: ftp (vsftpd 3.0.3)\n\n- **포트 22**: ssh (OpenSSH 8.2p1 Ubuntu 4ubuntu0.5 (Ubuntu Linux; protocol 2.0))\n\n- **포트 25**: smtp (Postfix smtpd)\n\n- **포트 53**: domain ((unknown banner: 1337_HTB_DNS))\n\n- **포트 80**: http (Apache httpd 2.4.41 ((Ubuntu)))\n\n- **포트 110**: pop3 (Dovecot pop3d)\n\n- **포트 111**: rpcbind (2-4 (RPC #100000))\n\n- **포트 143**: imap (Dovecot imapd (Ubuntu))\n\n- **포트 993**: ssl/imap (Dovecot imapd (Ubuntu))\n\n- **포트 995**: ssl/pop3 (Dovecot pop3d)\n\n- **포트 8080**: http (Apache httpd 2.4.41 ((Ubuntu)))\n\n\n## 웹 서비스 응답\n\nHTTP/HTTPS 서비스 2개 발견:\n\n- http://target-10-129-229-147.local\n\n- http://target-10-129-229-147.local:8080\n\n\n### http://target-10-129-229-147.local 기술 스택 정보\n\n\n### http://target-10-129-229-147.local:8080 기술 스택 정보\n\n\n## 추가 서비스 정보 (nmap scripts)\n\n서비스 상세 정보:\n\n  |_http-server-header: Apache/2.4.41 (Ubuntu)\n\n  |_http-title: Inlanefreight\n\n  |_http-title: Support Center\n\n  |_http-server-header: Apache/2.4.41 (Ubuntu)\n\n  Service Info: Host:  ubuntu; OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel\n\n\n## 시스템 환경 정보\n\n- 비표준 포트(8000번대) 사용 확인\n\n\n## AI 분석 요청\n\n위의 수집된 정보를 바탕으로 다음을 분석해주세요:\n\n1. **공격 가능성이 높은 진입점** 식별\n2. **단계별 공격 시나리오** 수립  \n3. **취약점들을 연계한 공격 체인** 구성\n4. **각 공격 경로의 성공 가능성** 평가\n5. **공격자 관점에서의 우선순위** 제시\n\n특히 발견된 웹 서비스들과 데이터베이스 노출 상황을 고려하여 실제 공격에서 어떤 순서로 접근할지 구체적인 시나리오를 제시해주세요."
+}
