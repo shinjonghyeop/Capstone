@@ -25,11 +25,12 @@ class OSINTStager:
     3. 결과 통합 및 AI 학습용 데이터 형식으로 변환
     """
     
-    def __init__(self, target: str):
+    def __init__(self, target: str, wordlist_path: str = None):
         """OSINTStager 초기화
         
         Args:
             target (str): 스캔할 대상 IP 주소 또는 도메인명
+            wordlist_path (str): SecLists 워드리스트 경로 (옵션)
         """
         self.original_target = target     # 원본 대상 (사용자 입력)
         self.target_ip = None            # 대상의 실제 IP 주소
@@ -38,7 +39,9 @@ class OSINTStager:
         self.discovered_ports = {}        # 발견된 포트와 서비스 정보 딕셔너리
         self.web_urls = []               # 발견된 웹 서비스 URL 리스트
         self.temp_files = []             # 생성된 임시 파일들 추적 (정리용)
-        self.seclists_path = None        # SecLists 워드리스트 경로 캐싱
+        self.seclists_path = wordlist_path  # 사용자가 지정한 워드리스트 경로
+        self.nmap_xml_file = None        # nmap XML 결과 파일 경로
+        self.cve_results = []            # searchsploit으로 발견된 CVE 목록
         
     def _process_target(self, target: str) -> str:
         """대상 처리: IP인 경우 도메인으로 변환하고 /etc/hosts 업데이트
@@ -152,80 +155,28 @@ class OSINTStager:
             print(f"/etc/hosts 업데이트 중 오류: {e}")
             return False
         
-    async def find_seclists_path(self) -> Optional[str]:
-        """SecLists 워드리스트 설치 경로 자동 탐지
-        
-        ffuf 등 브루트포스 도구에서 사용할 워드리스트 경로를 찾습니다.
-        일반적인 설치 경로부터 확인하고, 없으면 전체 시스템을 검색합니다.
+    def validate_wordlist_path(self) -> bool:
+        """사용자가 지정한 워드리스트 경로 유효성 검증
         
         Returns:
-            Optional[str]: SecLists 경로 또는 None (찾지 못한 경우)
+            bool: 워드리스트 경로가 유효하면 True, 아니면 False
         """
-        if self.seclists_path:  # 이미 찾았으면 재사용 (성능 최적화)
-            return self.seclists_path
+        if not self.seclists_path:
+            print("워드리스트 경로가 지정되지 않았습니다. -w 옵션을 사용해주세요.")
+            return False
             
-        print("SecLists 경로 탐색 중...")
-        
-        # 일반적인 SecLists 설치 경로들 (속도 향상을 위해 먼저 확인)
-        common_paths = [
-            "/usr/share/seclists",           # 우분투/데비안 패키지 설치 경로
-            "/usr/share/SecLists",           # 대문자 버전
-            "/opt/SecLists",                 # 옵셔널 소프트웨어 설치 경로
-            "/home/*/SecLists",              # 사용자 홈 디렉토리
-            "/home/*/Hack_The_Box/SecLists",  # HTB 사용자들의 일반적 경로
-            "/root/SecLists",                # root 사용자 경로
-            "~/SecLists"                     # 현재 사용자 홈 경로
-        ]
-        
-        # 빠른 확인을 위해 일반적인 경로부터 탐색
-        for path_pattern in common_paths:
-            try:
-                # glob으로 와일드카드 패턴(*) 처리 및 홈 디렉토리(~) 확장
-                import glob
-                matches = glob.glob(os.path.expanduser(path_pattern))
-                for path in matches:
-                    # SecLists의 핵심 디렉토리 존재 여부로 유효성 검증
-                    if os.path.isdir(path) and os.path.exists(f"{path}/Discovery/Web-Content"):
-                        print(f"SecLists 발견: {path}")
-                        self.seclists_path = path  # 캐싱
-                        return path
-            except:
-                continue  # 오류 발생시 다음 경로로
-        
-        # 일반적인 경로에서 못 찾으면 전체 시스템 검색 (시간 소요)
-        print("일반적인 경로에서 찾지 못함, 전체 시스템 검색 중...")
-        try:
-            # find 명령어로 전체 파일시스템에서 SecLists 디렉토리 검색
-            process = await asyncio.create_subprocess_exec(
-                'find', '/',                    # 루트 디렉토리부터 검색
-                '-type', 'd',                   # 디렉토리만 검색
-                '-name', '*SecLists*',          # SecLists가 포함된 이름
-                stdout=subprocess.PIPE,         # 표준 출력 캐치
-                stderr=subprocess.DEVNULL       # 에러 메시지 숨기기 (권한 오류 등)
-            )
+        if not os.path.isdir(self.seclists_path):
+            print(f"워드리스트 경로가 존재하지 않습니다: {self.seclists_path}")
+            return False
             
-            # 30초 타임아웃으로 find 명령어 실행
-            stdout, _ = await asyncio.wait_for(process.communicate(), timeout=30)
-            # 출력 결과를 줄 단위로 분할하여 경로 리스트 생성
-            paths = stdout.decode('utf-8', errors='ignore').strip().split('\n')
+        # SecLists의 핵심 디렉토리 존재 여부 검증
+        if not os.path.exists(f"{self.seclists_path}/Discovery/Web-Content"):
+            print(f"올바른 SecLists 디렉토리가 아닙니다: {self.seclists_path}")
+            print("디렉토리 내에 'Discovery/Web-Content' 폴더가 있는지 확인해주세요.")
+            return False
             
-            # 각 경로를 검증하여 유효한 SecLists 디렉토리 찾기
-            for path in paths:
-                path = path.strip()
-                # 경로가 존재하고 SecLists의 핵심 디렉토리가 있는지 확인
-                if path and os.path.isdir(path) and os.path.exists(f"{path}/Discovery/Web-Content"):
-                    print(f"SecLists 발견: {path}")
-                    self.seclists_path = path  # 캐싱하여 재사용
-                    return path
-                    
-        except asyncio.TimeoutError:  # 전체 시스템 검색 타임아웃
-            print("전체 시스템 검색 타임아웃")
-        except Exception as e:  # 기타 오류 발생
-            print(f"시스템 검색 중 오류: {e}")
-        
-        # SecLists를 찾지 못한 경우 사용자에게 설치 안내
-        print("SecLists를 찾을 수 없습니다.")
-        return None
+        print(f"SecLists 경로 확인됨: {self.seclists_path}")
+        return True
         
     async def run_command(self, name: str, command: List[str], timeout: int = 300) -> Optional[str]:
         """비동기 방식으로 외부 명령어 실행
@@ -285,7 +236,10 @@ class OSINTStager:
         
         # nmap 스캔 결과를 저장할 파일명 생성 (특수문자 치환)
         nmap_output_file = f'nmap_{self.target.replace(".", "_").replace(":", "_")}.txt'
+        nmap_xml_file = f'nmap_{self.target.replace(".", "_").replace(":", "_")}.xml'
+        self.nmap_xml_file = nmap_xml_file  # 인스턴스 변수에 저장
         self.temp_files.append(nmap_output_file)  # 나중에 정리할 파일 목록에 추가
+        self.temp_files.append(nmap_xml_file)     # XML 파일도 정리 대상에 추가
         
         # 대상에 따른 nmap 스캔 옵션 설정
         if self.target in ['localhost', '127.0.0.1', '::1']:  # 로컬호스트 스캔
@@ -295,7 +249,8 @@ class OSINTStager:
                 '-sV',                    # 서비스 버전 탐지
                 '-sC',                    # 기본 NSE 스크립트 실행
                 '--script=banner,http-title',  # 배너 및 HTTP 제목 수집
-                '-oX', nmap_output_file,  # 일반 형식으로 결과 저장
+                '-oN', nmap_output_file,  # 일반 형식으로 결과 저장
+                '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
                 self.target
             ]
         else:  # 원격 대상 스캔
@@ -304,7 +259,8 @@ class OSINTStager:
                 '-sS', '-sV', '-sC',      # 기본 스캔 옵션
                 '-O',                     # 운영체제 탐지
                 '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
-                '-oX', nmap_output_file,
+                '-oN', nmap_output_file,
+                '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
                 self.target
             ]
         
@@ -402,11 +358,6 @@ class OSINTStager:
         tasks = []       # 비동기 작업 리스트
         task_names = []  # 작업 이름 리스트 (결과 매칭용)
         
-        # 모든 대상에 대해 서브도메인 퍼징 실행 (IP든 도메인이든 무조건)
-        print("서브도메인 브루트포싱 실행 (모든 대상)")
-        tasks.append(self.run_subdomain_ffuf())
-        task_names.append("subdomain_ffuf")
-        
         # 웹 서비스 발견 시 웹 전용 보안 도구들 실행
         if self.web_urls:
             print("웹 서비스 탐지 - 웹 전용 스캐너들 병렬 실행")
@@ -423,10 +374,7 @@ class OSINTStager:
                 # nikto - 웹 취약점 스캔 (일반적인 웹 취약점 탐지)
                 tasks.append(self.run_nikto(url))
                 task_names.append(f"nikto_{url}")
-                
-                # nuclei - 템플릿 기반 취약점 탐지 (최신 CVE 등)
-                tasks.append(self.run_nuclei(url))
-                task_names.append(f"nuclei_{url}")
+
         
         # SSH 서비스 발견 시 SSH 전용 보안 감사 도구 실행
         if self.has_service('ssh'):
@@ -436,9 +384,15 @@ class OSINTStager:
         
         # SMB/NetBIOS 서비스 발견 시 윈도우 네트워크 열거 도구 실행
         if self.has_service('microsoft-ds') or self.has_service('netbios-ssn'):
-            print("SMB 서비스 탐지 - 윈도우 네트워크 열거 실행")
+            print("SMB 서비스 탐지 - 윈도우 네트욬크 열거 실행")
             tasks.append(self.run_enum4linux())  # SMB 공유, 사용자 정보 등 열거
             task_names.append("enum4linux")
+        
+        # nmap 결과가 있으면 searchsploit으로 CVE 검색 실행
+        if self.discovered_ports:
+            print("서비스 발견 - searchsploit CVE 검색 실행")
+            tasks.append(self.run_searchsploit())  # 알려진 취약점 검색
+            task_names.append("searchsploit")
         
         # 실행할 도구가 없는 경우 처리
         if not tasks:
@@ -495,79 +449,71 @@ class OSINTStager:
             url (str): 스캔할 웹 서비스 URL
             
         Returns:
-            str: 전체 5단계 스캔 결과를 JSON 형식으로 집계
+            str: 전체 6단계 스캔 결과를 JSON 형식으로 집계
         """
-        print(f"[{time.strftime('%H:%M:%S')}] ffuf 5단계 전문 스캔 시작 ({url})")
+        print(f"[{time.strftime('%H:%M:%S')}] ffuf 6단계 전문 스캔 시작 ({url})")
         
-        # ffuf 도구에 필수인 SecLists 워드리스트 경로 확인
-        seclists_path = await self.find_seclists_path()
-        if not seclists_path:
-            print("SecLists 워드리스트가 없어서 ffuf 스캔을 건너뜁니다.")
-            return "SecLists not found - ffuf skipped"
+        # SecLists 경로 설정
+        seclists_path = self.seclists_path
         
         # URL에서 프로토콜 제거하여 호스트명만 추출 (스크립트 사용용)
         target_host = url.replace('http://', '').replace('https://', '')
         
         # 다단계 ffuf 스캔을 수행할 Bash 스크립트 동적 생성
-        # 이 스크립트는 5가지 다른 전략으로 ffuf를 실행합니다.
+        # 이 스크립트는 6가지 다른 전략으로 ffuf를 실행합니다.
         script_content = f'''#!/bin/bash
-# ffuf 5단계 전문 스캔 스크립트
 TARGET="{target_host}"  # 스캔 대상 호스트
 OUTPUT_DIR="ffuf_results_{self.target.replace('.', '_').replace(':', '_')}"  # 결과 저장 디렉토리
 SEC_PATH="{seclists_path}"  # SecLists 워드리스트 경로
 mkdir -p "$OUTPUT_DIR"  # 결과 디렉토리 생성
 
-echo "SecLists 경로: $SEC_PATH"
-echo "스캔 대상: $TARGET"
-echo "결과 저장: $OUTPUT_DIR"
 
-echo "==================== 1단계: 디렉토리 퍼징 (recursion) ===================="
-echo "시작 시간: $(date)"
-# 중간 크기 디렉토리 리스트로 재귀적 퍼징
-if [ -f "$SEC_PATH/Discovery/Web-Content/directory-list-2.3-medium.txt" ]; then
+# 디렉토리 퍼징
+echo "디렉토리 퍼징 시작..."
+if [ -f "$SEC_PATH/Discovery/Web-Content/raft-medium-directories.txt" ]; then
     ffuf \\
-        -w "$SEC_PATH/Discovery/Web-Content/directory-list-2.3-medium.txt" \\
-        -u "http://{url}/FUZZ" \\
-        -recursion \\              # 발견된 디렉토리에서 재귀적 탐색
-        -recursion-depth 3 \\      # 최대 3단계까지 깊이 탐색
-        -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
-        -fc 404,500 \\             # 오류 코드 필터링
-        -t 50 \\                  # 동시 스레드 수 (속도 vs 안정성 균형)
-        -o "$OUTPUT_DIR/01_directories.json" -of json \\  # JSON 형식으로 결과 저장
-        -v                        # 상세 출력 모드
-else
-    echo "경고: directory-list-2.3-medium.txt 파일을 찾을 수 없습니다."
-    touch "$OUTPUT_DIR/01_directories.json"  # 빈 결과 파일 생성
-fi
-
-echo -e "\\n==================== 2단계: 일반 파일 퍼징 ===================="
-echo "시작 시간: $(date)"
-# 일반적인 파일명들로 퍼징 (기본 인덱스, 관리 파일 등)
-if [ -f "$SEC_PATH/Discovery/Web-Content/common.txt" ]; then
-    ffuf \\
-        -w "$SEC_PATH/Discovery/Web-Content/common.txt" \\  # 일반적인 파일명 리스트
-        -u "http://{url}/FUZZ" \\
+        -w "$SEC_PATH/Discovery/Web-Content/raft-medium-directories.txt" \\
+        -u "{url}/FUZZ" \\
         -mc 200,204,301,302,307,401,403 \\
         -fc 404,500 \\
-        -t 100 \\                 # 일반 파일이므로 빠른 스캔
+        -fs 0 \\
+        -t 50 \\
+        -o "$OUTPUT_DIR/01_directories.json" -of json \\
+        -v
+else
+    echo "경고: raft-medium-directories.txt 파일을 찾을 수 없습니다."
+    touch "$OUTPUT_DIR/01_directories.json"
+fi
+
+# 일반 파일 퍼징
+echo "일반 파일 퍼징 시작..."
+if [ -f "$SEC_PATH/Discovery/Web-Content/raft-medium-files.txt" ]; then
+    ffuf \\
+        -w "$SEC_PATH/Discovery/Web-Content/raft-medium-files.txt" \\
+        -u "{url}/FUZZ" \\
+        -mc 200,204,301,302,307,401,403 \\
+        -fc 404,500 \\
+        -fs 0 \\
+        -t 80 \\
         -o "$OUTPUT_DIR/02_files.json" -of json \\
         -v
 else
-    echo "경고: common.txt 파일을 찾을 수 없습니다."
+    echo "경고: raft-medium-files.txt 파일을 찾을 수 없습니다."
     touch "$OUTPUT_DIR/02_files.json"
 fi
 
-echo -e "\\n==================== 3단계: 확장자 퍼징 ===================="
-echo "시작 시간: $(date)"
-# 다양한 파일 확장자와 함께 퍼징
+
+# 확장자 퍼징 (일반 파일명 + 다양한 확장자)
+echo "확장자 퍼징 시작..."
 if [ -f "$SEC_PATH/Discovery/Web-Content/common.txt" ]; then
     ffuf \\
         -w "$SEC_PATH/Discovery/Web-Content/common.txt" \\
-        -u "http://{url}/FUZZ" \\
-        -e .php,.html,.js,.txt,.xml,.json,.log,.bak,.backup,.old,.tmp \\  # 주요 확장자들
+        -u "{url}/FUZZ" \\
+        -e .php,.html,.htm,.js,.txt,.xml,.json,.log,.bak,.backup,.old,.tmp,.sql,.conf,.config,.ini,.env,.yml,.yaml \\
         -mc 200,204,301,302,307,401,403 \\
         -fc 404,500 \\
-        -t 100 \\
+        -fs 0 \\
+        -t 80 \\
         -o "$OUTPUT_DIR/03_extensions.json" -of json \\
         -v
 else
@@ -575,80 +521,45 @@ else
     touch "$OUTPUT_DIR/03_extensions.json"
 fi
 
-echo -e "\\n==================== 4단계: API 엔드포인트 퍼징 ===================="
-echo "시작 시간: $(date)"
-# REST API 엔드포인트 탐지
-if [ -f "$SEC_PATH/Discovery/Web-Content/api/api-endpoints.txt" ]; then
+# 히든 파일 & 백업 파일 퍼징
+echo "히든 파일 & 백업 파일 퍼징 시작..."
+if [ -f "$SEC_PATH/Discovery/Web-Content/quickhits.txt" ]; then
     ffuf \\
-        -w "$SEC_PATH/Discovery/Web-Content/api/api-endpoints.txt" \\
-        -u "http://{url}/FUZZ" \\
+        -w "$SEC_PATH/Discovery/Web-Content/quickhits.txt" \\
+        -u "{url}/FUZZ" \\
         -mc 200,204,301,302,307,401,403 \\
         -fc 404,500 \\
-        -t 100 \\
-        -o "$OUTPUT_DIR/04_api.json" -of json \\
+        -fs 0 \\
+        -t 60 \\
+        -o "$OUTPUT_DIR/04_hidden.json" -of json \\
         -v
 else
-    echo "경고: api-endpoints.txt 파일을 찾을 수 없습니다."
-    touch "$OUTPUT_DIR/04_api.json"
+    echo "경고: quickhits.txt 파일을 찾을 수 없습니다."
+    touch "$OUTPUT_DIR/04_hidden.json"
 fi
 
-echo -e "\\n==================== 5단계: 백업/설정 파일 퍼징 ===================="
-echo "시작 시간: $(date)"
-# 백업 파일과 설정 파일 탐지 (보안에 중요)
-if [ -f "$SEC_PATH/Discovery/Web-Content/common.txt" ]; then
-    ffuf \\
-        -w "$SEC_PATH/Discovery/Web-Content/common.txt" \\
-        -u "http://{url}/FUZZ" \\
-        -e .config,.conf,.cfg,.ini,.env,.bak,.backup,.old,.orig,.swp,.tmp \\  # 설정/백업 확장자
-        -mc 200,204,301,302,307,401,403 \\
-        -fc 404,500 \\
-        -t 100 \\
-        -o "$OUTPUT_DIR/05_backup.json" -of json \\
-        -v
-else
-    echo "경고: common.txt 파일을 찾을 수 없습니다."
-    touch "$OUTPUT_DIR/05_backup.json"
-fi
+# 서브도메인 퍼징
+ffuf \\
+    -w "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" \\
+    -u "http://FUZZ.{self.target}" \\
+    -H "Host: FUZZ.{self.target}" \\
+    -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
+    -fc 404,500 \\             # 오류 코드 필터링
+    -fs 0 \\                   # 크기 0인 응답 필터링 (일반적으로 빈 응답)
+    -t 50 \\                   # 동시 스레드 수 (속도 vs 안정성 균형)
+    -o "$OUTPUT_DIR/05_subdomains.json" -of json \\  # JSON 형식으로 결과 저장
 
-echo -e "\\n==================== 6단계: 서브도메인 퍼징 ===================="
-echo "시작 시간: $(date)"
-if [ -f "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" ]; then
-    ffuf \\
-        -w "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" \\
-        -u "http://FUZZ.{target}" \\
-        -H "Host: FUZZ.{target}" \\
-        -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
-        -fc 404,500 \\             # 오류 코드 필터링
-        -fs 0 \\                   # 크기 0인 응답 필터링 (일반적으로 빈 응답)
-        -t 50 \\                   # 동시 스레드 수 (속도 vs 안정성 균형)
-        -o "$OUTPUT_DIR/06_subdomains.json" -of json \\  # JSON 형식으로 결과 저장
-        -v
-else
-    echo "경고: subdomains-top1million-5000.txt 파일을 찾을 수 없습니다."
-    touch "$OUTPUT_DIR/06_subdomails.json" -of json \\
-fi
-
-echo -e "\\n==================== 7단계: VHost 퍼징 ===================="
-echo "시작 시간: $(date)"
-if [ -f "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" ]; then
-    ffuf \\
-        -w "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" \\
-        -u "https://{target}" \\
-        -H "Host: FUZZ.{target}" \\
-        -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \\
-        -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
-        -fc 404,500 \\             # 오류 코드 필터링
-        -t 50 \\                   # 동시 스레드 수
-        -ac \\                     # 자동 칼리브레이션 (기본 응답 자동 필터링)
-        -o "$OUTPUT_DIR/07_vhosts.json" -of json \\  # JSON 형식으로 결과 저장
-        -v
-else
-    echo "경고: subdomains-top1million-5000.txt 파일을 찾을 수 없습니다."
-    touch "$OUTPUT_DIR/07_vhosts.json" -of json \\
-fi
-
-echo -e "\\n모든 ffuf 단계 완료!"
-echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
+# Vhost 퍼징
+ffuf \\
+    -w "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" \\
+    -u "https://{self.target}" \\
+    -H "Host: FUZZ.{self.target}" \\
+    -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \\
+    -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
+    -fc 404,500 \\             # 오류 코드 필터링
+    -t 100 \\                   # 동시 스레드 수
+    -ac \\                     # 자동 칼리브레이션 (기본 응답 자동 필터링)
+    -o "$OUTPUT_DIR/06_vhosts.json" -of json \\  # JSON 형식으로 결과 저장
 '''
         
         # 임시 스크립트 파일 생성 (실행 후 정리됨)
@@ -670,13 +581,14 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
             results_dir = f"ffuf_results_{self.target.replace('.', '_').replace(':', '_')}"
             self.temp_files.append(results_dir)  # 디렉토리도 정리 대상에 추가
             
-            # 5단계 결과를 하나의 딕셔너리로 통합
+            # 6단계 결과를 하나의 딕셔너리로 통합
             combined_results = {
                 "directories": self._read_ffuf_result(f"{results_dir}/01_directories.json"),
                 "files": self._read_ffuf_result(f"{results_dir}/02_files.json"), 
                 "extensions": self._read_ffuf_result(f"{results_dir}/03_extensions.json"),
-                "api": self._read_ffuf_result(f"{results_dir}/04_api.json"),
-                "backup": self._read_ffuf_result(f"{results_dir}/05_backup.json")
+                "hidden": self._read_ffuf_result(f"{results_dir}/04_hidden.json"),
+                "subdomains": self._read_ffuf_result(f"{results_dir}/05_subdomains.json"),
+                "vhosts": self._read_ffuf_result(f"{results_dir}/06_vhosts.json")
             }
             
             return json.dumps(combined_results, indent=2)
@@ -723,38 +635,6 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
         ]
         return await self.run_command(f"nikto ({url})", command, timeout=600)  # 10분 타임아웃
     
-    async def run_nuclei(self, url: str) -> str:
-        """nuclei를 이용한 템플릿 기반 취약점 탐지
-        
-        최신 CVE와 보안 템플릿을 사용하여 알려진 취약점들을 탐지합니다.
-        """
-        # nuclei 설치 여부 먼저 확인
-        try:
-            check_process = await asyncio.create_subprocess_exec(
-                'which', 'nuclei',
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            await check_process.communicate()
-            
-            if check_process.returncode != 0:
-                print(f"[WARNING] nuclei가 설치되지 않음 - 스킵")
-                return "nuclei not installed"
-                
-        except Exception:
-            print(f"[WARNING] nuclei 확인 실패 - 스킵")
-            return "nuclei check failed"
-        
-        # nuclei 실행 (CVE와 일반 취약점 템플릿 사용)
-        command = [
-            'nuclei', 
-            '-u', url, 
-            '-t', 'cves/',              # CVE 템플릿
-            '-t', 'vulnerabilities/',   # 일반 취약점 템플릿
-            '-jsonl',                   # JSONL 출력 형식 (v3.4.7에서 -json 대신 사용)
-            '-o', f'nuclei_{self.target.replace(".", "_")}.json'  # 결과 저장
-        ]
-        return await self.run_command(f"nuclei ({url})", command, timeout=300)
     
     async def run_ssh_audit(self) -> str:
         """ssh-audit을 이용한 SSH 서비스 보안 감사
@@ -774,79 +654,67 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
         command = ['enum4linux', '-a', self.target]  # 모든 정보 열거
         return await self.run_command("enum4linux", command, timeout=120)
     
-    async def run_subdomain_ffuf(self) -> str:
-        """ffuf를 이용한 서브도메인 브루트포싱
+    async def run_searchsploit(self) -> str:
+        """searchsploit을 이용한 nmap XML 결과 기반 CVE 검색
         
-        SecLists의 서브도메인 워드리스트를 사용하여 서브도메인을 탐지합니다.
-        IP 대상의 경우 미리 생성된 도메인명을 사용합니다.
+        nmap XML 결과에서 발견된 서비스 및 버전 정보를 기반으로
+        알려진 취약점과 CVE를 자동으로 검색합니다.
         
         Returns:
-            str: 서브도메인 스캔 결과를 JSON 형식으로 반환
+            str: searchsploit 검색 결과
         """
-        print(f"[{time.strftime('%H:%M:%S')}] 서브도메인 브루트포싱 시작 ({self.target})")
+        if not self.nmap_xml_file or not os.path.exists(self.nmap_xml_file):
+            print("nmap XML 파일을 찾을 수 없어 searchsploit 실행을 건너뜁니다.")
+            return "nmap XML file not found - searchsploit skipped"
         
-        # SecLists 서브도메인 워드리스트 경로 확인
-        seclists_path = await self.find_seclists_path()
-        if not seclists_path:
-            print("SecLists 워드리스트가 없어서 서브도메인 스캔을 건너뜁니다.")
-            return "SecLists not found - subdomain scan skipped"
+        print(f"[{time.strftime('%H:%M:%S')}] searchsploit CVE 검색 시작...")
         
-        # 사용할 서브도메인 워드리스트 파일들 (우선순위 순)
-        subdomain_wordlists = [
-            f"{seclists_path}/Discovery/DNS/subdomains-top1million-5000.txt",
-            f"{seclists_path}/Discovery/DNS/subdomains-top1million-20000.txt", 
-            f"{seclists_path}/Discovery/DNS/fierce-hostlist.txt",
-            f"{seclists_path}/Discovery/DNS/namelist.txt"
-        ]
+        # searchsploit에 nmap XML 파일을 직접 전달
+        command = ['searchsploit', '--nmap', self.nmap_xml_file]
         
-        # 실제 존재하는 워드리스트 찾기
-        selected_wordlist = None
-        for wordlist_path in subdomain_wordlists:
-            if os.path.exists(wordlist_path):
-                selected_wordlist = wordlist_path
-                print(f"서브도메인 워드리스트 선택: {os.path.basename(wordlist_path)}")
-                break
+        result = await self.run_command("searchsploit", command, timeout=60)
         
-        if not selected_wordlist:
-            print("서브도메인 워드리스트를 찾을 수 없습니다.")
-            return "No subdomain wordlist found"
+        if result:
+            # CVE 정보 추출 및 저장
+            self._parse_cve_results(result)
+            print(f"searchsploit 완료 - {len(self.cve_results)}개 CVE 발견")
         
-        # 결과 저장 파일명
-        output_file = f"subdomain_ffuf_{self.target.replace('.', '_').replace(':', '_')}.json"
-        self.temp_files.append(output_file)
-        
-        # ffuf 서브도메인 브루트포싱 명령어
-        command = [
-            'ffuf',
-            '-w', selected_wordlist,              # 서브도메인 워드리스트
-            '-u', f'http://FUZZ.{self.target}',   # FUZZ를 서브도메인으로 치환
-            '-mc', '200,204,301,302,307,401,403', # 매치할 상태 코드
-            '-fc', '404,500',                     # 필터링할 상태 코드  
-            '-t', '50',                           # 동시 스레드 수
-            '-timeout', '10',                     # 각 요청의 타임아웃 (초)
-            '-o', output_file,                    # 결과 저장 파일
-            '-of', 'json',                        # JSON 출력 형식
-            '-v'                                  # 상세 출력
-        ]
-        
-        try:
-            # 서브도메인 스캔 실행 (10분 타임아웃)
-            result = await self.run_command(f"서브도메인 ffuf ({self.target})", command, timeout=600)
-            
-            # 결과 파일 읽기
-            if os.path.exists(output_file):
-                with open(output_file, 'r') as f:
-                    scan_results = f.read()
-                    print(f"서브도메인 스캔 완료: {len(scan_results)} bytes")
-                    return scan_results
-            else:
-                print("서브도메인 스캔 결과 파일을 찾을 수 없습니다.")
-                return result
-                
-        except Exception as e:
-            print(f"서브도메인 스캔 중 오류: {e}")
-            return None
+        return result
     
+    def _parse_cve_results(self, searchsploit_output: str):
+        """핵심 searchsploit 출력에서 CVE 정보 추출
+        
+        Args:
+            searchsploit_output (str): searchsploit 원본 출력
+        """
+        if not searchsploit_output:
+            return
+            
+        lines = searchsploit_output.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            # CVE 패턴 찾기 (CVE-YYYY-NNNNN 형식)
+            cve_matches = re.findall(r'CVE-\d{4}-\d{4,7}', line)
+            
+            for cve in cve_matches:
+                if cve not in [item['cve'] for item in self.cve_results]:
+                    # 취약점 제목도 추출 (라인에서 CVE 전 부분)
+                    title_part = line.split(cve)[0].strip()
+                    if '|' in title_part:
+                        title = title_part.split('|')[-1].strip()
+                    else:
+                        title = title_part
+                    
+                    self.cve_results.append({
+                        'cve': cve,
+                        'title': title[:100] if title else 'Unknown',  # 제목 길이 제한
+                        'line': line[:200]  # 전체 라인 저장 (길이 제한)
+                    })
+        
+        print(f"[DEBUG] 추출된 CVE: {[item['cve'] for item in self.cve_results]}")
+
+
     def cleanup_temp_files(self):
         """스캔 과정에서 생성된 모든 임시 파일들을 정리
         
@@ -874,7 +742,7 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
             f"ffuf_results_{self.target.replace('.', '_').replace(':', '_')}*",
             f"nmap_{self.target.replace('.', '_').replace(':', '_')}*",
             f"nikto_{self.target.replace('.', '_').replace(':', '_')}*",
-            f"nuclei_{self.target.replace('.', '_').replace(':', '_')}*"
+            f"searchsploit_{self.target.replace('.', '_').replace(':', '_')}*"
         ]
         
         for pattern in patterns:
@@ -997,27 +865,84 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
         for key, value in results['specialized_scans'].items():
             if 'ffuf' in key and value:
                 actual_url = key.replace('ffuf_', '')  # 실제 스캔한 URL
-                sections.append(f"\n### {actual_url} 디렉토리/파일 탐색 (ffuf)")
+                sections.append(f"\n### {actual_url} 웹 취약점 탐색 (ffuf)")
                 
                 try:
                     ffuf_data = json.loads(value) if isinstance(value, str) else value
-                    found_paths = []
                     
-                    for category, data in ffuf_data.items():
-                        if isinstance(data, dict) and 'results' in data:
-                            for result in data['results'][:3]:  # 각 카테고리당 3개만 (중복 줄이기)
-                                if 'url' in result and actual_url in result['url']:  # URL 매칭 확인
-                                    found_paths.append(f"{result['url']} (상태: {result.get('status', '?')})")
+                    # 일반 웹 경로 결과 (디렉토리, 파일, 확장자, 히든파일)
+                    web_paths = []
+                    web_categories = ['directories', 'files', 'extensions', 'hidden']
                     
-                    if found_paths:
-                        sections.append("발견된 경로:")
-                        for path in list(set(found_paths))[:5]:  # 중복 제거 + 최대 5개
+                    for category in web_categories:
+                        if category in ffuf_data and isinstance(ffuf_data[category], dict) and 'results' in ffuf_data[category]:
+                            for result in ffuf_data[category]['results'][:3]:  # 각 카테고리당 3개만
+                                if 'url' in result:
+                                    web_paths.append(f"{result['url']} (상태: {result.get('status', '?')}, 유형: {category})")
+                    
+                    if web_paths:
+                        sections.append("발견된 웹 경로:")
+                        for path in list(set(web_paths))[:8]:  # 중복 제거 + 최대 8개
                             sections.append(f"  {path}")
-                    else:
-                        sections.append("특별한 경로 발견되지 않음")
+                    
+                    # 서브도메인 결과 별도 처리
+                    if 'subdomains' in ffuf_data and isinstance(ffuf_data['subdomains'], dict) and 'results' in ffuf_data['subdomains']:
+                        subdomain_results = ffuf_data['subdomains']['results'][:5]  # 상위 5개
+                        if subdomain_results:
+                            sections.append("\n발견된 서브도메인:")
+                            for result in subdomain_results:
+                                if 'url' in result:
+                                    sections.append(f"  {result['url']} (상태: {result.get('status', '?')})")
+                    
+                    # VHost 결과 별도 처리
+                    if 'vhosts' in ffuf_data and isinstance(ffuf_data['vhosts'], dict) and 'results' in ffuf_data['vhosts']:
+                        vhost_results = ffuf_data['vhosts']['results'][:5]  # 상위 5개
+                        if vhost_results:
+                            sections.append("\n발견된 가상 호스트 (VHost):")
+                            for result in vhost_results:
+                                if 'url' in result:
+                                    sections.append(f"  {result['url']} (상태: {result.get('status', '?')})")
+                    
+                    # 아무것도 찾지 못한 경우
+                    if not web_paths and not (ffuf_data.get('subdomains', {}).get('results')) and not (ffuf_data.get('vhosts', {}).get('results')):
+                        sections.append("특별한 경로나 서브도메인 발견되지 않음")
+                        
                 except Exception as e:
                     sections.append(f"ffuf 결과 파싱 중 오류: {e}")
 
+        # CVE 취약점 정보 섹션 (새로 추가)
+        if self.cve_results:
+            sections.append(f"\n## 발견된 취약점 (CVE)")
+            sections.append(f"searchsploit으로 {len(self.cve_results)}개의 알려진 취약점을 발견했습니다:")
+            
+            # CVE 중요도에 따른 정렬 (연도 역순으로)
+            sorted_cves = sorted(self.cve_results, key=lambda x: x['cve'], reverse=True)
+            
+            for i, cve_info in enumerate(sorted_cves[:10]):  # 상위 10개만 표시
+                sections.append(f"\n### {i+1}. {cve_info['cve']}")
+                sections.append(f"**제목**: {cve_info['title']}")
+                sections.append(f"**세부사항**: {cve_info['line']}")
+                
+                # CVE 연도 추출 및 위험도 평가
+                year = cve_info['cve'].split('-')[1] if '-' in cve_info['cve'] else '????'
+                current_year = datetime.datetime.now().year
+                age = current_year - int(year) if year.isdigit() else 0
+                
+                if age <= 2:
+                    risk_level = "🔴 높음 (최신 취약점)"
+                elif age <= 5:
+                    risk_level = "🟡 중간 (비교적 최신)"
+                else:
+                    risk_level = "🟢 낮음 (거비 취약점)"
+                
+                sections.append(f"**위헙도**: {risk_level} ({year}년, {age}년 전)")
+            
+            if len(self.cve_results) > 10:
+                sections.append(f"\n*총 {len(self.cve_results)}개 취약점 중 상위 10개만 표시*")
+        else:
+            sections.append("\n## CVE 취약점 검색 결과")
+            sections.append("알려진 CVE 취약점이 발견되지 않았습니다.")
+        
         # 시스템 환경 분석 
         sections.append("\n## 시스템 환경 정보")
         
@@ -1038,16 +963,22 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
         for info in port_info:
             sections.append(f"- {info}")
 
-        # AI 분석 요청 섹션
+        # AI 분석 요청 섹션 (CVE 정보 반영)
+        cve_mention = ""
+        if self.cve_results:
+            high_risk_cves = [cve for cve in self.cve_results if int(cve['cve'].split('-')[1]) >= datetime.datetime.now().year - 2]
+            cve_mention = f"\n\n특히 {len(self.cve_results)}개의 알려진 CVE 취약점이 발견되었으며, 이 중 {len(high_risk_cves)}개는 최신 취약점입니다. 이러한 CVE 정보를 활용한 공격 시나리오를 우선적으로 고려해주세요."
+        
         sections.append(f"""\n## AI 분석 요청
 
 위의 수집된 정보를 바탕으로 다음을 분석해주세요:
 
 1. **공격 가능성이 높은 진입점** 식별
-2. **단계별 공격 시나리오** 수립  
-3. **취약점들을 연계한 공격 체인** 구성
-4. **각 공격 경로의 성공 가능성** 평가
-5. **공격자 관점에서의 우선순위** 제시
+2. **CVE 기반 우선 공격 벡터** 도출
+3. **단계별 공격 시나리오** 수립  
+4. **취약점들을 연계한 공격 체인** 구성
+5. **각 공격 경로의 성공 가능성** 평가
+6. **공격자 관점에서의 우선순위** 제시{cve_mention}
 
 특히 발견된 웹 서비스들과 데이터베이스 노출 상황을 고려하여 실제 공격에서 어떤 순서로 접근할지 구체적인 시나리오를 제시해주세요.""")
         
@@ -1091,6 +1022,10 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
         print("OSINT 자동화 파이프라인 시작")
         print("=" * 60)
         
+        # 사전 준비: 워드리스트 경로 검증
+        if not self.validate_wordlist_path():
+            return {"error": "Invalid wordlist path"}
+        
         # 1단계: nmap 포트 스캔 및 서비스 탐지
         nmap_result = await self.stage1_nmap_discovery()
         
@@ -1113,7 +1048,8 @@ echo "결과 파일들이 $OUTPUT_DIR 디렉토리에 저장되었습니다."
             'discovered_ports': self.discovered_ports,    # 발견된 포트/서비스
             'web_urls': self.web_urls,                   # 웹 서비스 URL들
             'nmap_output': nmap_result,                  # nmap 원본 출력
-            'specialized_scans': specialized_results      # 전문 도구 결과들
+            'specialized_scans': specialized_results,     # 전문 도구 결과들
+            'cve_vulnerabilities': self.cve_results       # CVE 취약점 목록
         }
         
         print(f"\n전체 파이프라인 완료: {total_time:.2f}초")
@@ -1136,9 +1072,9 @@ async def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 사용 예시:
-  python3 pipe_annotated.py -t 192.168.1.100
-  python3 pipe_annotated.py --target localhost --output ./results
-  python3 pipe_annotated.py -t example.com --verbose
+  python3 pipe.py -t 192.168.1.100
+  python3 pipe.py --target localhost --output ./results
+  python3 pipe.py -t example.com --verbose
         """
     )
     
@@ -1167,6 +1103,11 @@ async def main():
         help='각 도구의 최대 실행 시간(초) (기본값: 300)'
     )
     
+    parser.add_argument(
+        '-w', '--wordlist-path',
+        help='SecLists 워드리스트 경로 (예: /usr/share/seclists)'
+    )
+    
     args = parser.parse_args()
     
     # 입력 검증
@@ -1181,7 +1122,7 @@ async def main():
         print(f"타임아웃: {args.timeout}초")
     
     # OSINT 스캐너 인스턴스 생성 및 실행
-    scanner = OSINTStager(target)
+    scanner = OSINTStager(target, args.wordlist_path)
     
     try:
         # 전체 파이프라인 실행
