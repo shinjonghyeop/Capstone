@@ -614,7 +614,6 @@ ffuf \\
         command = [
             'whatweb', 
             '--no-errors',           # 에러 출력 억제
-            '--no-colour',           # 색상 코드 제거
             '--colour=never',        # 색상 완전 비활성화
             '-a', '3',               # 공격성 레벨 3 (상세 분석)
             '-v',                    # 상세 출력
@@ -757,7 +756,7 @@ ffuf \\
                         print(f"   삭제: {file_path}/ (디렉토리)")
                         cleaned_count += 1
                 except Exception as e:
-                    print(f"   삭제 실패: {file_path} - {e}")
+                    print(f"삭제 실패: {file_path} - {e}")
         
         print(f"총 {cleaned_count}개 파일/디렉토리 정리 완료")
     
