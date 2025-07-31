@@ -1,0 +1,338 @@
+2025-07-24 19:55:24,755 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2025-07-24 19:55:24,755 INFO Included extra file "/etc/supervisor/conf.d/services.conf" during parsing
+2025-07-24 19:55:24,760 INFO RPC interface 'supervisor' initialized
+2025-07-24 19:55:24,760 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-07-24 19:55:24,760 INFO supervisord started with pid 312
+2025-07-24 19:55:25,765 INFO spawned: 'mysql' with pid 314
+2025-07-24 19:55:25,768 INFO spawned: 'php-fpm' with pid 315
+2025-07-24 19:55:25,773 INFO spawned: 'apache2' with pid 319
+2025-07-24 19:55:25,775 INFO spawned: 'nginx' with pid 323
+2025-07-24 19:55:25,778 INFO spawned: 'redis' with pid 328
+2025-07-24 19:55:25,781 INFO spawned: 'ssh' with pid 335
+2025-07-24 19:55:25,784 INFO spawned: 'vsftpd' with pid 338
+2025-07-24 19:55:25,787 INFO spawned: 'snmpd' with pid 339
+2025-07-24 19:55:25,789 INFO spawned: 'vulnerable-server' with pid 343
+2025-07-24 19:55:25,825 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-24 19:55:25,858 INFO exited: apache2 (exit status 1; not expected)
+2025-07-24 19:55:26,891 INFO success: mysql entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 19:55:26,891 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 19:55:26,893 INFO spawned: 'apache2' with pid 543
+2025-07-24 19:55:26,894 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 19:55:26,894 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 19:55:26,894 INFO success: ssh entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 19:55:26,894 INFO success: vsftpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 19:55:26,894 INFO success: snmpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 19:55:26,896 INFO spawned: 'vulnerable-server' with pid 544
+2025-07-24 19:55:26,915 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-24 19:55:26,944 INFO exited: apache2 (exit status 1; not expected)
+2025-07-24 19:55:28,950 INFO spawned: 'apache2' with pid 547
+2025-07-24 19:55:28,952 INFO spawned: 'vulnerable-server' with pid 548
+2025-07-24 19:55:28,976 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-24 19:55:29,010 INFO exited: apache2 (exit status 1; not expected)
+2025-07-24 19:55:32,019 INFO spawned: 'apache2' with pid 551
+2025-07-24 19:55:32,025 INFO spawned: 'vulnerable-server' with pid 552
+2025-07-24 19:55:32,071 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-24 19:55:32,089 INFO gave up: vulnerable-server entered FATAL state, too many start retries too quickly
+2025-07-24 19:55:32,101 INFO exited: apache2 (exit status 1; not expected)
+2025-07-24 19:55:32,101 INFO gave up: apache2 entered FATAL state, too many start retries too quickly
+2025-07-24 20:14:35,939 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2025-07-24 20:14:35,939 INFO Included extra file "/etc/supervisor/conf.d/services.conf" during parsing
+2025-07-24 20:14:35,944 INFO RPC interface 'supervisor' initialized
+2025-07-24 20:14:35,944 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-07-24 20:14:35,944 INFO supervisord started with pid 311
+2025-07-24 20:14:36,949 INFO spawned: 'mysql' with pid 313
+2025-07-24 20:14:36,952 INFO spawned: 'php-fpm' with pid 314
+2025-07-24 20:14:36,955 INFO spawned: 'apache2' with pid 315
+2025-07-24 20:14:36,957 INFO spawned: 'nginx' with pid 317
+2025-07-24 20:14:36,959 INFO spawned: 'redis' with pid 321
+2025-07-24 20:14:36,961 INFO spawned: 'ssh' with pid 327
+2025-07-24 20:14:36,964 INFO spawned: 'vsftpd' with pid 333
+2025-07-24 20:14:36,968 INFO spawned: 'snmpd' with pid 335
+2025-07-24 20:14:36,971 INFO spawned: 'vulnerable-server' with pid 337
+2025-07-24 20:14:37,000 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-24 20:14:37,029 INFO exited: apache2 (exit status 1; not expected)
+2025-07-24 20:14:38,081 INFO success: mysql entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 20:14:38,081 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 20:14:38,083 INFO spawned: 'apache2' with pid 542
+2025-07-24 20:14:38,083 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 20:14:38,084 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 20:14:38,084 INFO success: ssh entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 20:14:38,084 INFO success: vsftpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 20:14:38,084 INFO success: snmpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-24 20:14:38,086 INFO spawned: 'vulnerable-server' with pid 543
+2025-07-24 20:14:38,111 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-24 20:14:38,139 INFO exited: apache2 (exit status 1; not expected)
+2025-07-24 20:14:40,143 INFO spawned: 'apache2' with pid 546
+2025-07-24 20:14:40,146 INFO spawned: 'vulnerable-server' with pid 547
+2025-07-24 20:14:40,174 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-24 20:14:40,202 INFO exited: apache2 (exit status 1; not expected)
+2025-07-24 20:14:43,207 INFO spawned: 'apache2' with pid 550
+2025-07-24 20:14:43,209 INFO spawned: 'vulnerable-server' with pid 551
+2025-07-24 20:14:43,230 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-24 20:14:43,248 INFO gave up: vulnerable-server entered FATAL state, too many start retries too quickly
+2025-07-24 20:14:43,260 INFO exited: apache2 (exit status 1; not expected)
+2025-07-24 20:14:43,260 INFO gave up: apache2 entered FATAL state, too many start retries too quickly
+2025-07-25 15:12:14,318 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2025-07-25 15:12:14,318 INFO Included extra file "/etc/supervisor/conf.d/services.conf" during parsing
+2025-07-25 15:12:14,325 INFO RPC interface 'supervisor' initialized
+2025-07-25 15:12:14,325 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-07-25 15:12:14,325 INFO supervisord started with pid 505
+2025-07-25 15:12:15,334 INFO spawned: 'mysql' with pid 507
+2025-07-25 15:12:15,337 INFO spawned: 'php-fpm' with pid 508
+2025-07-25 15:12:15,339 INFO spawned: 'apache2' with pid 509
+2025-07-25 15:12:15,341 INFO spawned: 'nginx' with pid 510
+2025-07-25 15:12:15,344 INFO spawned: 'redis' with pid 514
+2025-07-25 15:12:15,347 INFO spawned: 'ssh' with pid 522
+2025-07-25 15:12:15,350 INFO spawned: 'vsftpd' with pid 526
+2025-07-25 15:12:15,352 INFO spawned: 'snmpd' with pid 530
+2025-07-25 15:12:15,355 INFO spawned: 'vulnerable-server' with pid 533
+2025-07-25 15:12:15,390 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-25 15:12:15,455 INFO exited: mysql (exit status 0; not expected)
+2025-07-25 15:12:15,544 INFO exited: apache2 (exit status 1; not expected)
+2025-07-25 15:12:16,664 INFO spawned: 'mysql' with pid 695
+2025-07-25 15:12:16,665 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-25 15:12:16,668 INFO spawned: 'apache2' with pid 696
+2025-07-25 15:12:16,668 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-25 15:12:16,668 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-25 15:12:16,668 INFO success: ssh entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-25 15:12:16,668 INFO success: vsftpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-25 15:12:16,668 INFO success: snmpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-25 15:12:16,670 INFO spawned: 'vulnerable-server' with pid 697
+2025-07-25 15:12:16,690 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-25 15:12:16,719 INFO exited: apache2 (exit status 1; not expected)
+2025-07-25 15:12:16,773 INFO exited: mysql (exit status 0; not expected)
+2025-07-25 15:12:18,778 INFO spawned: 'mysql' with pid 864
+2025-07-25 15:12:18,780 INFO spawned: 'apache2' with pid 865
+2025-07-25 15:12:18,782 INFO spawned: 'vulnerable-server' with pid 866
+2025-07-25 15:12:18,804 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-25 15:12:18,834 INFO exited: apache2 (exit status 1; not expected)
+2025-07-25 15:12:18,885 INFO exited: mysql (exit status 0; not expected)
+2025-07-25 15:12:21,892 INFO spawned: 'mysql' with pid 1033
+2025-07-25 15:12:21,895 INFO spawned: 'apache2' with pid 1034
+2025-07-25 15:12:21,897 INFO spawned: 'vulnerable-server' with pid 1035
+2025-07-25 15:12:21,918 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-25 15:12:21,936 INFO gave up: vulnerable-server entered FATAL state, too many start retries too quickly
+2025-07-25 15:12:21,947 INFO exited: apache2 (exit status 1; not expected)
+2025-07-25 15:12:21,948 INFO gave up: apache2 entered FATAL state, too many start retries too quickly
+2025-07-25 15:12:22,001 INFO exited: mysql (exit status 0; not expected)
+2025-07-25 15:12:23,002 INFO gave up: mysql entered FATAL state, too many start retries too quickly
+2025-07-27 17:16:55,269 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2025-07-27 17:16:55,270 INFO Included extra file "/etc/supervisor/conf.d/services.conf" during parsing
+2025-07-27 17:16:55,275 INFO RPC interface 'supervisor' initialized
+2025-07-27 17:16:55,275 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-07-27 17:16:55,276 INFO supervisord started with pid 505
+2025-07-27 17:16:56,284 INFO spawned: 'mysql' with pid 507
+2025-07-27 17:16:56,288 INFO spawned: 'php-fpm' with pid 508
+2025-07-27 17:16:56,290 INFO spawned: 'apache2' with pid 509
+2025-07-27 17:16:56,292 INFO spawned: 'nginx' with pid 510
+2025-07-27 17:16:56,295 INFO spawned: 'redis' with pid 515
+2025-07-27 17:16:56,298 INFO spawned: 'ssh' with pid 523
+2025-07-27 17:16:56,301 INFO spawned: 'vsftpd' with pid 528
+2025-07-27 17:16:56,304 INFO spawned: 'snmpd' with pid 531
+2025-07-27 17:16:56,306 INFO spawned: 'vulnerable-server' with pid 534
+2025-07-27 17:16:56,337 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-27 17:16:56,406 INFO exited: mysql (exit status 0; not expected)
+2025-07-27 17:16:56,455 INFO exited: apache2 (exit status 1; not expected)
+2025-07-27 17:16:57,591 INFO spawned: 'mysql' with pid 695
+2025-07-27 17:16:57,592 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-27 17:16:57,594 INFO spawned: 'apache2' with pid 696
+2025-07-27 17:16:57,595 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-27 17:16:57,595 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-27 17:16:57,595 INFO success: ssh entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-27 17:16:57,595 INFO success: vsftpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-27 17:16:57,595 INFO success: snmpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-27 17:16:57,597 INFO spawned: 'vulnerable-server' with pid 697
+2025-07-27 17:16:57,618 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-27 17:16:57,647 INFO exited: apache2 (exit status 1; not expected)
+2025-07-27 17:16:57,699 INFO exited: mysql (exit status 0; not expected)
+2025-07-27 17:16:59,706 INFO spawned: 'mysql' with pid 864
+2025-07-27 17:16:59,708 INFO spawned: 'apache2' with pid 865
+2025-07-27 17:16:59,710 INFO spawned: 'vulnerable-server' with pid 866
+2025-07-27 17:16:59,733 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-27 17:16:59,764 INFO exited: apache2 (exit status 1; not expected)
+2025-07-27 17:16:59,817 INFO exited: mysql (exit status 0; not expected)
+2025-07-27 17:17:02,825 INFO spawned: 'mysql' with pid 1033
+2025-07-27 17:17:02,829 INFO spawned: 'apache2' with pid 1034
+2025-07-27 17:17:02,831 INFO spawned: 'vulnerable-server' with pid 1035
+2025-07-27 17:17:02,849 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-27 17:17:02,867 INFO gave up: vulnerable-server entered FATAL state, too many start retries too quickly
+2025-07-27 17:17:02,879 INFO exited: apache2 (exit status 1; not expected)
+2025-07-27 17:17:02,879 INFO gave up: apache2 entered FATAL state, too many start retries too quickly
+2025-07-27 17:17:02,932 INFO exited: mysql (exit status 0; not expected)
+2025-07-27 17:17:03,934 INFO gave up: mysql entered FATAL state, too many start retries too quickly
+2025-07-30 16:15:27,911 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2025-07-30 16:15:27,911 INFO Included extra file "/etc/supervisor/conf.d/services.conf" during parsing
+2025-07-30 16:15:27,918 INFO RPC interface 'supervisor' initialized
+2025-07-30 16:15:27,918 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-07-30 16:15:27,919 INFO supervisord started with pid 504
+2025-07-30 16:15:28,927 INFO spawned: 'mysql' with pid 506
+2025-07-30 16:15:28,931 INFO spawned: 'php-fpm' with pid 507
+2025-07-30 16:15:28,933 INFO spawned: 'apache2' with pid 508
+2025-07-30 16:15:28,935 INFO spawned: 'nginx' with pid 510
+2025-07-30 16:15:28,937 INFO spawned: 'redis' with pid 513
+2025-07-30 16:15:28,940 INFO spawned: 'ssh' with pid 519
+2025-07-30 16:15:28,942 INFO spawned: 'vsftpd' with pid 526
+2025-07-30 16:15:28,945 INFO spawned: 'snmpd' with pid 530
+2025-07-30 16:15:28,948 INFO spawned: 'vulnerable-server' with pid 533
+2025-07-30 16:15:28,974 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-30 16:15:29,042 INFO exited: mysql (exit status 0; not expected)
+2025-07-30 16:15:29,109 INFO exited: apache2 (exit status 1; not expected)
+2025-07-30 16:15:30,235 INFO spawned: 'mysql' with pid 694
+2025-07-30 16:15:30,236 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 16:15:30,240 INFO spawned: 'apache2' with pid 695
+2025-07-30 16:15:30,241 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 16:15:30,241 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 16:15:30,241 INFO success: ssh entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 16:15:30,242 INFO success: vsftpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 16:15:30,242 INFO success: snmpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 16:15:30,246 INFO spawned: 'vulnerable-server' with pid 696
+2025-07-30 16:15:30,288 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-30 16:15:30,318 INFO exited: apache2 (exit status 1; not expected)
+2025-07-30 16:15:30,366 INFO exited: mysql (exit status 0; not expected)
+2025-07-30 16:15:32,373 INFO spawned: 'mysql' with pid 863
+2025-07-30 16:15:32,378 INFO spawned: 'apache2' with pid 864
+2025-07-30 16:15:32,380 INFO spawned: 'vulnerable-server' with pid 865
+2025-07-30 16:15:32,401 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-30 16:15:32,430 INFO exited: apache2 (exit status 1; not expected)
+2025-07-30 16:15:32,481 INFO exited: mysql (exit status 0; not expected)
+2025-07-30 16:15:35,489 INFO spawned: 'mysql' with pid 1032
+2025-07-30 16:15:35,492 INFO spawned: 'apache2' with pid 1033
+2025-07-30 16:15:35,494 INFO spawned: 'vulnerable-server' with pid 1034
+2025-07-30 16:15:35,517 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-30 16:15:35,533 INFO gave up: vulnerable-server entered FATAL state, too many start retries too quickly
+2025-07-30 16:15:35,545 INFO exited: apache2 (exit status 1; not expected)
+2025-07-30 16:15:35,545 INFO gave up: apache2 entered FATAL state, too many start retries too quickly
+2025-07-30 16:15:35,599 INFO exited: mysql (exit status 0; not expected)
+2025-07-30 16:15:36,601 INFO gave up: mysql entered FATAL state, too many start retries too quickly
+2025-07-30 18:56:11,438 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2025-07-30 18:56:11,439 INFO Included extra file "/etc/supervisor/conf.d/services.conf" during parsing
+2025-07-30 18:56:11,444 INFO RPC interface 'supervisor' initialized
+2025-07-30 18:56:11,444 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-07-30 18:56:11,445 INFO supervisord started with pid 505
+2025-07-30 18:56:12,452 INFO spawned: 'mysql' with pid 507
+2025-07-30 18:56:12,456 INFO spawned: 'php-fpm' with pid 508
+2025-07-30 18:56:12,458 INFO spawned: 'apache2' with pid 509
+2025-07-30 18:56:12,460 INFO spawned: 'nginx' with pid 510
+2025-07-30 18:56:12,462 INFO spawned: 'redis' with pid 514
+2025-07-30 18:56:12,464 INFO spawned: 'ssh' with pid 515
+2025-07-30 18:56:12,467 INFO spawned: 'vsftpd' with pid 516
+2025-07-30 18:56:12,469 INFO spawned: 'snmpd' with pid 520
+2025-07-30 18:56:12,472 INFO spawned: 'vulnerable-server' with pid 526
+2025-07-30 18:56:12,499 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-30 18:56:12,588 INFO exited: mysql (exit status 0; not expected)
+2025-07-30 18:56:12,636 INFO exited: apache2 (exit status 1; not expected)
+2025-07-30 18:56:13,796 INFO spawned: 'mysql' with pid 695
+2025-07-30 18:56:13,797 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 18:56:13,798 INFO spawned: 'apache2' with pid 696
+2025-07-30 18:56:13,799 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 18:56:13,799 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 18:56:13,799 INFO success: ssh entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 18:56:13,799 INFO success: vsftpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 18:56:13,799 INFO success: snmpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-30 18:56:13,801 INFO spawned: 'vulnerable-server' with pid 697
+2025-07-30 18:56:13,832 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-30 18:56:13,852 INFO exited: apache2 (exit status 1; not expected)
+2025-07-30 18:56:13,905 INFO exited: mysql (exit status 0; not expected)
+2025-07-30 18:56:15,912 INFO spawned: 'mysql' with pid 864
+2025-07-30 18:56:15,915 INFO spawned: 'apache2' with pid 865
+2025-07-30 18:56:15,917 INFO spawned: 'vulnerable-server' with pid 866
+2025-07-30 18:56:15,938 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-30 18:56:15,970 INFO exited: apache2 (exit status 1; not expected)
+2025-07-30 18:56:16,024 INFO exited: mysql (exit status 0; not expected)
+2025-07-30 18:56:19,032 INFO spawned: 'mysql' with pid 1033
+2025-07-30 18:56:19,035 INFO spawned: 'apache2' with pid 1034
+2025-07-30 18:56:19,037 INFO spawned: 'vulnerable-server' with pid 1035
+2025-07-30 18:56:19,057 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-30 18:56:19,075 INFO gave up: vulnerable-server entered FATAL state, too many start retries too quickly
+2025-07-30 18:56:19,087 INFO exited: apache2 (exit status 1; not expected)
+2025-07-30 18:56:19,087 INFO gave up: apache2 entered FATAL state, too many start retries too quickly
+2025-07-30 18:56:19,140 INFO exited: mysql (exit status 0; not expected)
+2025-07-30 18:56:20,141 INFO gave up: mysql entered FATAL state, too many start retries too quickly
+2025-07-31 23:44:03,438 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2025-07-31 23:44:03,439 INFO Included extra file "/etc/supervisor/conf.d/services.conf" during parsing
+2025-07-31 23:44:03,445 INFO RPC interface 'supervisor' initialized
+2025-07-31 23:44:03,445 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-07-31 23:44:03,445 INFO supervisord started with pid 504
+2025-07-31 23:44:04,454 INFO spawned: 'mysql' with pid 506
+2025-07-31 23:44:04,457 INFO spawned: 'php-fpm' with pid 507
+2025-07-31 23:44:04,459 INFO spawned: 'apache2' with pid 508
+2025-07-31 23:44:04,461 INFO spawned: 'nginx' with pid 509
+2025-07-31 23:44:04,463 INFO spawned: 'redis' with pid 510
+2025-07-31 23:44:04,466 INFO spawned: 'ssh' with pid 514
+2025-07-31 23:44:04,468 INFO spawned: 'vsftpd' with pid 515
+2025-07-31 23:44:04,471 INFO spawned: 'snmpd' with pid 517
+2025-07-31 23:44:04,474 INFO spawned: 'vulnerable-server' with pid 526
+2025-07-31 23:44:04,501 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-31 23:44:04,624 INFO exited: mysql (exit status 0; not expected)
+2025-07-31 23:44:04,636 INFO exited: apache2 (exit status 1; not expected)
+2025-07-31 23:44:05,790 INFO spawned: 'mysql' with pid 694
+2025-07-31 23:44:05,791 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-31 23:44:05,795 INFO spawned: 'apache2' with pid 695
+2025-07-31 23:44:05,795 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-31 23:44:05,795 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-31 23:44:05,795 INFO success: ssh entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-31 23:44:05,795 INFO success: vsftpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-31 23:44:05,795 INFO success: snmpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-31 23:44:05,797 INFO spawned: 'vulnerable-server' with pid 696
+2025-07-31 23:44:05,819 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-31 23:44:05,847 INFO exited: apache2 (exit status 1; not expected)
+2025-07-31 23:44:05,901 INFO exited: mysql (exit status 0; not expected)
+2025-07-31 23:44:07,908 INFO spawned: 'mysql' with pid 863
+2025-07-31 23:44:07,910 INFO spawned: 'apache2' with pid 864
+2025-07-31 23:44:07,912 INFO spawned: 'vulnerable-server' with pid 865
+2025-07-31 23:44:07,934 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-31 23:44:07,965 INFO exited: apache2 (exit status 1; not expected)
+2025-07-31 23:44:08,019 INFO exited: mysql (exit status 0; not expected)
+2025-07-31 23:44:11,027 INFO spawned: 'mysql' with pid 1032
+2025-07-31 23:44:11,029 INFO spawned: 'apache2' with pid 1033
+2025-07-31 23:44:11,031 INFO spawned: 'vulnerable-server' with pid 1034
+2025-07-31 23:44:11,052 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-07-31 23:44:11,069 INFO gave up: vulnerable-server entered FATAL state, too many start retries too quickly
+2025-07-31 23:44:11,081 INFO exited: apache2 (exit status 1; not expected)
+2025-07-31 23:44:11,081 INFO gave up: apache2 entered FATAL state, too many start retries too quickly
+2025-07-31 23:44:11,134 INFO exited: mysql (exit status 0; not expected)
+2025-07-31 23:44:12,135 INFO gave up: mysql entered FATAL state, too many start retries too quickly
+2025-08-01 00:06:10,030 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2025-08-01 00:06:10,031 INFO Included extra file "/etc/supervisor/conf.d/services.conf" during parsing
+2025-08-01 00:06:10,039 INFO RPC interface 'supervisor' initialized
+2025-08-01 00:06:10,039 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-08-01 00:06:10,040 INFO supervisord started with pid 504
+2025-08-01 00:06:11,042 INFO spawned: 'mysql' with pid 506
+2025-08-01 00:06:11,045 INFO spawned: 'php-fpm' with pid 507
+2025-08-01 00:06:11,048 INFO spawned: 'apache2' with pid 508
+2025-08-01 00:06:11,050 INFO spawned: 'nginx' with pid 509
+2025-08-01 00:06:11,053 INFO spawned: 'redis' with pid 510
+2025-08-01 00:06:11,060 INFO spawned: 'ssh' with pid 514
+2025-08-01 00:06:11,062 INFO spawned: 'vsftpd' with pid 516
+2025-08-01 00:06:11,065 INFO spawned: 'snmpd' with pid 518
+2025-08-01 00:06:11,072 INFO spawned: 'vulnerable-server' with pid 526
+2025-08-01 00:06:11,119 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-08-01 00:06:11,186 INFO exited: apache2 (exit status 1; not expected)
+2025-08-01 00:06:11,263 INFO exited: mysql (exit status 0; not expected)
+2025-08-01 00:06:12,266 INFO spawned: 'mysql' with pid 694
+2025-08-01 00:06:12,266 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-01 00:06:12,268 INFO spawned: 'apache2' with pid 695
+2025-08-01 00:06:12,269 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-01 00:06:12,269 INFO success: redis entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-01 00:06:12,269 INFO success: ssh entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-01 00:06:12,269 INFO success: vsftpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-01 00:06:12,269 INFO success: snmpd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-08-01 00:06:12,272 INFO spawned: 'vulnerable-server' with pid 696
+2025-08-01 00:06:12,308 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-08-01 00:06:12,353 INFO exited: apache2 (exit status 1; not expected)
+2025-08-01 00:06:12,432 INFO exited: mysql (exit status 0; not expected)
+2025-08-01 00:06:14,436 INFO spawned: 'mysql' with pid 863
+2025-08-01 00:06:14,438 INFO spawned: 'apache2' with pid 864
+2025-08-01 00:06:14,441 INFO spawned: 'vulnerable-server' with pid 865
+2025-08-01 00:06:14,472 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-08-01 00:06:14,513 INFO exited: apache2 (exit status 1; not expected)
+2025-08-01 00:06:14,600 INFO exited: mysql (exit status 0; not expected)
+2025-08-01 00:06:17,604 INFO spawned: 'mysql' with pid 1032
+2025-08-01 00:06:17,606 INFO spawned: 'apache2' with pid 1033
+2025-08-01 00:06:17,608 INFO spawned: 'vulnerable-server' with pid 1034
+2025-08-01 00:06:17,630 INFO exited: vulnerable-server (exit status 1; not expected)
+2025-08-01 00:06:17,645 INFO gave up: vulnerable-server entered FATAL state, too many start retries too quickly
+2025-08-01 00:06:17,657 INFO exited: apache2 (exit status 1; not expected)
+2025-08-01 00:06:17,657 INFO gave up: apache2 entered FATAL state, too many start retries too quickly
+2025-08-01 00:06:17,718 INFO exited: mysql (exit status 0; not expected)
+2025-08-01 00:06:18,719 INFO gave up: mysql entered FATAL state, too many start retries too quickly

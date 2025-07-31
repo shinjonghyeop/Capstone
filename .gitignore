@@ -5,12 +5,13 @@ CLAUDE.md
 # SecLists는 용량이 크므로 제외 (필요시 주석 처리)
 SecLists/
 
-# OSINT 도구 결과 파일들
-*.log
-nmap_*
-nikto_*
-nuclei_*
-ffuf_results_*
+# OSINT 도구 임시 결과 파일들 (루트 디렉토리만)
+/nmap_*
+/nikto_*
+/nuclei_*
+/ffuf_results_*
+/osint_results_*
+/security_report_*
 
 # Python 관련
 __pycache__/
@@ -21,18 +22,10 @@ __pycache__/
 *.tmp
 *.temp
 temp_*
+/tmp/
 
 # OS 관련
 .DS_Store
 Thumbs.db
-
-# Docker 관련
-.dockerignore
-
-# 그냥 수정해봄
-*.md
-*.xml
-*.json
-*.txt
 
 
