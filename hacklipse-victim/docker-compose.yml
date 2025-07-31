@@ -100,6 +100,86 @@ services:
       - victim-net
     restart: unless-stopped
 
+  # Node.js Express 구 버전 (CVE-2022-0155)
+  nodejs-vuln:
+    image: node:14.15.0-alpine
+    container_name: victim-nodejs
+    ports:
+      - "8085:3000"
+    working_dir: /app
+    command: sh -c "npm install express@4.16.0 && echo 'const express = require(\"express\"); const app = express(); app.get(\"/\", (req, res) => res.send(\"Node.js 14.15.0 with Express 4.16.0\")); app.listen(3000);' > app.js && node app.js"
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+  # Jenkins 구 버전 (CVE-2018-1000861)
+  jenkins-vuln:
+    image: jenkins/jenkins:2.121.1
+    container_name: victim-jenkins
+    ports:
+      - "8086:8080"
+    environment:
+      - JENKINS_OPTS=--httpPort=8080
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+  # Apache Tomcat 구 버전 (CVE-2017-12615)
+  tomcat-vuln:
+    image: tomcat:8.5.32-jre8
+    container_name: victim-tomcat
+    ports:
+      - "8087:8080"
+    environment:
+      - CATALINA_OPTS=-Xmx512m
+    volumes:
+      - ./web-content:/usr/local/tomcat/webapps/ROOT:ro
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+  # Apache HTTP Server 구 버전 (CVE-2021-41773)
+  apache-vuln:
+    image: httpd:2.4.49-alpine
+    container_name: victim-apache-249
+    ports:
+      - "8088:80"
+    volumes:
+      - ./web-content:/usr/local/apache2/htdocs:ro
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+  # MongoDB 구 버전 (CVE-2021-32563)
+  mongodb-vuln:
+    image: mongo:4.4.6
+    container_name: victim-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - victim-net
+    restart: unless-stopped
+
+  # PhpMyAdmin 구 버전 (CVE-2018-12613)
+  phpmyadmin-vuln:
+    image: phpmyadmin/phpmyadmin:4.8.1
+    container_name: victim-phpmyadmin
+    ports:
+      - "8089:80"
+    environment:
+      - PMA_HOST=mysql-wp
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+    depends_on:
+      - mysql-wp
+    networks:
+      - victim-net
+    restart: unless-stopped
+
 networks:
   victim-net:
     driver: bridge

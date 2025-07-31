@@ -12,6 +12,7 @@ import os              # 운영체제 인터페이스
 import sys             # 시스템 관련 기능
 from typing import Dict, List, Optional, Tuple  # 타입 힌팅
 import glob, datetime, shutil  # 파일 패턴 매칭, 날짜/시간, 파일 조작
+import xml.etree.ElementTree as ET  # XML 파싱을 위한 라이브러리
 
 class OSINTStager:
     """OSINT(공개정보수집) 자동화 도구 메인 클래스
@@ -241,28 +242,15 @@ class OSINTStager:
         self.temp_files.append(nmap_output_file)  # 나중에 정리할 파일 목록에 추가
         self.temp_files.append(nmap_xml_file)     # XML 파일도 정리 대상에 추가
         
-        # 대상에 따른 nmap 스캔 옵션 설정
-        if self.target in ['localhost', '127.0.0.1', '::1']:  # 로컬호스트 스캔
-            command = [
-                'sudo', 'nmap',           # root 권한 필요 (SYN 스캔용)
-                '-sS',                    # SYN 스캔 (스텔스 스캔)
-                '-sV',                    # 서비스 버전 탐지
-                '-sC',                    # 기본 NSE 스크립트 실행
-                '--script=banner,http-title',  # 배너 및 HTTP 제목 수집
-                '-oN', nmap_output_file,  # 일반 형식으로 결과 저장
-                '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
-                self.target
-            ]
-        else:  # 원격 대상 스캔
-            command = [
-                'sudo', 'nmap', 
-                '-sS', '-sV', '-sC',      # 기본 스캔 옵션
-                '-O',                     # 운영체제 탐지
-                '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
-                '-oN', nmap_output_file,
-                '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
-                self.target
-            ]
+        command = [
+            'sudo', 'nmap', 
+            '-sS', '-sV', '-sC',      # 기본 스캔 옵션
+            '-O',                     # 운영체제 탐지
+            '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
+            '-oN', nmap_output_file,
+            '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
+            self.target
+        ]
         
         print(f"실행 명령어: {' '.join(command)}")  # 디버깅용 명령어 출력
         
@@ -376,17 +364,6 @@ class OSINTStager:
                 task_names.append(f"nikto_{url}")
 
         
-        # SSH 서비스 발견 시 SSH 전용 보안 감사 도구 실행
-        if self.has_service('ssh'):
-            print("SSH 서비스 탐지 - SSH 보안 감사 실행")
-            tasks.append(self.run_ssh_audit())  # SSH 설정 및 취약점 분석
-            task_names.append("ssh_audit")
-        
-        # SMB/NetBIOS 서비스 발견 시 윈도우 네트워크 열거 도구 실행
-        if self.has_service('microsoft-ds') or self.has_service('netbios-ssn'):
-            print("SMB 서비스 탐지 - 윈도우 네트욬크 열거 실행")
-            tasks.append(self.run_enum4linux())  # SMB 공유, 사용자 정보 등 열거
-            task_names.append("enum4linux")
         
         # nmap 결과가 있으면 searchsploit으로 CVE 검색 실행
         if self.discovered_ports:
@@ -538,17 +515,6 @@ else
     touch "$OUTPUT_DIR/04_hidden.json"
 fi
 
-# 서브도메인 퍼징
-ffuf \\
-    -w "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" \\
-    -u "http://FUZZ.{self.target}" \\
-    -H "Host: FUZZ.{self.target}" \\
-    -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
-    -fc 404,500 \\             # 오류 코드 필터링
-    -fs 0 \\                   # 크기 0인 응답 필터링 (일반적으로 빈 응답)
-    -t 50 \\                   # 동시 스레드 수 (속도 vs 안정성 균형)
-    -o "$OUTPUT_DIR/05_subdomains.json" -of json \\  # JSON 형식으로 결과 저장
-
 # Vhost 퍼징
 ffuf \\
     -w "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" \\
@@ -559,7 +525,8 @@ ffuf \\
     -fc 404,500 \\             # 오류 코드 필터링
     -t 100 \\                   # 동시 스레드 수
     -ac \\                     # 자동 칼리브레이션 (기본 응답 자동 필터링)
-    -o "$OUTPUT_DIR/06_vhosts.json" -of json \\  # JSON 형식으로 결과 저장
+    -o "$OUTPUT_DIR/05_vhosts.json" -of json \\  # JSON 형식으로 결과 저장
+    -s
 '''
         
         # 임시 스크립트 파일 생성 (실행 후 정리됨)
@@ -587,8 +554,7 @@ ffuf \\
                 "files": self._read_ffuf_result(f"{results_dir}/02_files.json"), 
                 "extensions": self._read_ffuf_result(f"{results_dir}/03_extensions.json"),
                 "hidden": self._read_ffuf_result(f"{results_dir}/04_hidden.json"),
-                "subdomains": self._read_ffuf_result(f"{results_dir}/05_subdomains.json"),
-                "vhosts": self._read_ffuf_result(f"{results_dir}/06_vhosts.json")
+                "vhosts": self._read_ffuf_result(f"{results_dir}/05_vhosts.json")
             }
             
             return json.dumps(combined_results, indent=2)
@@ -635,83 +601,249 @@ ffuf \\
         return await self.run_command(f"nikto ({url})", command, timeout=600)  # 10분 타임아웃
     
     
-    async def run_ssh_audit(self) -> str:
-        """ssh-audit을 이용한 SSH 서비스 보안 감사
-        
-        SSH 서버의 보안 구성을 분석합니다.
-        (암호화 알고리즘, 키 교환 방식, 보안 설정 등)
-        """
-        command = ['ssh-audit', self.target]
-        return await self.run_command("ssh-audit", command, timeout=30)
-    
-    async def run_enum4linux(self) -> str:
-        """enum4linux를 이용한 SMB 서비스 열거
-        
-        윈도우/삼바 시스템의 네트워크 정보를 열거합니다.
-        (공유 폴더, 사용자 계정, 그룹 정보 등)
-        """
-        command = ['enum4linux', '-a', self.target]  # 모든 정보 열거
-        return await self.run_command("enum4linux", command, timeout=120)
-    
     async def run_searchsploit(self) -> str:
-        """searchsploit을 이용한 nmap XML 결과 기반 CVE 검색
+        """nmap XML 파싱 후 각 서비스별로 searchsploit CVE 검색
         
-        nmap XML 결과에서 발견된 서비스 및 버전 정보를 기반으로
-        알려진 취약점과 CVE를 자동으로 검색합니다.
+        nmap XML 결과를 직접 파싱하여 발견된 서비스 및 버전 정보를 추출하고,
+        각 서비스에 대해 개별적으로 searchsploit을 실행하여 CVE를 검색합니다.
         
         Returns:
-            str: searchsploit 검색 결과
+            str: 모든 searchsploit 검색 결과 통합
         """
         if not self.nmap_xml_file or not os.path.exists(self.nmap_xml_file):
             print("nmap XML 파일을 찾을 수 없어 searchsploit 실행을 건너뜁니다.")
             return "nmap XML file not found - searchsploit skipped"
         
-        print(f"[{time.strftime('%H:%M:%S')}] searchsploit CVE 검색 시작...")
+        print(f"[{time.strftime('%H:%M:%S')}] nmap XML 파싱 및 CVE 검색 시작...")
         
-        # searchsploit에 nmap XML 파일을 직접 전달
-        command = ['searchsploit', '--nmap', self.nmap_xml_file]
+        # XML 파일에서 서비스 정보 추출
+        services = self._parse_nmap_xml()
+        if not services:
+            print("XML에서 서비스 정보를 추출할 수 없습니다.")
+            return "No services found in XML"
         
-        result = await self.run_command("searchsploit", command, timeout=60)
+        print(f"XML에서 {len(services)}개 서비스 발견, searchsploit 검색 시작...")
         
-        if result:
-            # CVE 정보 추출 및 저장
-            self._parse_cve_results(result)
-            print(f"searchsploit 완료 - {len(self.cve_results)}개 CVE 발견")
+        all_results = []
+        total_cves = 0
         
-        return result
+        # 각 서비스에 대해 개별 searchsploit 실행
+        for service_info in services:
+            service_name = service_info.get('service', '')
+            product = service_info.get('product', '')
+            version = service_info.get('version', '')
+            port = service_info.get('port', '')
+            
+            # 검색어 조합 생성
+            search_terms = self._generate_search_terms(service_name, product, version)
+            
+            for search_term in search_terms:
+                if not search_term.strip():
+                    continue
+                    
+                print(f"  포트 {port}: '{search_term}' 검색 중...")
+                
+                # searchsploit 실행
+                command = ['searchsploit', search_term]
+                result = await self.run_command(f"searchsploit ({search_term})", command, timeout=30)
+                
+                if result and result.strip():
+                    # 결과에서 CVE 추출
+                    found_cves = self._parse_cve_results(result, service_info)
+                    if found_cves > 0:
+                        all_results.append(f"\n=== {search_term} (포트 {port}) ===\n{result}")
+                        total_cves += found_cves
+                
+                # 과도한 요청 방지를 위한 짧은 대기
+                await asyncio.sleep(0.5)
+        
+        final_result = "\n".join(all_results) if all_results else "No CVE results found"
+        print(f"searchsploit 완료 - {len(self.cve_results)}개 고유 CVE 발견")
+        
+        return final_result
     
-    def _parse_cve_results(self, searchsploit_output: str):
-        """핵심 searchsploit 출력에서 CVE 정보 추출
+    def _parse_nmap_xml(self) -> List[Dict[str, str]]:
+        """nmap XML 파일을 파싱하여 서비스 정보 추출
+        
+        Returns:
+            List[Dict]: 각 서비스의 상세 정보를 담은 딕셔너리 리스트
+        """
+        try:
+            tree = ET.parse(self.nmap_xml_file)
+            root = tree.getroot()
+            
+            services = []
+            
+            # 모든 호스트 순회
+            for host in root.findall('host'):
+                # 호스트의 모든 포트 순회
+                for port in host.findall('.//port'):
+                    port_id = port.get('portid')
+                    protocol = port.get('protocol')
+                    
+                    # 포트 상태 확인
+                    state = port.find('state')
+                    if state is None or state.get('state') != 'open':
+                        continue
+                    
+                    # 서비스 정보 추출
+                    service = port.find('service')
+                    if service is not None:
+                        service_info = {
+                            'port': port_id,
+                            'protocol': protocol,
+                            'service': service.get('name', ''),
+                            'product': service.get('product', ''),
+                            'version': service.get('version', ''),
+                            'extrainfo': service.get('extrainfo', ''),
+                            'ostype': service.get('ostype', '')
+                        }
+                        
+                        # CPE 정보도 추출 (있다면)
+                        cpes = service.findall('cpe')
+                        if cpes:
+                            service_info['cpes'] = [cpe.text for cpe in cpes]
+                        
+                        services.append(service_info)
+                        print(f"[XML] 포트 {port_id}: {service_info['service']} {service_info['product']} {service_info['version']}")
+            
+            return services
+            
+        except Exception as e:
+            print(f"XML 파싱 오류: {e}")
+            return []
+    
+    def _generate_search_terms(self, service: str, product: str, version: str) -> List[str]:
+        """서비스 정보를 기반으로 searchsploit 검색어 생성
+        
+        Args:
+            service (str): 서비스 이름 (http, ssh, ftp 등)
+            product (str): 제품명 (Apache httpd, OpenSSH 등)
+            version (str): 버전 정보
+            
+        Returns:
+            List[str]: 우선순위별 검색어 리스트
+        """
+        search_terms = []
+        
+        # 1. 제품명 + 버전 (가장 구체적)
+        if product and version:
+            # 버전에서 주요 버전만 추출 (예: "2.4.49" -> "2.4")
+            main_version = '.'.join(version.split('.')[:2]) if '.' in version else version
+            search_terms.append(f"{product} {version}")
+            search_terms.append(f"{product} {main_version}")
+        
+        # 2. 제품명만
+        if product:
+            search_terms.append(product)
+        
+        # 3. 서비스명 + 버전
+        if service and version and service.lower() != product.lower():
+            search_terms.append(f"{service} {version}")
+        
+        # 4. 서비스명만
+        if service and service not in [product.lower(), product]:
+            search_terms.append(service)
+        
+        # 중복 제거 및 빈 문자열 제거
+        unique_terms = []
+        for term in search_terms:
+            clean_term = term.strip()
+            if clean_term and clean_term not in unique_terms:
+                unique_terms.append(clean_term)
+        
+        return unique_terms[:3]  # 상위 3개만 반환 (성능상)
+    
+    def _parse_cve_results(self, searchsploit_output: str, service_info: Dict[str, str] = None) -> int:
+        """searchsploit 출력에서 CVE 정보 추출 및 저장
         
         Args:
             searchsploit_output (str): searchsploit 원본 출력
+            service_info (Dict): 해당 서비스 정보 (옵션)
+            
+        Returns:
+            int: 새로 발견된 CVE 개수
         """
         if not searchsploit_output:
-            return
+            return 0
             
+        found_count = 0
         lines = searchsploit_output.split('\n')
         
         for line in lines:
             line = line.strip()
+            # 실제 exploit 결과 라인만 처리 (구분선이나 헤더 제외)
+            if not line or line.startswith('-') or line.startswith('Exploit') or 'Shellcodes:' in line:
+                continue
+                
             # CVE 패턴 찾기 (CVE-YYYY-NNNNN 형식)
             cve_matches = re.findall(r'CVE-\d{4}-\d{4,7}', line)
             
+            # CVE가 없어도 유용한 exploit이 있다면 저장
+            if '|' in line and any(keyword in line.lower() for keyword in 
+                ['remote', 'rce', 'execution', 'overflow', 'injection', 'traversal']):
+                
+                # CVE가 없는 경우 EDB-ID 추출
+                if not cve_matches:
+                    # exploit 제목과 경로 추출
+                    parts = line.split('|')
+                    if len(parts) >= 2:
+                        title = parts[0].strip()
+                        path = parts[1].strip()
+                        
+                        # EDB-ID 추출 시도
+                        edb_match = re.search(r'/(\d+)\.', path)
+                        if edb_match:
+                            edb_id = f"EDB-{edb_match.group(1)}"
+                            
+                            # 중복 확인
+                            if edb_id not in [item.get('edb_id', '') for item in self.cve_results]:
+                                cve_info = {
+                                    'cve': '',
+                                    'edb_id': edb_id,
+                                    'title': title[:100],
+                                    'line': line[:200],
+                                    'path': path
+                                }
+                                
+                                if service_info:
+                                    cve_info['service'] = service_info.get('service', '')
+                                    cve_info['product'] = service_info.get('product', '')
+                                    cve_info['port'] = service_info.get('port', '')
+                                
+                                self.cve_results.append(cve_info)
+                                found_count += 1
+            
+            # CVE가 있는 경우 처리
             for cve in cve_matches:
-                if cve not in [item['cve'] for item in self.cve_results]:
-                    # 취약점 제목도 추출 (라인에서 CVE 전 부분)
+                if cve not in [item.get('cve', '') for item in self.cve_results]:
+                    # 취약점 제목 추출
                     title_part = line.split(cve)[0].strip()
                     if '|' in title_part:
-                        title = title_part.split('|')[-1].strip()
+                        title = title_part.split('|')[0].strip()
+                        path = title_part.split('|')[1].strip() if len(title_part.split('|')) > 1 else ''
                     else:
                         title = title_part
+                        path = ''
                     
-                    self.cve_results.append({
+                    cve_info = {
                         'cve': cve,
-                        'title': title[:100] if title else 'Unknown',  # 제목 길이 제한
-                        'line': line[:200]  # 전체 라인 저장 (길이 제한)
-                    })
+                        'edb_id': '',
+                        'title': title[:100] if title else 'Unknown',
+                        'line': line[:200],
+                        'path': path
+                    }
+                    
+                    # 서비스 정보 추가
+                    if service_info:
+                        cve_info['service'] = service_info.get('service', '')
+                        cve_info['product'] = service_info.get('product', '')
+                        cve_info['port'] = service_info.get('port', '')
+                    
+                    self.cve_results.append(cve_info)
+                    found_count += 1
         
-        print(f"[DEBUG] 추출된 CVE: {[item['cve'] for item in self.cve_results]}")
+        return found_count
 
 
     def cleanup_temp_files(self):
@@ -909,35 +1041,67 @@ ffuf \\
                 except Exception as e:
                     sections.append(f"ffuf 결과 파싱 중 오류: {e}")
 
-        # CVE 취약점 정보 섹션 (새로 추가)
+        # CVE 취약점 정보 섹션 (개선된 버전)
         if self.cve_results:
-            sections.append(f"\n## 발견된 취약점 (CVE)")
-            sections.append(f"searchsploit으로 {len(self.cve_results)}개의 알려진 취약점을 발견했습니다:")
+            sections.append(f"\n## 발견된 취약점 및 Exploit")
+            sections.append(f"searchsploit으로 {len(self.cve_results)}개의 알려진 취약점/Exploit을 발견했습니다:")
             
-            # CVE 중요도에 따른 정렬 (연도 역순으로)
-            sorted_cves = sorted(self.cve_results, key=lambda x: x['cve'], reverse=True)
-            
-            for i, cve_info in enumerate(sorted_cves[:10]):  # 상위 10개만 표시
-                sections.append(f"\n### {i+1}. {cve_info['cve']}")
-                sections.append(f"**제목**: {cve_info['title']}")
-                sections.append(f"**세부사항**: {cve_info['line']}")
-                
-                # CVE 연도 추출 및 위험도 평가
-                year = cve_info['cve'].split('-')[1] if '-' in cve_info['cve'] else '????'
-                current_year = datetime.datetime.now().year
-                age = current_year - int(year) if year.isdigit() else 0
-                
-                if age <= 2:
-                    risk_level = "🔴 높음 (최신 취약점)"
-                elif age <= 5:
-                    risk_level = "🟡 중간 (비교적 최신)"
+            # CVE 및 EDB 중요도에 따른 정렬 (CVE 있는 것 우선, 연도 역순)
+            def sort_key(x):
+                if x.get('cve'):
+                    year = x['cve'].split('-')[1] if '-' in x['cve'] else '0000'
+                    return (1, year)  # CVE 있는 것이 우선
                 else:
-                    risk_level = "🟢 낮음 (거비 취약점)"
-                
-                sections.append(f"**위헙도**: {risk_level} ({year}년, {age}년 전)")
+                    return (0, x.get('edb_id', 'EDB-0'))  # EDB만 있는 것은 나중에
             
-            if len(self.cve_results) > 10:
-                sections.append(f"\n*총 {len(self.cve_results)}개 취약점 중 상위 10개만 표시*")
+            sorted_vulns = sorted(self.cve_results, key=sort_key, reverse=True)
+            
+            for i, vuln_info in enumerate(sorted_vulns[:15]):  # 상위 15개 표시
+                # CVE 또는 EDB-ID 표시
+                if vuln_info.get('cve'):
+                    vuln_id = vuln_info['cve']
+                    sections.append(f"\n### {i+1}. {vuln_id} (CVE)")
+                    
+                    # CVE 연도 추출 및 위험도 평가
+                    year = vuln_id.split('-')[1] if '-' in vuln_id else '????'
+                    current_year = datetime.datetime.now().year
+                    age = current_year - int(year) if year.isdigit() else 0
+                    
+                    if age <= 2:
+                        risk_level = "🔴 높음 (최신 취약점)"
+                    elif age <= 5:
+                        risk_level = "🟡 중간 (비교적 최신)"
+                    else:
+                        risk_level = "🟢 낮음 (구 취약점)"
+                    
+                    sections.append(f"**위험도**: {risk_level} ({year}년, {age}년 전)")
+                else:
+                    vuln_id = vuln_info.get('edb_id', 'Unknown')
+                    sections.append(f"\n### {i+1}. {vuln_id} (Exploit)")
+                    sections.append(f"**위험도**: 🟠 Exploit 코드 존재")
+                
+                sections.append(f"**제목**: {vuln_info['title']}")
+                
+                # 서비스 정보 표시 (있다면)
+                if vuln_info.get('service') or vuln_info.get('product'):
+                    service_desc = []
+                    if vuln_info.get('port'):
+                        service_desc.append(f"포트 {vuln_info['port']}")
+                    if vuln_info.get('service'):
+                        service_desc.append(vuln_info['service'])
+                    if vuln_info.get('product'):
+                        service_desc.append(vuln_info['product'])
+                    
+                    sections.append(f"**대상 서비스**: {' - '.join(service_desc)}")
+                
+                sections.append(f"**세부사항**: {vuln_info['line']}")
+                
+                # Exploit 경로 표시 (있다면)
+                if vuln_info.get('path'):
+                    sections.append(f"**Exploit 경로**: {vuln_info['path']}")
+            
+            if len(self.cve_results) > 15:
+                sections.append(f"\n*총 {len(self.cve_results)}개 취약점 중 상위 15개만 표시*")
         else:
             sections.append("\n## CVE 취약점 검색 결과")
             sections.append("알려진 CVE 취약점이 발견되지 않았습니다.")
