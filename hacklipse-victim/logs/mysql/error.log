@@ -1,0 +1,44 @@
+2025-07-24T10:55:01.305851Z mysqld_safe Logging to '/var/log/mysql/error.log'.
+2025-07-24T10:55:01.325560Z mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+2025-07-24T10:55:01.746551Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.42-0ubuntu0.20.04.1) starting as process 190
+2025-07-24T10:55:01.785214Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2025-07-24T10:55:03.043492Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2025-07-24T10:55:03.355700Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2025-07-24T10:55:03.355770Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2025-07-24T10:55:03.382629Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '0.0.0.0' port: 33060, socket: /var/run/mysqld/mysqlx.sock
+2025-07-24T10:55:03.382693Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.42-0ubuntu0.20.04.1'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  (Ubuntu).
+2025-07-24T10:55:19.452291Z 13 [Warning] [MY-010235] [Server] Following users were specified in CREATE USER IF NOT EXISTS but they already exist. Corresponding entry in binary log used default authentication plugin 'caching_sha2_password' to rewrite authentication information (if any) for them: 'admin'@'%'
+2025-07-24T10:55:19.523532Z 17 [System] [MY-013172] [Server] Received SHUTDOWN from user debian-sys-maint. Shutting down mysqld (Version: 8.0.42-0ubuntu0.20.04.1).
+2025-07-24T10:55:20.802163Z 0 [System] [MY-010910] [Server] /usr/sbin/mysqld: Shutdown complete (mysqld 8.0.42-0ubuntu0.20.04.1)  (Ubuntu).
+2025-07-24T10:55:20.844608Z mysqld_safe mysqld from pid file /var/lib/mysql/victim.local.pid ended
+2025-07-24T10:55:25.859799Z mysqld_safe Logging to '/var/log/mysql/error.log'.
+2025-07-24T10:55:25.878668Z mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+2025-07-24T10:55:26.186926Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.42-0ubuntu0.20.04.1) starting as process 495
+2025-07-24T10:55:26.193655Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2025-07-24T10:55:26.577514Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2025-07-24T10:55:26.850174Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2025-07-24T10:55:26.850295Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2025-07-24T10:55:26.885789Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Socket: /var/run/mysqld/mysqlx.sock
+2025-07-24T10:55:26.885926Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.42-0ubuntu0.20.04.1'  socket: '/var/run/mysqld/mysqld.sock'  port: 0  (Ubuntu).
+2025-07-24T11:14:12.440748Z mysqld_safe Logging to '/var/log/mysql/error.log'.
+2025-07-24T11:14:12.467846Z mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+2025-07-24T11:14:12.818768Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.42-0ubuntu0.20.04.1) starting as process 189
+2025-07-24T11:14:12.834335Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2025-07-24T11:14:14.105648Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2025-07-24T11:14:14.453658Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2025-07-24T11:14:14.453728Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2025-07-24T11:14:14.479052Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '0.0.0.0' port: 33060, socket: /var/run/mysqld/mysqlx.sock
+2025-07-24T11:14:14.479121Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.42-0ubuntu0.20.04.1'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  (Ubuntu).
+2025-07-24T11:14:30.598352Z 13 [Warning] [MY-010235] [Server] Following users were specified in CREATE USER IF NOT EXISTS but they already exist. Corresponding entry in binary log used default authentication plugin 'caching_sha2_password' to rewrite authentication information (if any) for them: 'admin'@'%'
+2025-07-24T11:14:30.719646Z 17 [System] [MY-013172] [Server] Received SHUTDOWN from user debian-sys-maint. Shutting down mysqld (Version: 8.0.42-0ubuntu0.20.04.1).
+2025-07-24T11:14:31.838208Z 0 [System] [MY-010910] [Server] /usr/sbin/mysqld: Shutdown complete (mysqld 8.0.42-0ubuntu0.20.04.1)  (Ubuntu).
+2025-07-24T11:14:31.882648Z mysqld_safe mysqld from pid file /var/lib/mysql/victim.local.pid ended
+2025-07-24T11:14:37.051461Z mysqld_safe Logging to '/var/log/mysql/error.log'.
+2025-07-24T11:14:37.070737Z mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+2025-07-24T11:14:37.372034Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.42-0ubuntu0.20.04.1) starting as process 494
+2025-07-24T11:14:37.381527Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2025-07-24T11:14:37.739231Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2025-07-24T11:14:38.026019Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2025-07-24T11:14:38.026169Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2025-07-24T11:14:38.052081Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Socket: /var/run/mysqld/mysqlx.sock
+2025-07-24T11:14:38.052158Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.42-0ubuntu0.20.04.1'  socket: '/var/run/mysqld/mysqld.sock'  port: 0  (Ubuntu).

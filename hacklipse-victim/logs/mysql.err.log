@@ -1,0 +1,96 @@
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 1: eval: cannot create /var/log/mysql/error.log: Permission denied
+/usr/bin/mysqld_safe: 144: cannot create /var/log/mysql/error.log: Permission denied
