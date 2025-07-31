@@ -13,6 +13,8 @@ import sys             # 시스템 관련 기능
 from typing import Dict, List, Optional, Tuple  # 타입 힌팅
 import glob, datetime, shutil  # 파일 패턴 매칭, 날짜/시간, 파일 조작
 import xml.etree.ElementTree as ET  # XML 파싱을 위한 라이브러리
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 class OSINTStager:
     """OSINT(공개정보수집) 자동화 도구 메인 클래스
