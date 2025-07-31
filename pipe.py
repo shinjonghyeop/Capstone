@@ -28,16 +28,43 @@ class OSINTStager:
     3. 결과 통합 및 AI 학습용 데이터 형식으로 변환
     """
     
-    def __init__(self, target: str, wordlist_path: str = None):
+    def __init__(self, target: str = None, wordlist_path: str = None, ip: str = None, domain: str = None):
         """OSINTStager 초기화
         
         Args:
-            target (str): 스캔할 대상 IP 주소 또는 도메인명
+            target (str): 스캔할 대상 IP 주소 또는 도메인명 (레거시 옵션)
             wordlist_path (str): SecLists 워드리스트 경로 (옵션)
+            ip (str): IP 주소 (-i 옵션)
+            domain (str): 도메인명 (-d 옵션)
         """
-        self.original_target = target     # 원본 대상 (사용자 입력)
-        self.target_ip = None            # 대상의 실제 IP 주소
-        self.target = self._process_target(target)  # 처리된 최종 대상 (도메인으로 변환 가능)
+        # IP와 도메인이 둘 다 주어진 경우 우선 처리
+        if ip and domain:
+            self.target_ip = ip
+            self.target = domain
+            self.original_target = f"{ip} -> {domain}"
+            self.ip_domain_mapping = True
+            # /etc/hosts 에 매핑 추가
+            self._update_hosts_file(ip, domain)
+        elif target:
+            # 레거시 모드: 기존 -t 옵션 사용
+            self.original_target = target
+            self.target = self._process_target(target)
+            self.ip_domain_mapping = False
+        elif ip:
+            # IP만 주어진 경우
+            self.target_ip = ip
+            self.target = ip
+            self.original_target = ip
+            self.ip_domain_mapping = False
+        elif domain:
+            # 도메인만 주어진 경우
+            self.target_ip = domain
+            self.target = domain
+            self.original_target = domain
+            self.ip_domain_mapping = False
+        else:
+            raise ValueError("대상을 지정해주세요: -t <target> 또는 -i <ip> -d <domain>")
+            
         self.nmap_results = None          # nmap 스캔 결과 저장
         self.discovered_ports = {}        # 발견된 포트와 서비스 정보 딕셔너리
         self.web_urls = []               # 발견된 웹 서비스 URL 리스트
@@ -47,30 +74,21 @@ class OSINTStager:
         self.cve_results = []            # searchsploit으로 발견된 CVE 목록
         
     def _process_target(self, target: str) -> str:
-        """대상 처리: IP인 경우 도메인으로 변환하고 /etc/hosts 업데이트
+        """대상 처리: 타겟 정보 설정
         
         Args:
             target (str): 원본 대상 (IP 또는 도메인)
             
         Returns:
-            str: 처리된 대상 (항상 도메인 형태)
+            str: 처리된 대상 (원본 그대로)
         """
         if self._is_ip_address(target):
             print(f"IP 주소 감지: {target}")
             self.target_ip = target
-            # IP를 도메인으로 매핑
-            domain_name = self._generate_domain_name(target)
-            success = self._update_hosts_file(target, domain_name)
-            if success:
-                print(f"도메인 매핑 완료: {target} -> {domain_name}")
-                return domain_name
-            else:
-                print(f"도메인 매핑 실패, 원본 IP 사용: {target}")
-                return target
         else:
             print(f"도메인 감지: {target}")
             self.target_ip = target  # 도메인인 경우 target_ip도 동일하게 설정
-            return target
+        return target
     
     def _is_ip_address(self, target: str) -> bool:
         """IP 주소 여부 검사
@@ -89,20 +107,6 @@ class OSINTStager:
             octets = target.split('.')
             return all(0 <= int(octet) <= 255 for octet in octets)
         return False
-    
-    def _generate_domain_name(self, ip: str) -> str:
-        """IP 주소를 기반으로 도메인명 생성
-        
-        Args:
-            ip (str): IP 주소
-            
-        Returns:
-            str: 생성된 도메인명
-        """
-        # IP 주소의 점을 하이픈으로 변경하여 도메인명 생성
-        # 예: 192.168.1.100 -> target-192-168-1-100.local
-        sanitized_ip = ip.replace('.', '-')
-        return f"target-{sanitized_ip}.local"
     
     def _update_hosts_file(self, ip: str, domain: str) -> bool:
         """/etc/hosts 파일에 IP-도메인 매핑 추가
@@ -148,7 +152,7 @@ class OSINTStager:
             _, stderr = tee_process.communicate()
             
             if tee_process.returncode == 0:
-                print(f"/etc/hosts 업데이트 성공")
+                print(f"/etc/hosts 업데이트 성공: {ip} -> {domain}")
                 return True
             else:
                 print(f"/etc/hosts 업데이트 실패: {stderr.decode('utf-8', errors='ignore')}")
@@ -244,6 +248,9 @@ class OSINTStager:
         self.temp_files.append(nmap_output_file)  # 나중에 정리할 파일 목록에 추가
         self.temp_files.append(nmap_xml_file)     # XML 파일도 정리 대상에 추가
         
+        # nmap은 항상 IP 주소로 스캔 (도메인 매핑의 경우 target_ip 사용)
+        scan_target = self.target_ip if hasattr(self, 'target_ip') and self.target_ip else self.target
+        
         command = [
             'sudo', 'nmap', 
             '-sS', '-sV', '-sC',      # 기본 스캔 옵션
@@ -251,7 +258,7 @@ class OSINTStager:
             '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
             '-oN', nmap_output_file,
             '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
-            self.target
+            scan_target
         ]
         
         print(f"실행 명령어: {' '.join(command)}")  # 디버깅용 명령어 출력
@@ -416,154 +423,143 @@ class OSINTStager:
         
         이 함수는 웹 서버에서 숨겨진 디렉토리와 파일들을 찾기 위해
         5단계에 걸쳐 다양한 워드리스트와 패턴을 사용합니다.
+        각 단계를 개별 명령어로 실행하여 더 나은 에러 핸들링을 제공합니다.
         
         단계별 전략:
-        1. 디렉토리 퍼징 (recursion 사용)
+        1. 디렉토리 퍼징
         2. 일반 파일 퍼징
         3. 확장자 퍼징
-        4. API 엔드포인트 퍼징
-        5. 백업/설정 파일 퍼징
+        4. 히든/백업 파일 퍼징
+        5. VHost 퍼징
         
         Args:
             url (str): 스캔할 웹 서비스 URL
             
         Returns:
-            str: 전체 6단계 스캔 결과를 JSON 형식으로 집계
+            str: 전체 5단계 스캔 결과를 JSON 형식으로 집계
         """
-        print(f"[{time.strftime('%H:%M:%S')}] ffuf 6단계 전문 스캔 시작 ({url})")
+        print(f"[{time.strftime('%H:%M:%S')}] ffuf 5단계 전문 스캔 시작 ({url})")
         
         # SecLists 경로 설정
         seclists_path = self.seclists_path
         
-        # URL에서 프로토콜 제거하여 호스트명만 추출 (스크립트 사용용)
-        target_host = url.replace('http://', '').replace('https://', '')
+        # 결과 저장 디렉토리 생성
+        results_dir = f"ffuf_results_{self.target.replace('.', '_').replace(':', '_')}"
+        os.makedirs(results_dir, exist_ok=True)
+        self.temp_files.append(results_dir)
         
-        # 다단계 ffuf 스캔을 수행할 Bash 스크립트 동적 생성
-        # 이 스크립트는 6가지 다른 전략으로 ffuf를 실행합니다.
-        script_content = f'''#!/bin/bash
-TARGET="{target_host}"  # 스캔 대상 호스트
-OUTPUT_DIR="ffuf_results_{self.target.replace('.', '_').replace(':', '_')}"  # 결과 저장 디렉토리
-SEC_PATH="{seclists_path}"  # SecLists 워드리스트 경로
-mkdir -p "$OUTPUT_DIR"  # 결과 디렉토리 생성
-
-
-# 디렉토리 퍼징
-echo "디렉토리 퍼징 시작..."
-if [ -f "$SEC_PATH/Discovery/Web-Content/raft-medium-directories.txt" ]; then
-    ffuf \\
-        -w "$SEC_PATH/Discovery/Web-Content/raft-medium-directories.txt" \\
-        -u "{url}/FUZZ" \\
-        -mc 200,204,301,302,307,401,403 \\
-        -fc 404,500 \\
-        -fs 0 \\
-        -t 50 \\
-        -o "$OUTPUT_DIR/01_directories.json" -of json \\
-        -v
-else
-    echo "경고: raft-medium-directories.txt 파일을 찾을 수 없습니다."
-    touch "$OUTPUT_DIR/01_directories.json"
-fi
-
-# 일반 파일 퍼징
-echo "일반 파일 퍼징 시작..."
-if [ -f "$SEC_PATH/Discovery/Web-Content/raft-medium-files.txt" ]; then
-    ffuf \\
-        -w "$SEC_PATH/Discovery/Web-Content/raft-medium-files.txt" \\
-        -u "{url}/FUZZ" \\
-        -mc 200,204,301,302,307,401,403 \\
-        -fc 404,500 \\
-        -fs 0 \\
-        -t 80 \\
-        -o "$OUTPUT_DIR/02_files.json" -of json \\
-        -v
-else
-    echo "경고: raft-medium-files.txt 파일을 찾을 수 없습니다."
-    touch "$OUTPUT_DIR/02_files.json"
-fi
-
-
-# 확장자 퍼징 (일반 파일명 + 다양한 확장자)
-echo "확장자 퍼징 시작..."
-if [ -f "$SEC_PATH/Discovery/Web-Content/common.txt" ]; then
-    ffuf \\
-        -w "$SEC_PATH/Discovery/Web-Content/common.txt" \\
-        -u "{url}/FUZZ" \\
-        -e .php,.html,.htm,.js,.txt,.xml,.json,.log,.bak,.backup,.old,.tmp,.sql,.conf,.config,.ini,.env,.yml,.yaml \\
-        -mc 200,204,301,302,307,401,403 \\
-        -fc 404,500 \\
-        -fs 0 \\
-        -t 80 \\
-        -o "$OUTPUT_DIR/03_extensions.json" -of json \\
-        -v
-else
-    echo "경고: common.txt 파일을 찾을 수 없습니다."
-    touch "$OUTPUT_DIR/03_extensions.json"
-fi
-
-# 히든 파일 & 백업 파일 퍼징
-echo "히든 파일 & 백업 파일 퍼징 시작..."
-if [ -f "$SEC_PATH/Discovery/Web-Content/quickhits.txt" ]; then
-    ffuf \\
-        -w "$SEC_PATH/Discovery/Web-Content/quickhits.txt" \\
-        -u "{url}/FUZZ" \\
-        -mc 200,204,301,302,307,401,403 \\
-        -fc 404,500 \\
-        -fs 0 \\
-        -t 60 \\
-        -o "$OUTPUT_DIR/04_hidden.json" -of json \\
-        -v
-else
-    echo "경고: quickhits.txt 파일을 찾을 수 없습니다."
-    touch "$OUTPUT_DIR/04_hidden.json"
-fi
-
-# Vhost 퍼징
-ffuf \\
-    -w "$SEC_PATH/Discovery/DNS/subdomains-top1million-5000.txt" \\
-    -u "https://{self.target}" \\
-    -H "Host: FUZZ.{self.target}" \\
-    -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \\
-    -mc 200,204,301,302,307,401,403 \\  # 성공/리다이렉트/인증 코드 매치
-    -fc 404,500 \\             # 오류 코드 필터링
-    -t 100 \\                   # 동시 스레드 수
-    -ac \\                     # 자동 칼리브레이션 (기본 응답 자동 필터링)
-    -o "$OUTPUT_DIR/05_vhosts.json" -of json \\  # JSON 형식으로 결과 저장
-    -s
-'''
+        # 5단계 스캔 태스크 리스트
+        scan_tasks = []
         
-        # 임시 스크립트 파일 생성 (실행 후 정리됨)
-        script_path = f"/tmp/ffuf_scan_{self.target.replace('.', '_').replace(':', '_')}_{int(time.time())}.sh"
-        self.temp_files.append(script_path)
+        # 1. 디렉토리 퍼징
+        dir_wordlist = f"{seclists_path}/Discovery/Web-Content/raft-medium-directories.txt"
+        if os.path.exists(dir_wordlist):
+            scan_tasks.append((
+                "directories",
+                ['ffuf', '-w', dir_wordlist, '-u', f'{url}/FUZZ',
+                 '-mc', '200,204,301,302,307,401,403', '-fc', '404,500', '-fs', '0',
+                 '-t', '50', '-ac', '-s',
+                 '-o', f'{results_dir}/01_directories.json', '-of', 'json']
+            ))
         
-        with open(script_path, 'w') as f:
-            f.write(script_content)
+        # 2. 일반 파일 퍼징
+        file_wordlist = f"{seclists_path}/Discovery/Web-Content/raft-medium-files.txt"
+        if os.path.exists(file_wordlist):
+            scan_tasks.append((
+                "files",
+                ['ffuf', '-w', file_wordlist, '-u', f'{url}/FUZZ',
+                 '-mc', '200,204,301,302,307,401,403', '-fc', '404,500', '-fs', '0',
+                 '-t', '80', '-ac', '-s',
+                 '-o', f'{results_dir}/02_files.json', '-of', 'json']
+            ))
         
-        # 스크립트 실행 권한 부여 및 실행
-        import os
-        os.chmod(script_path, 0o755)
+        # 3. 확장자 퍼징
+        common_wordlist = f"{seclists_path}/Discovery/Web-Content/common.txt"
+        if os.path.exists(common_wordlist):
+            scan_tasks.append((
+                "extensions",
+                ['ffuf', '-w', common_wordlist, '-u', f'{url}/FUZZ',
+                 '-e', '.php,.html,.htm,.js,.txt,.xml,.json,.log,.bak,.backup,.old,.tmp,.sql,.conf,.config,.ini,.env,.yml,.yaml',
+                 '-mc', '200,204,301,302,307,401,403', '-fc', '404,500', '-fs', '0',
+                 '-t', '80', '-ac', '-s',
+                 '-o', f'{results_dir}/03_extensions.json', '-of', 'json']
+            ))
         
-        try:
-            # 30분 타임아웃으로 전체 ffuf 스캔 실행
-            result = await self.run_command(f"ffuf 전문스캔 ({url})", ['bash', script_path], timeout=1800)
-            
-            # 각 단계별 결과 파일들을 읽어서 통합
-            results_dir = f"ffuf_results_{self.target.replace('.', '_').replace(':', '_')}"
-            self.temp_files.append(results_dir)  # 디렉토리도 정리 대상에 추가
-            
-            # 6단계 결과를 하나의 딕셔너리로 통합
-            combined_results = {
-                "directories": self._read_ffuf_result(f"{results_dir}/01_directories.json"),
-                "files": self._read_ffuf_result(f"{results_dir}/02_files.json"), 
-                "extensions": self._read_ffuf_result(f"{results_dir}/03_extensions.json"),
-                "hidden": self._read_ffuf_result(f"{results_dir}/04_hidden.json"),
-                "vhosts": self._read_ffuf_result(f"{results_dir}/05_vhosts.json")
-            }
-            
-            return json.dumps(combined_results, indent=2)
-            
-        except Exception as e:
-            print(f"ffuf 전문스캔 오류: {e}")
-            return None
+        # 4. 히든/백업 파일 퍼징
+        quickhits_wordlist = f"{seclists_path}/Discovery/Web-Content/quickhits.txt"
+        if os.path.exists(quickhits_wordlist):
+            scan_tasks.append((
+                "hidden",
+                ['ffuf', '-w', quickhits_wordlist, '-u', f'{url}/FUZZ',
+                 '-mc', '200,204,301,302,307,401,403', '-fc', '404,500', '-fs', '0',
+                 '-t', '60', '-ac', '-s',
+                 '-o', f'{results_dir}/04_hidden.json', '-of', 'json']
+            ))
+        
+        # 5. VHost 퍼징 (도메인 타겟에서 웹 서비스가 있을 때만 실행)
+        # IP-도메인 매핑이 있거나 도메인 타겟인 경우 VHost 퍼징 실행
+        can_vhost_fuzz = (self.ip_domain_mapping or not self._is_ip_address(self.target)) and self.web_urls
+        
+        if can_vhost_fuzz:
+            subdomain_wordlist = f"{seclists_path}/Discovery/DNS/subdomains-top1million-5000.txt"
+            if os.path.exists(subdomain_wordlist):
+                # 발견된 웹 URL 중 HTTPS 우선, 없으면 첫 번째 URL 사용
+                vhost_base_url = None
+                for web_url in self.web_urls:
+                    if web_url.startswith('https://'):
+                        vhost_base_url = web_url
+                        break
+                if not vhost_base_url:
+                    vhost_base_url = self.web_urls[0]  # HTTPS가 없으면 첫 번째 URL
+                
+                scan_tasks.append((
+                    "vhosts",
+                    ['ffuf', '-w', subdomain_wordlist, '-u', vhost_base_url,
+                     '-H', f'Host: FUZZ.{self.target}',
+                     '-mc', '200,204,301,302,307,401,403', '-fc', '404,500',
+                     '-t', '100', '-ac', '-s',
+                     '-o', f'{results_dir}/05_vhosts.json', '-of', 'json']
+                    
+                ))
+                print(f"  VHost 퍼징 예정: {vhost_base_url} (Host: FUZZ.{self.target})")
+        else:
+            if self._is_ip_address(self.target) and not self.ip_domain_mapping:
+                print("  VHost 퍼징 건너뜀 (IP 주소 타겟, 도메인 매핑 없음)")
+            else:
+                print("  VHost 퍼징 건너뜀 (웹 서비스 미발견)")
+        
+        # 각 스캔 단계를 순차적으로 실행
+        scan_results = {}
+        for scan_name, command in scan_tasks:
+            print(f"  {scan_name} 스캔 시작...")
+            try:
+                result = await self.run_command(f"ffuf {scan_name}", command, timeout=600)
+                if result:
+                    print(f"  {scan_name} 스캔 완료")
+                    scan_results[scan_name] = "completed"
+                else:
+                    print(f"  {scan_name} 스캔 실패")
+                    scan_results[scan_name] = "failed"
+                    
+                # 스캔 간 짧은 대기
+                await asyncio.sleep(1)
+                
+            except Exception as e:
+                print(f"  {scan_name} 스캔 오류: {e}")
+                scan_results[scan_name] = f"error: {e}"
+        
+        # 모든 결과 파일들을 읽어서 통합
+        combined_results = {
+            "directories": self._read_ffuf_result(f"{results_dir}/01_directories.json"),
+            "files": self._read_ffuf_result(f"{results_dir}/02_files.json"), 
+            "extensions": self._read_ffuf_result(f"{results_dir}/03_extensions.json"),
+            "hidden": self._read_ffuf_result(f"{results_dir}/04_hidden.json"),
+            "vhosts": self._read_ffuf_result(f"{results_dir}/05_vhosts.json") if ((self.ip_domain_mapping or not self._is_ip_address(self.target)) and self.web_urls) else {"message": "Skipped (IP target without domain mapping or no web services)"},
+            "scan_status": scan_results
+        }
+        
+        print(f"[{time.strftime('%H:%M:%S')}] ffuf 전체 스캔 완료")
+        return json.dumps(combined_results, indent=2)
     
     def _read_ffuf_result(self, filepath: str) -> dict:
         """ffuf JSON 결과 파일 읽기 (에러 처리 포함)"""
@@ -1028,16 +1024,21 @@ ffuf \\
                                     sections.append(f"  {result['url']} (상태: {result.get('status', '?')})")
                     
                     # VHost 결과 별도 처리
-                    if 'vhosts' in ffuf_data and isinstance(ffuf_data['vhosts'], dict) and 'results' in ffuf_data['vhosts']:
-                        vhost_results = ffuf_data['vhosts']['results'][:5]  # 상위 5개
-                        if vhost_results:
-                            sections.append("\n발견된 가상 호스트 (VHost):")
-                            for result in vhost_results:
-                                if 'url' in result:
-                                    sections.append(f"  {result['url']} (상태: {result.get('status', '?')})")
+                    if 'vhosts' in ffuf_data and isinstance(ffuf_data['vhosts'], dict):
+                        if 'results' in ffuf_data['vhosts']:
+                            vhost_results = ffuf_data['vhosts']['results'][:5]  # 상위 5개
+                            if vhost_results:
+                                sections.append("\n발견된 가상 호스트 (VHost):")
+                                for result in vhost_results:
+                                    if 'url' in result:
+                                        sections.append(f"  {result['url']} (상태: {result.get('status', '?')})")
+                        elif 'message' in ffuf_data['vhosts']:
+                            sections.append("\nVHost 스캔: IP 주소 대상으로 건너뜀")
                     
                     # 아무것도 찾지 못한 경우
-                    if not web_paths and not (ffuf_data.get('subdomains', {}).get('results')) and not (ffuf_data.get('vhosts', {}).get('results')):
+                    vhost_has_results = (ffuf_data.get('vhosts', {}).get('results') and 
+                                       not ffuf_data.get('vhosts', {}).get('message'))
+                    if not web_paths and not (ffuf_data.get('subdomains', {}).get('results')) and not vhost_has_results:
                         sections.append("특별한 경로나 서브도메인 발견되지 않음")
                         
                 except Exception as e:
@@ -1246,8 +1247,17 @@ async def main():
     
     parser.add_argument(
         '-t', '--target', 
-        required=True,
-        help='스캔할 대상 IP 또는 도메인 (예: 192.168.1.100, localhost)'
+        help='스캔할 대상 IP 또는 도메인 (예: 192.168.1.100, localhost) - 레거시 옵션'
+    )
+    
+    parser.add_argument(
+        '-i', '--ip',
+        help='IP 주소 (예: 192.168.1.100)'
+    )
+    
+    parser.add_argument(
+        '-d', '--domain',
+        help='도메인명 (예: example.com)'
     )
     
     parser.add_argument(
@@ -1277,18 +1287,31 @@ async def main():
     args = parser.parse_args()
     
     # 입력 검증
-    target = args.target.strip()
-    if not target:
-        print("오류: 대상을 입력해주세요.")
+    if not args.target and not (args.ip and args.domain) and not args.ip:
+        print("오류: 대상을 지정해주세요:")
+        print("  옵션 1: -t <target> (레거시)")
+        print("  옵션 2: -i <ip> -d <domain> (IP-도메인 매핑)")
+        print("  옵션 3: -i <ip> (IP만)")
         return
     
-    print(f"대상: {target}")
+    if args.target:
+        target = args.target.strip()
+        print(f"대상: {target}")
+    elif args.ip and args.domain:
+        print(f"IP-도메인 매핑: {args.ip} -> {args.domain}")
+    elif args.ip:
+        print(f"IP 대상: {args.ip}")
     if args.verbose:
         print(f"출력 경로: {args.output}")
         print(f"타임아웃: {args.timeout}초")
     
     # OSINT 스캐너 인스턴스 생성 및 실행
-    scanner = OSINTStager(target, args.wordlist_path)
+    scanner = OSINTStager(
+        target=args.target,
+        wordlist_path=args.wordlist_path,
+        ip=args.ip,
+        domain=args.domain
+    )
     
     try:
         # 전체 파이프라인 실행
@@ -1299,9 +1322,10 @@ async def main():
         os.makedirs(args.output, exist_ok=True)
         
         # JSON 결과 파일 저장
+        target_name = results['target'].replace('.', '_').replace(':', '_')
         output_file = os.path.join(
             args.output, 
-            f"osint_results_{target.replace('.', '_')}_{int(time.time())}.json"
+            f"osint_results_{target_name}_{int(time.time())}.json"
         )
         
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -1313,7 +1337,7 @@ async def main():
         if 'natural_language_context' in results:
             report_file = os.path.join(
                 args.output,
-                f"security_report_{target.replace('.', '_')}_{int(time.time())}.md"
+                f"security_report_{target_name}_{int(time.time())}.md"
             )
             with open(report_file, 'w', encoding='utf-8') as f:
                 f.write(results['natural_language_context'])
