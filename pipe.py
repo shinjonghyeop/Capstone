@@ -643,8 +643,8 @@ ffuf \\
                     
                 print(f"  포트 {port}: '{search_term}' 검색 중...")
                 
-                # searchsploit 실행
-                command = ['searchsploit', search_term]
+                # searchsploit 실행 (-p 옵션으로 경로 정보도 함께 출력)
+                command = ['searchsploit', '-p', search_term]
                 result = await self.run_command(f"searchsploit ({search_term})", command, timeout=30)
                 
                 if result and result.strip():
@@ -1063,7 +1063,8 @@ ffuf \\
                     sections.append(f"\n### {i+1}. {vuln_id} (CVE)")
                     
                     # CVE 연도 추출 및 위험도 평가
-                    year = vuln_id.split('-')[1] if '-' in vuln_id else '????'
+                    year_parts = vuln_id.split('-')
+                    year = year_parts[1] if len(year_parts) > 1 and year_parts[1].isdigit() else '????'
                     current_year = datetime.datetime.now().year
                     age = current_year - int(year) if year.isdigit() else 0
                     
@@ -1129,7 +1130,7 @@ ffuf \\
         # AI 분석 요청 섹션 (CVE 정보 반영)
         cve_mention = ""
         if self.cve_results:
-            high_risk_cves = [cve for cve in self.cve_results if int(cve['cve'].split('-')[1]) >= datetime.datetime.now().year - 2]
+            high_risk_cves = [cve for cve in self.cve_results if cve.get('cve') and '-' in cve['cve'] and len(cve['cve'].split('-')) > 1 and cve['cve'].split('-')[1].isdigit() and int(cve['cve'].split('-')[1]) >= datetime.datetime.now().year - 2]
             cve_mention = f"\n\n특히 {len(self.cve_results)}개의 알려진 CVE 취약점이 발견되었으며, 이 중 {len(high_risk_cves)}개는 최신 취약점입니다. 이러한 CVE 정보를 활용한 공격 시나리오를 우선적으로 고려해주세요."
         
         sections.append(f"""\n## AI 분석 요청
