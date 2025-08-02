@@ -346,9 +346,6 @@ class OSINTStager:
                 tasks.append(self.run_whatweb(url))
                 task_names.append(f"whatweb_{url}")
                 
-                # nikto - 웹 취약점 스캔 (일반적인 웹 취약점 탐지)
-                tasks.append(self.run_nikto(url))
-                task_names.append(f"nikto_{url}")
 
         
         
@@ -490,16 +487,18 @@ class OSINTStager:
                 if not vhost_base_url:
                     vhost_base_url = self.web_urls[0]  # HTTPS가 없으면 첫 번째 URL
                 
+                # VHost 퍼징 실행 (응답 길이와 상태코드로 필터링)
                 scan_tasks.append((
                     "vhosts",
                     ['ffuf', '-w', subdomain_wordlist, '-u', vhost_base_url,
                      '-H', f'Host: FUZZ.{self.target}',
-                     '-mc', '200,204,301,302,307,401,403', '-fc', '404,500',
-                     '-t', '100', '-ac', '-s',
+                     '-mc', '200,204,301,302,307,401,403,500,503', '-fc', '404',
+                     '-fs', '162,163,164,165,166',  # 기본 404 응답 길이 필터링
+                     '-t', '100', '-s',  # -ac 제거하여 더 많은 결과 확인
                      '-o', f'{results_dir}/05_vhosts.json', '-of', 'json']
-                    
                 ))
                 print(f"  VHost 퍼징 예정: {vhost_base_url} (Host: FUZZ.{self.target})")
+                print(f"  대상 도메인: {self.target}")
         else:
             if self._is_ip_address(self.target) and not self.ip_domain_mapping:
                 print("  VHost 퍼징 건너뜀 (IP 주소 타겟, 도메인 매핑 없음)")
@@ -563,18 +562,6 @@ class OSINTStager:
         ]
         return await self.run_command(f"whatweb ({url})", command, timeout=60)
     
-    async def run_nikto(self, url: str) -> str:
-        """nikto를 이용한 웹 취약점 스캔
-        
-        일반적인 웹 애플리케이션 취약점들을 탐지합니다.
-        (구식 버전, 설정 오류, 위험한 파일/스크립트 등)
-        """
-        command = [
-            'nikto', 
-            '-h', url,                                              # 대상 호스트
-            '-output', f'nikto_{self.target.replace(".", "_")}.txt' # 결과 파일 저장
-        ]
-        return await self.run_command(f"nikto ({url})", command, timeout=600)  # 10분 타임아웃
     
     
     async def run_searchsploit(self) -> str:
@@ -848,7 +835,6 @@ class OSINTStager:
         patterns = [
             f"ffuf_results_{self.target.replace('.', '_').replace(':', '_')}*",
             f"nmap_{self.target.replace('.', '_').replace(':', '_')}*",
-            f"nikto_{self.target.replace('.', '_').replace(':', '_')}*",
             f"searchsploit_{self.target.replace('.', '_').replace(':', '_')}*"
         ]
         
@@ -890,72 +876,61 @@ class OSINTStager:
 
         # 포트 스캔 결과 섹션
         sections.append("## 포트 스캔 결과 (nmap)")
-        if results['discovered_ports']:
-            sections.append(f"총 {len(results['discovered_ports'])}개 포트가 열려있음:")
-            for port, info in results['discovered_ports'].items():
-                sections.append(f"- **포트 {port}**: {info['service']} ({info['version']})")
+        discovered_ports = results.get('discovered_ports', {})
+        if isinstance(discovered_ports, dict) and discovered_ports:
+            sections.append(f"총 {len(discovered_ports)}개 포트가 열려있음:")
+            for port, info in discovered_ports.items():
+                if isinstance(info, dict):
+                    service = info.get('service', 'unknown')
+                    version = info.get('version', 'unknown')
+                    sections.append(f"- **포트 {port}**: {service} ({version})")
         
         # 웹 서비스 정보 섹션
-        if results['web_urls']:
+        web_urls = results.get('web_urls', [])
+        if isinstance(web_urls, list) and web_urls:
             sections.append(f"\n## 웹 서비스 응답")
-            sections.append(f"HTTP/HTTPS 서비스 {len(results['web_urls'])}개 발견:")
-            for url in results['web_urls']:
+            sections.append(f"HTTP/HTTPS 서비스 {len(web_urls)}개 발견:")
+            for url in web_urls:
                 sections.append(f"- {url}")
 
         # WhatWeb 기술 스택 분석 결과
-        for key, value in results['specialized_scans'].items():
-            if 'whatweb' in key and value:
-                url = key.replace('whatweb_', '')
-                sections.append(f"\n### {url} 기술 스택 정보")
-                
-                # ANSI 색상 코드 완전 제거
-                clean_value = self._clean_ansi_codes(value)
-                
-                # WhatWeb 결과에서 핵심 정보만 추출
-                if 'Summary' in clean_value:
-                    summary_start = clean_value.find('Summary   :')
-                    if summary_start != -1:
-                        summary_end = clean_value.find('\n\n', summary_start)
-                        summary = clean_value[summary_start:summary_end] if summary_end != -1 else clean_value[summary_start:summary_start+300]
-                        clean_summary = summary.replace('Summary   :', '').strip()
-                        # 추가 정리
-                        clean_summary = re.sub(r'\s+', ' ', clean_summary)  # 연속 공백 제거
-                        sections.append(f"기술 스택: {clean_summary}")
-                
-                # HTTP 헤더 정보 (더 깔끔하게)
-                if 'HTTP Headers:' in clean_value:
-                    header_start = clean_value.find('HTTP Headers:')
-                    header_end = clean_value.find('\n\n', header_start)
-                    if header_end != -1:
-                        header_section = clean_value[header_start:header_end]
-                        # 불필요한 탭 제거하고 정리
-                        clean_headers = '\n'.join([line.strip() for line in header_section.split('\n') if line.strip()])
-                        sections.append(f"HTTP 헤더:\n{clean_headers}")
+        specialized_scans = results.get('specialized_scans', {})
+        if isinstance(specialized_scans, dict):
+            for key, value in specialized_scans.items():
+                if 'whatweb' in key and value:
+                    url = key.replace('whatweb_', '')
+                    sections.append(f"\n### {url} 기술 스택 정보")
+                    
+                    # ANSI 색상 코드 완전 제거
+                    clean_value = self._clean_ansi_codes(value)
+                    
+                    # WhatWeb 결과에서 핵심 정보만 추출
+                    if 'Summary' in clean_value:
+                        summary_start = clean_value.find('Summary   :')
+                        if summary_start != -1:
+                            summary_end = clean_value.find('\n\n', summary_start)
+                            summary = clean_value[summary_start:summary_end] if summary_end != -1 else clean_value[summary_start:summary_start+300]
+                            clean_summary = summary.replace('Summary   :', '').strip()
+                            # 추가 정리
+                            clean_summary = re.sub(r'\s+', ' ', clean_summary)  # 연속 공백 제거
+                            sections.append(f"기술 스택: {clean_summary}")
+                    
+                    # HTTP 헤더 정보 (더 깔끔하게)
+                    if 'HTTP Headers:' in clean_value:
+                        header_start = clean_value.find('HTTP Headers:')
+                        header_end = clean_value.find('\n\n', header_start)
+                        if header_end != -1:
+                            header_section = clean_value[header_start:header_end]
+                            # 불필요한 탭 제거하고 정리
+                            clean_headers = '\n'.join([line.strip() for line in header_section.split('\n') if line.strip()])
+                            sections.append(f"HTTP 헤더:\n{clean_headers}")
 
-        # Nikto 웹 취약점 스캔 결과
-        for key, value in results['specialized_scans'].items():
-            if 'nikto' in key and value:
-                url = key.replace('nikto_', '')
-                sections.append(f"\n### {url} 취약점 스캔 결과 (Nikto)")
-                
-                # Nikto 결과를 라인별로 분석해서 핵심 정보만
-                lines = value.split('\n')
-                findings = []
-                for line in lines:
-                    line = line.strip()
-                    if line.startswith('+') and any(keyword in line for keyword in 
-                        ['OSVDB', 'header', 'found', 'redirects', 'leaks', 'reveals']):
-                        findings.append(line)
-                
-                if findings:
-                    sections.append("발견된 취약점들:")
-                    for finding in findings[:10]:  # 상위 10개만
-                        sections.append(f"  {finding}")
 
         # nmap 스크립트 상세 결과
-        if results.get('nmap_output'):
+        nmap_output = results.get('nmap_output', '')
+        if nmap_output:
             sections.append("\n## 추가 서비스 정보 (nmap scripts)")
-            nmap_lines = results['nmap_output'].split('\n')
+            nmap_lines = nmap_output.split('\n')
             script_results = []
             
             for line in nmap_lines:
@@ -969,75 +944,84 @@ class OSINTStager:
                     sections.append(f"  {result}")
 
         # ffuf 디렉토리/파일 탐색 결과
-        for key, value in results['specialized_scans'].items():
-            if 'ffuf' in key and value:
-                actual_url = key.replace('ffuf_', '')  # 실제 스캔한 URL
-                sections.append(f"\n### {actual_url} 웹 취약점 탐색 (ffuf)")
-                
-                try:
-                    ffuf_data = json.loads(value) if isinstance(value, str) else value
+        if isinstance(specialized_scans, dict):
+            for key, value in specialized_scans.items():
+                if 'ffuf' in key and value:
+                    actual_url = key.replace('ffuf_', '')  # 실제 스캔한 URL
+                    sections.append(f"\n### {actual_url} 웹 취약점 탐색 (ffuf)")
                     
-                    # 5단계 ffuf 스캔 결과 처리
-                    scan_categories = {
-                        'directories': '디렉토리',
-                        'files': '파일',
-                        'extensions': '확장자',
-                        'hidden': '히든/백업 파일',
-                        'vhosts': '가상 호스트'
-                    }
-                    
-                    found_results = []
-                    
-                    # 각 스캔 단계별 결과 처리
-                    for category, category_name in scan_categories.items():
-                        if category in ffuf_data and isinstance(ffuf_data[category], dict):
-                            # 스캔 상태 확인
-                            scan_status = ffuf_data.get('scan_status', {}).get(category, 'unknown')
-                            
-                            if 'results' in ffuf_data[category] and ffuf_data[category]['results']:
-                                results = ffuf_data[category]['results'][:3]  # 상위 3개만
-                                category_results = []
-                                
-                                for result in results:
-                                    if 'url' in result:
-                                        status_code = result.get('status', '?')
-                                        length = result.get('length', '?')
-                                        
-                                        # VHost의 경우 특별 처리
-                                        if category == 'vhosts':
-                                            host_header = result.get('input', {}).get('FUZZ', 'unknown')
-                                            category_results.append(f"    {host_header}.{self.target} (상태: {status_code}, 길이: {length})")
-                                        else:
-                                            category_results.append(f"    {result['url']} (상태: {status_code}, 길이: {length})")
-                                
-                                if category_results:
-                                    found_results.append(f"**{category_name} 스캔 결과** ({scan_status}):")
-                                    found_results.extend(category_results)
-                                    found_results.append("")  # 빈 줄 추가
-                            
-                            elif 'message' in ffuf_data[category]:
-                                # 스캔을 건너뛴 경우
-                                found_results.append(f"**{category_name} 스캔**: {ffuf_data[category]['message']}")
-                                found_results.append("")
-                            
-                            elif scan_status == 'failed':
-                                found_results.append(f"**{category_name} 스캔**: 실패")
-                                found_results.append("")
-                            
-                            elif scan_status == 'completed':
-                                found_results.append(f"**{category_name} 스캔**: 완료 (결과 없음)")
-                                found_results.append("")
-                    
-                    # 결과 출력
-                    if found_results:
-                        sections.append("ffuf 5단계 웹 퍼징 결과:")
-                        sections.extend(found_results)
-                    else:
-                        sections.append("ffuf 웹 퍼징에서 특별한 결과를 발견하지 못했습니다.")
+                    try:
+                        ffuf_data = json.loads(value) if isinstance(value, str) else value
                         
-                except Exception as e:
-                    sections.append(f"ffuf 결과 파싱 중 오류: {e}")
-                    sections.append(f"원본 데이터 구조: {type(ffuf_data)} - {list(ffuf_data.keys()) if isinstance(ffuf_data, dict) else 'N/A'}")
+                        # 5단계 ffuf 스캔 결과 처리
+                        scan_categories = {
+                            'directories': '디렉토리',
+                            'files': '파일',
+                            'extensions': '확장자',
+                            'hidden': '히든/백업 파일',
+                            'vhosts': '가상 호스트'
+                        }
+                        
+                        found_results = []
+                        
+                        # 각 스캔 단계별 결과 처리
+                        for category, category_name in scan_categories.items():
+                            if category in ffuf_data and isinstance(ffuf_data[category], dict):
+                                # 스캔 상태 확인
+                                scan_status = ffuf_data.get('scan_status', {}).get(category, 'unknown')
+                                
+                                if 'results' in ffuf_data[category] and ffuf_data[category]['results']:
+                                    results = ffuf_data[category]['results'][:3]  # 상위 3개만
+                                    category_results = []
+                                    
+                                    for result in results:
+                                        if 'url' in result:
+                                            status_code = result.get('status', '?')
+                                            length = result.get('length', '?')
+                                            
+                                            # VHost의 경우 특별 처리
+                                            if category == 'vhosts':
+                                                # ffuf VHost 결과에서 호스트명 추출
+                                                input_data = result.get('input', {})
+                                                if isinstance(input_data, dict):
+                                                    host_header = input_data.get('FUZZ', 'unknown')
+                                                else:
+                                                    # input이 딕셔너리가 아닌 경우 URL에서 추출 시도
+                                                    host_header = result.get('url', '').replace(f'http://{self.target}', '').replace(f'https://{self.target}', '').strip('/')
+                                                    if not host_header:
+                                                        host_header = 'unknown'
+                                                category_results.append(f"    {host_header}.{self.target} (상태: {status_code}, 길이: {length})")
+                                            else:
+                                                category_results.append(f"    {result['url']} (상태: {status_code}, 길이: {length})")
+                                    
+                                    if category_results:
+                                        found_results.append(f"**{category_name} 스캔 결과** ({scan_status}):")
+                                        found_results.extend(category_results)
+                                        found_results.append("")  # 빈 줄 추가
+                                
+                                elif 'message' in ffuf_data[category]:
+                                    # 스캔을 건너뛴 경우
+                                    found_results.append(f"**{category_name} 스캔**: {ffuf_data[category]['message']}")
+                                    found_results.append("")
+                                
+                                elif scan_status == 'failed':
+                                    found_results.append(f"**{category_name} 스캔**: 실패")
+                                    found_results.append("")
+                                
+                                elif scan_status == 'completed':
+                                    found_results.append(f"**{category_name} 스캔**: 완료 (결과 없음)")
+                                    found_results.append("")
+                        
+                        # 결과 출력
+                        if found_results:
+                            sections.append("ffuf 5단계 웹 퍼징 결과:")
+                            sections.extend(found_results)
+                        else:
+                            sections.append("ffuf 웹 퍼징에서 특별한 결과를 발견하지 못했습니다.")
+                            
+                    except Exception as e:
+                        sections.append(f"ffuf 결과 파싱 중 오류: {e}")
+                        sections.append(f"원본 데이터 구조: {type(ffuf_data)} - {list(ffuf_data.keys()) if isinstance(ffuf_data, dict) else 'N/A'}")
 
         # CVE 취약점 정보 섹션 (개선된 버전)
         if self.cve_results:
@@ -1109,16 +1093,22 @@ class OSINTStager:
         sections.append("\n## 시스템 환경 정보")
         
         port_info = []
-        if any(port in ['8080', '8081', '8082', '8083', '8084'] for port in results['discovered_ports'].keys()):
-            port_info.append("비표준 포트(8000번대) 사용 확인")
+        discovered_ports = results.get('discovered_ports', {})
         
-        db_ports = [port for port, info in results['discovered_ports'].items() 
-                   if info['service'] in ['postgresql', 'mysql', 'mongodb']]
-        if db_ports:
-            port_info.append(f"데이터베이스 포트 외부 노출: {', '.join(db_ports)}")
-        
-        tcpwrapped_count = len([p for p in results['discovered_ports'].values() 
-                               if p['service'] == 'tcpwrapped'])
+        # discovered_ports가 딕셔너리인지 확인
+        if isinstance(discovered_ports, dict) and discovered_ports:
+            if any(port in ['8080', '8081', '8082', '8083', '8084'] for port in discovered_ports.keys()):
+                port_info.append("비표준 포트(8000번대) 사용 확인")
+            
+            db_ports = [port for port, info in discovered_ports.items() 
+                       if isinstance(info, dict) and info.get('service', '') in ['postgresql', 'mysql', 'mongodb']]
+            if db_ports:
+                port_info.append(f"데이터베이스 포트 외부 노출: {', '.join(db_ports)}")
+            
+            tcpwrapped_count = len([p for p in discovered_ports.values() 
+                                   if isinstance(p, dict) and p.get('service', '') == 'tcpwrapped'])
+        else:
+            tcpwrapped_count = 0
         if tcpwrapped_count > 0:
             port_info.append(f"접근 제어된 서비스 {tcpwrapped_count}개 확인")
         
@@ -1336,14 +1326,21 @@ async def main():
         print("="*50)
         print(f"대상: {results['target']}")
         print(f"실행 시간: {results['execution_time']}")
-        print(f"발견된 포트: {len(results['discovered_ports'])}개")
-        print(f"웹 서비스: {len(results['web_urls'])}개")
-        print(f"전문 스캔: {len(results['specialized_scans'])}개")
+        discovered_ports = results.get('discovered_ports', {})
+        web_urls = results.get('web_urls', [])
+        specialized_scans = results.get('specialized_scans', {})
         
-        if args.verbose and results['discovered_ports']:
+        print(f"발견된 포트: {len(discovered_ports) if isinstance(discovered_ports, dict) else 0}개")
+        print(f"웹 서비스: {len(web_urls) if isinstance(web_urls, list) else 0}개")
+        print(f"전문 스캔: {len(specialized_scans) if isinstance(specialized_scans, dict) else 0}개")
+        
+        if args.verbose and isinstance(discovered_ports, dict) and discovered_ports:
             print("\n발견된 서비스 상세:")
-            for port, info in results['discovered_ports'].items():
-                print(f"   {port}/tcp: {info['service']} ({info['version']})")
+            for port, info in discovered_ports.items():
+                if isinstance(info, dict):
+                    service = info.get('service', 'unknown')
+                    version = info.get('version', 'unknown')
+                    print(f"   {port}/tcp: {service} ({version})")
         
     finally:
         # 항상 임시 파일 정리 (보안과 디스크 공간을 위해)
@@ -1423,7 +1420,6 @@ def check_required_tools():
     required_tools = {
         'nmap': 'sudo apt install nmap',
         'whatweb': 'sudo apt install whatweb', 
-        'nikto': 'sudo apt install nikto'
     }
     
     missing_tools = []
@@ -1472,4 +1468,13 @@ if __name__ == "__main__":
         print("\n\n사용자에 의해 중단됨")
     except Exception as e:
         print(f"\n실행 중 오류 발생: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
+    finally:
+        # asyncio 이벤트 루프가 제대로 정리되도록 처리
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # 이미 루프가 종료된 경우 무시
+            pass
