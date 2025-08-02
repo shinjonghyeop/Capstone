@@ -1,4 +1,28 @@
 services:
+  # Nginx Reverse Proxy for Subdomain Fuzzing
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: victim-nginx-proxy
+    ports:
+      - "80:80"     # HTTP proxy port (main entry point)
+      - "8090:80"   # Alternative port for testing
+    volumes:
+      - ./nginx-proxy.conf:/etc/nginx/nginx.conf:ro
+      - ./logs:/var/log/nginx
+    depends_on:
+      - victim-main
+      - wordpress-vuln
+      - drupal-vuln
+      - jenkins-vuln
+      - tomcat-vuln
+      - apache-vuln
+      - phpmyadmin-vuln
+      - nodejs-vuln
+      - log-viewer
+    networks:
+      - victim-net
+    restart: unless-stopped
+
   # 메인 취약 서버
   victim-main:
     build:

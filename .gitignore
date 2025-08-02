@@ -66,8 +66,6 @@ nmap_*
 *.nmap
 *.gnmap
 
-# nikto 스캔 결과
-nikto_*
 
 # nuclei 스캔 결과
 nuclei_*
