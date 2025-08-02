@@ -491,7 +491,7 @@ class OSINTStager:
                 scan_tasks.append((
                     "vhosts",
                     ['ffuf', '-w', subdomain_wordlist, '-u', vhost_base_url,
-                     '-H', f'Host: FUZZ.{self.target}',
+                     '-H', f'\"Host: FUZZ.{self.target}\"',
                      '-mc', '200,204,301,302,307,401,403,500,503', '-fc', '404',
                      '-fs', '162,163,164,165,166',  # 기본 404 응답 길이 필터링
                      '-t', '100', '-s',  # -ac 제거하여 더 많은 결과 확인
