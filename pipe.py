@@ -3,17 +3,20 @@
 # Hacklipse 팀의 연구과제용으로 개발되었습니다.
 
 # 필수 라이브러리 임포트
+import argparse
 import asyncio          # 비동기 처리를 위한 라이브러리
-import subprocess       # 외부 명령어 실행을 위한 라이브러리
+import datetime
+import glob
 import json            # JSON 데이터 처리
-import time            # 시간 관련 함수
-import re              # 정규표현식 처리
 import os              # 운영체제 인터페이스
+import re              # 정규표현식 처리
+import shutil          # 파일 조작
+import subprocess       # 외부 명령어 실행을 위한 라이브러리
 import sys             # 시스템 관련 기능
-from typing import Dict, List, Optional, Tuple  # 타입 힌팅
-import glob, datetime, shutil  # 파일 패턴 매칭, 날짜/시간, 파일 조작
-import xml.etree.ElementTree as ET  # XML 파싱을 위한 라이브러리
+import time            # 시간 관련 함수
 import warnings
+import xml.etree.ElementTree as ET  # XML 파싱을 위한 라이브러리
+from typing import Dict, List, Optional  # 타입 힌팅
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 class OSINTStager:
@@ -28,11 +31,10 @@ class OSINTStager:
     3. 결과 통합 및 AI 학습용 데이터 형식으로 변환
     """
     
-    def __init__(self, target: str = None, wordlist_path: str = None, ip: str = None, domain: str = None):
+    def __init__(self, wordlist_path: str = None, ip: str = None, domain: str = None):
         """OSINTStager 초기화
         
         Args:
-            target (str): 스캔할 대상 IP 주소 또는 도메인명 (레거시 옵션)
             wordlist_path (str): SecLists 워드리스트 경로 (옵션)
             ip (str): IP 주소 (-i 옵션)
             domain (str): 도메인명 (-d 옵션)
@@ -45,11 +47,6 @@ class OSINTStager:
             self.ip_domain_mapping = True
             # /etc/hosts 에 매핑 추가
             self._update_hosts_file(ip, domain)
-        elif target:
-            # 레거시 모드: 기존 -t 옵션 사용
-            self.original_target = target
-            self.target = self._process_target(target)
-            self.ip_domain_mapping = False
         elif ip:
             # IP만 주어진 경우
             self.target_ip = ip
@@ -63,7 +60,7 @@ class OSINTStager:
             self.original_target = domain
             self.ip_domain_mapping = False
         else:
-            raise ValueError("대상을 지정해주세요: -t <target> 또는 -i <ip> -d <domain>")
+            raise ValueError("대상을 지정해주세요: -i <ip> -d <domain> 또는 -i <ip>")
             
         self.nmap_results = None          # nmap 스캔 결과 저장
         self.discovered_ports = {}        # 발견된 포트와 서비스 정보 딕셔너리
@@ -72,23 +69,6 @@ class OSINTStager:
         self.seclists_path = wordlist_path  # 사용자가 지정한 워드리스트 경로
         self.nmap_xml_file = None        # nmap XML 결과 파일 경로
         self.cve_results = []            # searchsploit으로 발견된 CVE 목록
-        
-    def _process_target(self, target: str) -> str:
-        """대상 처리: 타겟 정보 설정
-        
-        Args:
-            target (str): 원본 대상 (IP 또는 도메인)
-            
-        Returns:
-            str: 처리된 대상 (원본 그대로)
-        """
-        if self._is_ip_address(target):
-            print(f"IP 주소 감지: {target}")
-            self.target_ip = target
-        else:
-            print(f"도메인 감지: {target}")
-            self.target_ip = target  # 도메인인 경우 target_ip도 동일하게 설정
-        return target
     
     def _is_ip_address(self, target: str) -> bool:
         """IP 주소 여부 검사
@@ -99,7 +79,6 @@ class OSINTStager:
         Returns:
             bool: IP 주소이면 True, 아니면 False
         """
-        import re
         # IPv4 주소 패턴 (간단한 검증)
         ipv4_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
         if re.match(ipv4_pattern, target):
@@ -142,7 +121,6 @@ class OSINTStager:
                     updated_content = content.rstrip() + f"\n{mapping_line}\n"
             
             # /etc/hosts 파일 업데이트 (sudo 권한 필요)
-            import subprocess
             echo_process = subprocess.Popen(['echo', updated_content], stdout=subprocess.PIPE)
             tee_process = subprocess.Popen(['sudo', 'tee', hosts_file], 
                                          stdin=echo_process.stdout, 
@@ -391,7 +369,7 @@ class OSINTStager:
         
         # 각 도구별 실행 결과 정리 및 에러 처리
         final_results = {}
-        for i, (task_name, result) in enumerate(zip(task_names, results)):
+        for task_name, result in zip(task_names, results):
             if isinstance(result, Exception):  # 예외 발생한 작업 처리
                 print(f"{task_name} 실행 중 오류: {result}")
                 final_results[task_name] = None
@@ -999,50 +977,67 @@ class OSINTStager:
                 try:
                     ffuf_data = json.loads(value) if isinstance(value, str) else value
                     
-                    # 일반 웹 경로 결과 (디렉토리, 파일, 확장자, 히든파일)
-                    web_paths = []
-                    web_categories = ['directories', 'files', 'extensions', 'hidden']
+                    # 5단계 ffuf 스캔 결과 처리
+                    scan_categories = {
+                        'directories': '디렉토리',
+                        'files': '파일',
+                        'extensions': '확장자',
+                        'hidden': '히든/백업 파일',
+                        'vhosts': '가상 호스트'
+                    }
                     
-                    for category in web_categories:
-                        if category in ffuf_data and isinstance(ffuf_data[category], dict) and 'results' in ffuf_data[category]:
-                            for result in ffuf_data[category]['results'][:3]:  # 각 카테고리당 3개만
-                                if 'url' in result:
-                                    web_paths.append(f"{result['url']} (상태: {result.get('status', '?')}, 유형: {category})")
+                    found_results = []
                     
-                    if web_paths:
-                        sections.append("발견된 웹 경로:")
-                        for path in list(set(web_paths))[:8]:  # 중복 제거 + 최대 8개
-                            sections.append(f"  {path}")
-                    
-                    # 서브도메인 결과 별도 처리
-                    if 'subdomains' in ffuf_data and isinstance(ffuf_data['subdomains'], dict) and 'results' in ffuf_data['subdomains']:
-                        subdomain_results = ffuf_data['subdomains']['results'][:5]  # 상위 5개
-                        if subdomain_results:
-                            sections.append("\n발견된 서브도메인:")
-                            for result in subdomain_results:
-                                if 'url' in result:
-                                    sections.append(f"  {result['url']} (상태: {result.get('status', '?')})")
-                    
-                    # VHost 결과 별도 처리
-                    if 'vhosts' in ffuf_data and isinstance(ffuf_data['vhosts'], dict):
-                        if 'results' in ffuf_data['vhosts']:
-                            vhost_results = ffuf_data['vhosts']['results'][:5]  # 상위 5개
-                            if vhost_results:
-                                sections.append("\n발견된 가상 호스트 (VHost):")
-                                for result in vhost_results:
+                    # 각 스캔 단계별 결과 처리
+                    for category, category_name in scan_categories.items():
+                        if category in ffuf_data and isinstance(ffuf_data[category], dict):
+                            # 스캔 상태 확인
+                            scan_status = ffuf_data.get('scan_status', {}).get(category, 'unknown')
+                            
+                            if 'results' in ffuf_data[category] and ffuf_data[category]['results']:
+                                results = ffuf_data[category]['results'][:3]  # 상위 3개만
+                                category_results = []
+                                
+                                for result in results:
                                     if 'url' in result:
-                                        sections.append(f"  {result['url']} (상태: {result.get('status', '?')})")
-                        elif 'message' in ffuf_data['vhosts']:
-                            sections.append("\nVHost 스캔: IP 주소 대상으로 건너뜀")
+                                        status_code = result.get('status', '?')
+                                        length = result.get('length', '?')
+                                        
+                                        # VHost의 경우 특별 처리
+                                        if category == 'vhosts':
+                                            host_header = result.get('input', {}).get('FUZZ', 'unknown')
+                                            category_results.append(f"    {host_header}.{self.target} (상태: {status_code}, 길이: {length})")
+                                        else:
+                                            category_results.append(f"    {result['url']} (상태: {status_code}, 길이: {length})")
+                                
+                                if category_results:
+                                    found_results.append(f"**{category_name} 스캔 결과** ({scan_status}):")
+                                    found_results.extend(category_results)
+                                    found_results.append("")  # 빈 줄 추가
+                            
+                            elif 'message' in ffuf_data[category]:
+                                # 스캔을 건너뛴 경우
+                                found_results.append(f"**{category_name} 스캔**: {ffuf_data[category]['message']}")
+                                found_results.append("")
+                            
+                            elif scan_status == 'failed':
+                                found_results.append(f"**{category_name} 스캔**: 실패")
+                                found_results.append("")
+                            
+                            elif scan_status == 'completed':
+                                found_results.append(f"**{category_name} 스캔**: 완료 (결과 없음)")
+                                found_results.append("")
                     
-                    # 아무것도 찾지 못한 경우
-                    vhost_has_results = (ffuf_data.get('vhosts', {}).get('results') and 
-                                       not ffuf_data.get('vhosts', {}).get('message'))
-                    if not web_paths and not (ffuf_data.get('subdomains', {}).get('results')) and not vhost_has_results:
-                        sections.append("특별한 경로나 서브도메인 발견되지 않음")
+                    # 결과 출력
+                    if found_results:
+                        sections.append("ffuf 5단계 웹 퍼징 결과:")
+                        sections.extend(found_results)
+                    else:
+                        sections.append("ffuf 웹 퍼징에서 특별한 결과를 발견하지 못했습니다.")
                         
                 except Exception as e:
                     sections.append(f"ffuf 결과 파싱 중 오류: {e}")
+                    sections.append(f"원본 데이터 구조: {type(ffuf_data)} - {list(ffuf_data.keys()) if isinstance(ffuf_data, dict) else 'N/A'}")
 
         # CVE 취약점 정보 섹션 (개선된 버전)
         if self.cve_results:
@@ -1231,7 +1226,6 @@ class OSINTStager:
 
 async def main():
     """명령줄 인터페이스 및 메인 실행 로직"""
-    import argparse
     
     # 명령줄 인자 파싱 설정
     parser = argparse.ArgumentParser(
@@ -1239,15 +1233,10 @@ async def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 사용 예시:
-  python3 pipe.py -t 192.168.1.100
-  python3 pipe.py --target localhost --output ./results
-  python3 pipe.py -t example.com --verbose
+  python3 pipe.py -i 192.168.1.100
+  python3 pipe.py -i 192.168.1.100 -d example.com
+  python3 pipe.py -d example.com --verbose
         """
-    )
-    
-    parser.add_argument(
-        '-t', '--target', 
-        help='스캔할 대상 IP 또는 도메인 (예: 192.168.1.100, localhost) - 레거시 옵션'
     )
     
     parser.add_argument(
@@ -1262,7 +1251,7 @@ async def main():
     
     parser.add_argument(
         '-o', '--output',
-        default='./',
+        default='./train/',
         help='결과 파일 저장 경로 (기본값: 현재 디렉토리)'
     )
     
@@ -1287,27 +1276,25 @@ async def main():
     args = parser.parse_args()
     
     # 입력 검증
-    if not args.target and not (args.ip and args.domain) and not args.ip:
+    if not args.ip and not args.domain:
         print("오류: 대상을 지정해주세요:")
-        print("  옵션 1: -t <target> (레거시)")
-        print("  옵션 2: -i <ip> -d <domain> (IP-도메인 매핑)")
-        print("  옵션 3: -i <ip> (IP만)")
+        print("  옵션 1: -i <ip> -d <domain> (IP-도메인 매핑)")
+        print("  옵션 2: -i <ip> (IP만)")
+        print("  옵션 3: -d <domain> (도메인만)")
         return
     
-    if args.target:
-        target = args.target.strip()
-        print(f"대상: {target}")
-    elif args.ip and args.domain:
+    if args.ip and args.domain:
         print(f"IP-도메인 매핑: {args.ip} -> {args.domain}")
     elif args.ip:
         print(f"IP 대상: {args.ip}")
+    elif args.domain:
+        print(f"도메인 대상: {args.domain}")
     if args.verbose:
         print(f"출력 경로: {args.output}")
         print(f"타임아웃: {args.timeout}초")
     
     # OSINT 스캐너 인스턴스 생성 및 실행
     scanner = OSINTStager(
-        target=args.target,
         wordlist_path=args.wordlist_path,
         ip=args.ip,
         domain=args.domain
@@ -1402,7 +1389,6 @@ def check_sudo_privileges():
     
     # sudo 가능한지 확인
     try:
-        import subprocess
         result = subprocess.run(['sudo', '-n', 'true'], 
                               capture_output=True, timeout=5)
         if result.returncode == 0:
@@ -1417,8 +1403,6 @@ def check_sudo_privileges():
     
     try:
         # 현재 스크립트를 sudo로 재실행
-        import sys
-        import os
         
         # Python 실행 경로와 스크립트 경로, 모든 인자들 보존
         cmd = ['sudo', sys.executable] + sys.argv
