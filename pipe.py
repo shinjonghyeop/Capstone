@@ -971,10 +971,10 @@ class OSINTStager:
                                 scan_status = ffuf_data.get('scan_status', {}).get(category, 'unknown')
                                 
                                 if 'results' in ffuf_data[category] and ffuf_data[category]['results']:
-                                    results = ffuf_data[category]['results'][:3]  # 상위 3개만
+                                    ffuf_results = ffuf_data[category]['results'][:3]  # 상위 3개만
                                     category_results = []
                                     
-                                    for result in results:
+                                    for result in ffuf_results:
                                         if 'url' in result:
                                             status_code = result.get('status', '?')
                                             length = result.get('length', '?')
