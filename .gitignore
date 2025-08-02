@@ -1,33 +1,303 @@
+# Hacklipse OSINT Pipeline - Git Ignore File
+# 보안 연구용 OSINT 자동화 도구의 불필요한 파일들을 Git에서 제외
+
+# =============================================================================
+# Python 관련 파일들
+# =============================================================================
+
+# 바이트코드 및 캐시
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 배포 관련
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 테스트 및 커버리지
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# 가상환경
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# =============================================================================
+# OSINT 도구들이 생성하는 파일들
+# =============================================================================
+
+# nmap 스캔 결과 (모든 위치)
+nmap_*
+*.nmap
+*.gnmap
+
+# nikto 스캔 결과
+nikto_*
+
+# nuclei 스캔 결과
+nuclei_*
+
+# ffuf 결과 디렉토리 및 파일
+ffuf_results_*
+ffuf_*
+
+# whatweb 결과
+whatweb_*
+
+# searchsploit 결과
+searchsploit_*
+
+# 일반적인 스캔 결과 파일들
+*.scan
+*.result
+results_*/
+scan_*/
+osint_results_*
+security_report_*
+
+# OSINT 도구 로그 파일들
+*.log
+logs/
+scan.log
+debug.log
+
+# 스크린샷 및 증거 파일들
+screenshots/
+evidence/
+
+# 압축된 결과 파일들
+*.zip
+*.tar.gz
+*.tar.bz2
+*.7z
+*.rar
+
+# =============================================================================
+# 시스템 및 운영체제 파일들
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# 임시 파일들
+# =============================================================================
+
+# 일반 임시 파일
+*.tmp
+*.temp
+*.bak
+*.backup
+temp_*
+tmp_*
+/tmp/
+
+# 스왑 파일
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# IDE 및 에디터 설정 파일들
+# =============================================================================
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+tags
+[._]*.un~
+
+# =============================================================================
+# 보안 및 민감한 정보
+# =============================================================================
+
+# VPN 설정 파일들
+*.ovpn
+*.conf
+
+# 환경 변수 및 설정
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+config.json
+secrets.json
+credentials.json
+
+# SSH 키 및 인증서
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+
+# API 키 및 토큰
+*api_key*
+*token*
+*secret*
+.secrets
+
+# =============================================================================
+# Docker 및 가상화 관련
+# =============================================================================
+
+# Docker 로그
+hacklipse-victim/logs/
+
+# Docker 볼륨 데이터 (로컬 개발용)
+docker-data/
+volumes/
+
+# =============================================================================
+# 대용량 데이터 파일들
+# =============================================================================
+
+# SecLists는 서브모듈이므로 제외 (필요시 주석 처리)
+SecLists/
+
+# 학습 데이터 결과물 (크기가 클 경우)
+train/*.json
+train/*.md
+
+# 대용량 워드리스트 백업
+wordlists_backup/
+custom_wordlists/
+
+# 데이터베이스 파일
+*.db
+*.sqlite
+*.sqlite3
+
+# =============================================================================
+# 개발 도구
+# =============================================================================
+
+# Node.js (웹 인터페이스 추가 시)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 테스트 결과
+test_results/
+benchmark_results/
+
+# =============================================================================
+# Claude Code 설정 (기존 유지)
+# =============================================================================
+
 # Claude Code 설정 디렉토리 (권한 오류 방지)
 .claude/
 CLAUDE.md
 
-# SecLists는 용량이 크므로 제외 (필요시 주석 처리)
-SecLists/
+# =============================================================================
+# 프로젝트에서 유지해야 할 중요 파일들 (명시적 포함)
+# =============================================================================
 
-# OSINT 도구 임시 결과 파일들 (루트 디렉토리만)
-/nmap_*
-/nikto_*
-/nuclei_*
-/ffuf_results_*
-/osint_results_*
-/security_report_*
-
-# Python 관련
-__pycache__/
-*.py[cod]
-*$py.class
-
-# 임시 파일들
-*.tmp
-*.temp
-temp_*
-/tmp/
-
-# OS 관련
-.DS_Store
-Thumbs.db
-
-
-hacklipse-victim/logs/
-*.ovpn
+# 프로젝트 핵심 파일들은 반드시 포함
+!pipe.py
+!README.md
+!docker-compose.yml
+!Dockerfile*
+!requirements.txt
+!setup.py
+!*.sh
+!hacklipse-victim/README.md
+!hacklipse-victim/docker-compose.yml
