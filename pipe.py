@@ -476,7 +476,8 @@ class OSINTStager:
         can_vhost_fuzz = (self.ip_domain_mapping or not self._is_ip_address(self.target)) and self.web_urls
         
         if can_vhost_fuzz:
-            subdomain_wordlist = f"{seclists_path}/Discovery/DNS/subdomains-top1million-5000.txt"
+            # subdomain_wordlist = f"{seclists_path}/Discovery/DNS/subdomains-top1million-5000.txt"
+            subdomain_wordlist = f"{seclists_path}/Discovery/DNS/namelist.txt"
             if os.path.exists(subdomain_wordlist):
                 # 발견된 웹 URL 중 HTTPS 우선, 없으면 첫 번째 URL 사용
                 vhost_base_url = None
@@ -488,15 +489,17 @@ class OSINTStager:
                     vhost_base_url = self.web_urls[0]  # HTTPS가 없으면 첫 번째 URL
                 
                 # VHost 퍼징 실행 (응답 길이와 상태코드로 필터링)
-                scan_tasks.append((
-                    "vhosts",
-                    ['ffuf', '-w', subdomain_wordlist, '-u', vhost_base_url,
-                     '-H', f'\"Host: FUZZ.{self.target}\"',
+                vhost_command = ['ffuf', '-w', subdomain_wordlist, '-u', vhost_base_url,
+                     '-H', f'Host: FUZZ.{self.target}',
                      '-mc', '200,204,301,302,307,401,403,500,503', '-fc', '404',
                      '-fs', '162,163,164,165,166',  # 기본 404 응답 길이 필터링
-                     '-t', '100', '-s',  # -ac 제거하여 더 많은 결과 확인
+                     '-t', '100', '-s', '-ac',
                      '-o', f'{results_dir}/05_vhosts.json', '-of', 'json']
-                ))
+                
+                # 디버깅을 위한 명령어 출력
+                print(f"  VHost 퍼징 명령어: {' '.join(vhost_command)}")
+                
+                scan_tasks.append(("vhosts", vhost_command))
                 print(f"  VHost 퍼징 예정: {vhost_base_url} (Host: FUZZ.{self.target})")
                 print(f"  대상 도메인: {self.target}")
         else:
@@ -509,6 +512,9 @@ class OSINTStager:
         scan_results = {}
         for scan_name, command in scan_tasks:
             print(f"  {scan_name} 스캔 시작...")
+            # 디버깅을 위한 명령어 출력 (VHost가 아닌 경우)
+            if scan_name != "vhosts":
+                print(f"    명령어: {' '.join(command)}")
             try:
                 result = await self.run_command(f"ffuf {scan_name}", command, timeout=600)
                 if result:
