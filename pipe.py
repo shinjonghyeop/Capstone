@@ -977,7 +977,8 @@ class OSINTStager:
                                 scan_status = ffuf_data.get('scan_status', {}).get(category, 'unknown')
                                 
                                 if 'results' in ffuf_data[category] and ffuf_data[category]['results']:
-                                    ffuf_results = ffuf_data[category]['results'][:3]  # 상위 3개만
+                                    # 모든 ffuf 결과를 전체 표시 (제한 없음)
+                                    ffuf_results = ffuf_data[category]['results']
                                     category_results = []
                                     
                                     for result in ffuf_results:
