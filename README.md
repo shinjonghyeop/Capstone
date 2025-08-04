@@ -50,7 +50,7 @@
 graph TB
     A[Target Input] --> B[Stage 1: nmap Discovery]
     B --> C{Services Found?}
-    C -->|Web Services| D[ffuf + whatweb]
+    C -->|Web Services| D[ffuf]
     C -->|All Services| E[SearchSploit CVE Lookup]
     D --> F[Parallel Execution]
     E --> F
@@ -95,29 +95,20 @@ git clone https://github.com/danielmiessler/SecLists.git
 
 ```bash
 # Scan localhost with SecLists
-sudo python3 pipe.py -t localhost -w ./SecLists
+sudo python3 pipe.py -i IP -d Domain -w ./SecLists
 
 # Scan remote target
-sudo python3 pipe.py -t 192.168.1.100 -w /usr/share/seclists
+sudo python3 pipe.py -i 192.168.1.100 -w /usr/share/seclists
 ```
 
-### Advanced Options
 
-```bash
-# Verbose output with custom timeout
-sudo python3 pipe.py \
-    --target example.com \
-    --wordlist-path ./SecLists \
-    --output ./results \
-    --timeout 600 \
-    --verbose
-```
 
 ### Command Line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-t, --target` | Target IP or domain | Required |
+| `-i` | Target IP or domain | Required |
+| `-d` | Target domain | 
 | `-w, --wordlist-path` | SecLists directory path | Required |
 | `-o, --output` | Output directory | `./` |
 | `--timeout` | Tool timeout (seconds) | `300` |
