@@ -231,7 +231,7 @@ class OSINTStager:
         
         command = [
             'sudo', 'nmap', 
-            '-sT', '-sV', '-sC',      # 기본 스캔 옵션
+            '-sT', '-sV', '-sC', '-Pn',     # 기본 스캔 옵션
             '-O',                     # 운영체제 탐지
             '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
             '-oN', nmap_output_file,
