@@ -50,7 +50,7 @@
 graph TB
     A[Target Input] --> B[Stage 1: nmap Discovery]
     B --> C{Services Found?}
-    C -->|Web Services| D[ffuf + whatweb + nikto]
+    C -->|Web Services| D[ffuf + whatweb]
     C -->|All Services| E[SearchSploit CVE Lookup]
     D --> F[Parallel Execution]
     E --> F
