@@ -1382,7 +1382,7 @@ async def main():
     
     parser.add_argument(
         '-o', '--output',
-        default='./train'
+        default='./train',
         help='결과 저장할 디렉토리 (default: ./train/)'
     )
     
