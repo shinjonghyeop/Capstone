@@ -228,16 +228,26 @@ class OSINTStager:
         
         # nmap은 항상 IP 주소로 스캔 (도메인 매핑의 경우 target_ip 사용)
         scan_target = self.target_ip if hasattr(self, 'target_ip') and self.target_ip else self.target
-        
-        command = [
+        if args.port:
+            command = [
             'sudo', 'nmap', 
             '-sT', '-sV', '-sC', '-Pn',     # 기본 스캔 옵션
-            '-O',            # 운영체제 탐지
+            '-O', '-p', args.port,           # 운영체제 탐지
             '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
             '-oN', nmap_output_file,
             '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
             scan_target
-        ]
+            ]
+        else:     
+            command = [
+                'sudo', 'nmap', 
+                '-sT', '-sV', '-sC', '-Pn',     # 기본 스캔 옵션
+                '-O',            # 운영체제 탐지
+                '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
+                '-oN', nmap_output_file,
+                '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
+                scan_target
+            ]
         
         print(f"실행 명령어: {' '.join(command)}")  # 디버깅용 명령어 출력
         
@@ -1368,10 +1378,6 @@ async def main():
     )
     
     parser.add_argument(
-        '-o', '--output',
-        default='./train/',
-        help='결과 파일 저장 경로 (기본값: 현재 디렉토리)'
-    )
     
     parser.add_argument(
         '-v', '--verbose',
@@ -1380,10 +1386,9 @@ async def main():
     )
     
     parser.add_argument(
-        '--timeout',
-        type=int,
-        default=300,
-        help='각 도구의 최대 실행 시간(초) (기본값: 300)'
+        '-p', '--port',
+        default=None,
+        help='포트 지정'
     )
     
     parser.add_argument(
@@ -1453,7 +1458,6 @@ async def main():
         print("실행 요약")
         print("="*50)
         print(f"대상: {results['target']}")
-        print(f"실행 시간: {results['execution_time']}")
         discovered_ports = results.get('discovered_ports', {})
         web_urls = results.get('web_urls', [])
         specialized_scans = results.get('specialized_scans', {})
@@ -1586,8 +1590,7 @@ if __name__ == "__main__":
     if not check_required_tools():
         sys.exit(1)
     
-    print("모든 준비 완료, OSINT 파이프라인 시작...")
-    print()
+
     
     # 3. 메인 파이프라인 실행
     try:
