@@ -1380,7 +1380,11 @@ async def main():
         help='도메인명 (예: example.com)'
     )
     
-    
+    parser.add_argument(
+        '-o', '--output',
+        default='./train'
+        help='결과 저장할 디렉토리 (default: ./train/)'
+    )
     
     parser.add_argument(
         '-v', '--verbose',
