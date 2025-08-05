@@ -971,11 +971,11 @@ class OSINTStager:
             except Exception as e:
                 print(f"   삭제 실패: {temp_item} - {e}")
         
-        # 패턴으로 생성된 추가 파일들도 정리
+        # 패턴으로 생성된 추가 파일들도 정리 (결과 파일 제외)
         patterns = [
-            f"ffuf_results_{self.target.replace('.', '_').replace(':', '_')}*",
-            f"nmap_{self.target.replace('.', '_').replace(':', '_')}*",
-            f"searchsploit_{self.target.replace('.', '_').replace(':', '_')}*"
+            f"nmap_{self.target.replace('.', '_').replace(':', '_')}.txt",
+            f"nmap_{self.target.replace('.', '_').replace(':', '_')}.xml",
+            f"searchsploit_{self.target.replace('.', '_').replace(':', '_')}.txt"
         ]
         
         for pattern in patterns:
@@ -1348,8 +1348,11 @@ class OSINTStager:
         
         print(f"\n전체 파이프라인 완료: {total_time:.2f}초")
         
-        # 자연어 보고서는 별도 파일용으로만 생성
-        natural_context = self.generate_natural_language_context(final_results)
+        # 자연어 보고서는 별도 파일용으로만 생성 (specialized_results 포함)
+        report_data = final_results.copy()
+        report_data['specialized_scans'] = specialized_results
+        report_data['web_urls'] = self.web_urls
+        natural_context = self.generate_natural_language_context(report_data)
         
         return final_results, natural_context
 
@@ -1401,6 +1404,13 @@ async def main():
     parser.add_argument(
         '-w', '--wordlist-path',
         help='SecLists 워드리스트 경로 (예: /usr/share/seclists)'
+    )
+    
+    parser.add_argument(
+        '-t', '--timeout',
+        type=int,
+        default=300,
+        help='스캔 타임아웃 (초, default: 300)'
     )
     
     args = parser.parse_args()
@@ -1504,9 +1514,7 @@ def print_banner():
     
     print(banner)
     print("2025 인공지능빅데이터센터 연구과제")
-    print("방어적 보안 연구용 - 로컬호스트 테스트 전용")
     print("AI 학습용 데이터 수집 및 분석 자동화")
-    print()
     print("=" * 60)
     print()
 
@@ -1521,7 +1529,6 @@ def check_sudo_privileges():
     
     # 이미 root 권한인지 확인
     if os.geteuid() == 0:
-        print("Root 권한으로 실행 중")
         return True
     
     # sudo 가능한지 확인
@@ -1535,8 +1542,7 @@ def check_sudo_privileges():
         pass
     
     # sudo 권한이 필요한 경우 자동 재실행
-    print("nmap 등의 도구를 위해 sudo 권한이 필요합니다.")
-    print("sudo 권한으로 재실행 중...")
+    print("nmap 실행을 위해 sudo 권한이 필요합니다.")
     
     try:
         # 현재 스크립트를 sudo로 재실행
@@ -1559,7 +1565,6 @@ def check_required_tools():
     """
     required_tools = {
         'nmap': 'sudo apt install nmap',
-        'whatweb': 'sudo apt install whatweb', 
     }
     
     missing_tools = []
