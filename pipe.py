@@ -483,8 +483,8 @@ class OSINTStager:
         can_vhost_fuzz = (self.ip_domain_mapping or not self._is_ip_address(self.target)) and self.web_urls
         
         if can_vhost_fuzz:
-            # subdomain_wordlist = f"{seclists_path}/Discovery/DNS/subdomains-top1million-5000.txt"
-            subdomain_wordlist = f"{seclists_path}/Discovery/DNS/namelist.txt"
+            subdomain_wordlist = f"{seclists_path}/Discovery/DNS/subdomains-top1million-5000.txt"
+            #subdomain_wordlist = f"{seclists_path}/Discovery/DNS/namelist.txt"
             if os.path.exists(subdomain_wordlist):
                 # 발견된 웹 URL 중 HTTPS 우선, 없으면 첫 번째 URL 사용
                 vhost_base_url = None
