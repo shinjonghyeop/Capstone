@@ -31,7 +31,7 @@ class OSINTStager:
     3. 결과 통합 및 AI 학습용 데이터 형식으로 변환
     """
     
-    def __init__(self, wordlist_path: str = None, ip: str = None, domain: str = None):
+    def __init__(self, wordlist_path: str = None, ip: str = None, domain: str = None, port:str = None):
         """OSINTStager 초기화
         
         Args:
@@ -45,6 +45,7 @@ class OSINTStager:
             self.target = domain
             self.original_target = f"{ip} -> {domain}"
             self.ip_domain_mapping = True
+            self.port = port
             # /etc/hosts 에 매핑 추가
             self._update_hosts_file(ip, domain)
         elif ip:
@@ -53,12 +54,14 @@ class OSINTStager:
             self.target = ip
             self.original_target = ip
             self.ip_domain_mapping = False
+            self.port = port
         elif domain:
             # 도메인만 주어진 경우
             self.target_ip = domain
             self.target = domain
             self.original_target = domain
             self.ip_domain_mapping = False
+            self.port = port
         else:
             raise ValueError("대상을 지정해주세요: -i <ip> -d <domain> 또는 -i <ip>")
             
@@ -228,11 +231,11 @@ class OSINTStager:
         
         # nmap은 항상 IP 주소로 스캔 (도메인 매핑의 경우 target_ip 사용)
         scan_target = self.target_ip if hasattr(self, 'target_ip') and self.target_ip else self.target
-        if args.port:
+        if self.port:
             command = [
             'sudo', 'nmap', 
             '-sT', '-sV', '-sC', '-Pn',     # 기본 스캔 옵션
-            '-O', '-p', args.port,           # 운영체제 탐지
+            '-O', '-p', self.port,           # 운영체제 탐지
             '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
             '-oN', nmap_output_file,
             '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
@@ -1377,7 +1380,7 @@ async def main():
         help='도메인명 (예: example.com)'
     )
     
-    parser.add_argument(
+    
     
     parser.add_argument(
         '-v', '--verbose',
@@ -1420,7 +1423,8 @@ async def main():
     scanner = OSINTStager(
         wordlist_path=args.wordlist_path,
         ip=args.ip,
-        domain=args.domain
+        domain=args.domain,
+        port=args.port
     )
     
     try:
