@@ -232,7 +232,7 @@ class OSINTStager:
         command = [
             'sudo', 'nmap', 
             '-sT', '-sV', '-sC', '-Pn',     # 기본 스캔 옵션
-            '-O',                     # 운영체제 탐지
+            '-O',            # 운영체제 탐지
             '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
             '-oN', nmap_output_file,
             '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
@@ -348,11 +348,11 @@ class OSINTStager:
 
         
         
-        # nmap 결과가 있으면 searchsploit으로 CVE 검색 실행
+        # nmap 결과가 있으면 searchsploit으로 CVE 검색 실행 (결과는 cve_vulnerabilities에만 저장)
         if self.discovered_ports:
             print("서비스 발견 - searchsploit CVE 검색 실행")
             tasks.append(self.run_searchsploit())  # 알려진 취약점 검색
-            task_names.append("searchsploit")
+            task_names.append("searchsploit_internal")  # 내부 처리용 태그
         
         # 실행할 도구가 없는 경우 처리
         if not tasks:
@@ -366,6 +366,14 @@ class OSINTStager:
         # 각 도구별 실행 결과 정리 및 에러 처리
         final_results = {}
         for task_name, result in zip(task_names, results):
+            # searchsploit_internal은 specialized_scans에 포함하지 않음 (CVE 데이터는 별도 저장됨)
+            if task_name == "searchsploit_internal":
+                if isinstance(result, Exception):
+                    print(f"searchsploit 실행 중 오류: {result}")
+                else:
+                    print(f"searchsploit 완료 - CVE 데이터는 cve_vulnerabilities에 저장됨")
+                continue  # specialized_scans 결과에는 포함하지 않음
+                
             if isinstance(result, Exception):  # 예외 발생한 작업 처리
                 print(f"{task_name} 실행 중 오류: {result}")
                 final_results[task_name] = None
@@ -828,6 +836,106 @@ class OSINTStager:
         return found_count
 
 
+    def _compress_ports(self) -> dict:
+        """발견된 포트 정보를 토큰 효율적으로 압축"""
+        compressed = {}
+        for port, info in self.discovered_ports.items():
+            service = info.get('service', 'unknown')
+            version = info.get('version', '')
+            
+            # 버전에서 불필요한 정보 제거
+            if version:
+                version = re.sub(r'\([^)]*\)', '', version).strip()
+                version = re.sub(r'protocol \d+\.\d+', '', version).strip()
+                version = re.sub(r'Ubuntu Linux.*', '', version).strip()
+                # 주요 버전만 추출 (예: "2.4.49" -> "2.4")
+                if '.' in version:
+                    version_parts = version.split('.')
+                    if len(version_parts) >= 2:
+                        version = '.'.join(version_parts[:2])
+            
+            compressed[port] = f"{service}" + (f" {version}" if version else "")
+        
+        return compressed
+    
+    def _compress_ffuf(self, specialized_results: dict) -> dict:
+        """ffuf 결과를 포트별로 분리하여 압축"""
+        port_results = {}
+        
+        # 모든 ffuf 결과를 포트별로 분류
+        for key, value in specialized_results.items():
+            if "ffuf_" in key and value:
+                try:
+                    # URL에서 포트 추출 (예: ffuf_http://target:8080 -> 8080)
+                    url_part = key.replace('ffuf_', '')
+                    if ':' in url_part and '://' in url_part:
+                        # http://target:8080 형태
+                        port = url_part.split(':')[-1].rstrip('/')
+                        if not port.isdigit():
+                            port = '80' if url_part.startswith('http://') else '443'
+                    else:
+                        # 기본 포트
+                        port = '80' if url_part.startswith('http://') else '443'
+                    
+                    data = json.loads(value) if isinstance(value, str) else value
+                    if isinstance(data, dict):
+                        port_results[port] = data
+                        
+                except Exception:
+                    continue
+        
+        if not port_results:
+            return {}
+        
+        # 포트별로 압축된 결과 생성
+        compressed = {}
+        for port, ffuf_data in port_results.items():
+            port_compressed = {}
+            
+            # 5개 카테고리 모두 처리
+            for category in ['directories', 'files', 'extensions', 'hidden', 'vhosts']:
+                if category in ffuf_data and ffuf_data[category].get('results'):
+                    results = ffuf_data[category]['results']
+                    
+                    if category == 'directories':
+                        port_compressed['dirs'] = [r['url'].split('/')[-1] for r in results if r.get('url')]
+                    elif category == 'files':
+                        port_compressed['files'] = [r['url'].split('/')[-1] for r in results if r.get('url') and r['url'].split('/')[-1] not in ['.', '']]
+                    elif category == 'extensions':
+                        port_compressed['extensions'] = [r['url'].split('/')[-1] for r in results if r.get('url') and r['url'].split('/')[-1] not in ['.', '']]
+                    elif category == 'hidden':
+                        port_compressed['hidden'] = [r['url'].split('/')[-1] for r in results if r.get('url') and r['url'].split('/')[-1] not in ['.', '']]
+                    elif category == 'vhosts':
+                        port_compressed['vhosts'] = [r.get('host', '').split('.')[0] for r in results if r.get('host')]
+            
+            # 결과가 있는 포트만 추가
+            if port_compressed:
+                compressed[port] = port_compressed
+        
+        return compressed
+    
+    def _compress_cves(self) -> dict:
+        """CVE 데이터를 서비스별로 그룹화하여 압축"""
+        if not self.cve_results:
+            return {}
+        
+        compressed = {}
+        for cve in self.cve_results:
+            service = cve.get('service', 'unknown')
+            port = cve.get('port', 'unknown')
+            cve_id = cve.get('cve', '')
+            
+            key = f"{service}:{port}"
+            if key not in compressed:
+                compressed[key] = []
+            
+            if cve_id:
+                compressed[key].append(cve_id)
+            elif cve.get('edb_id'):
+                compressed[key].append(cve['edb_id'])
+        
+        return compressed
+
     def cleanup_temp_files(self):
         """스캔 과정에서 생성된 모든 임시 파일들을 정리
         
@@ -879,40 +987,74 @@ class OSINTStager:
         수집된 모든 정보를 LLM이 분석하기 쉬운 구조화된 텍스트로 변환합니다.
         이는 AI 모델이 공격 시나리오를 분석하고 취약점을 평가하는데 사용됩니다.
         """
-        print("\nLLM 분석용 정보 정리 중...")
         
         sections = []
         
         # 보고서 헤더 생성
-        timestamp = datetime.datetime.now().strftime("%Y년 %m월 %d일 %H:%M")
-        sections.append(f"""# 보안 정찰 정보 보고서
+        sections.append(f""" 보안 정찰 정보 보고서
 
-**대상**: {results['target']}
-**스캔 일시**: {timestamp}  
-**실행 시간**: {results['execution_time']}
+대상: {results['target']}
 
 다음은 {results['target']}에 대한 OSINT 수집 결과입니다. 이 정보를 바탕으로 공격 시나리오를 분석해주세요.""")
 
         # 포트 스캔 결과 섹션
         sections.append("## 포트 스캔 결과 (nmap)")
-        discovered_ports = results.get('discovered_ports', {})
-        if isinstance(discovered_ports, dict) and discovered_ports:
-            sections.append(f"총 {len(discovered_ports)}개 포트가 열려있음:")
-            for port, info in discovered_ports.items():
-                if isinstance(info, dict):
-                    service = info.get('service', 'unknown')
-                    version = info.get('version', 'unknown')
+        services = results.get('services', results.get('discovered_ports', {}))
+        if isinstance(services, dict) and services:
+            sections.append(f"총 {len(services)}개 포트가 열려있음:")
+            for port, service_info in services.items():
+                if isinstance(service_info, str):
+                    # 압축된 형태: "http Apache 2.4"
+                    sections.append(f"- **포트 {port}**: {service_info}")
+                elif isinstance(service_info, dict):
+                    # 기존 형태 호환성
+                    service = service_info.get('service', 'unknown')
+                    version = service_info.get('version', 'unknown')
                     sections.append(f"- **포트 {port}**: {service} ({version})")
         
         # 웹 서비스 정보 섹션
-        web_urls = results.get('web_urls', [])
-        if isinstance(web_urls, list) and web_urls:
-            sections.append(f"\n## 웹 서비스 응답")
-            sections.append(f"HTTP/HTTPS 서비스 {len(web_urls)}개 발견:")
-            for url in web_urls:
-                sections.append(f"- {url}")
+        web_enum = results.get('ffuf_enum', {})
+        web_urls = results.get('ffuf_urls', [])  # 기존 형태 호환성
+        
+        if web_enum or web_urls:
+            sections.append(f"\n## 웹 서비스 정보")
+            if web_urls:
+                sections.append(f"HTTP/HTTPS 서비스 {len(web_urls)}개 발견:")
+                for url in web_urls:
+                    sections.append(f"- {url}")
+            
+            if web_enum:
+                # 포트별 구조 처리
+                if isinstance(web_enum, dict) and any(port.isdigit() for port in web_enum.keys()):
+                    # 새로운 포트별 구조
+                    sections.append("포트별 웹 열거 결과:")
+                    for port, port_data in web_enum.items():
+                        if isinstance(port_data, dict):
+                            sections.append(f"\n**포트 {port}:**")
+                            if port_data.get('dirs'):
+                                sections.append(f"  - 디렉토리: {', '.join(port_data['dirs'])}")
+                            if port_data.get('files'):
+                                sections.append(f"  - 파일: {', '.join(port_data['files'])}")
+                            if port_data.get('extensions'):
+                                sections.append(f"  - 확장자: {', '.join(port_data['extensions'])}")
+                            if port_data.get('hidden'):
+                                sections.append(f"  - 히든파일: {', '.join(port_data['hidden'])}")
+                            if port_data.get('vhosts'):
+                                sections.append(f"  - 가상호스트: {', '.join(port_data['vhosts'])}")
+                else:
+                    # 기존 통합 구조 호환성
+                    sections.append("웹 열거 결과:")
+                    if web_enum.get('dirs'):
+                        sections.append(f"- 디렉토리: {', '.join(web_enum['dirs'])}")
+                    if web_enum.get('files'):
+                        sections.append(f"- 파일: {', '.join(web_enum['files'])}")
+                    if web_enum.get('extensions'):
+                        sections.append(f"- 확장자: {', '.join(web_enum['extensions'])}")
+                    if web_enum.get('hidden'):
+                        sections.append(f"- 히든파일: {', '.join(web_enum['hidden'])}")
+                    if web_enum.get('vhosts'):
+                        sections.append(f"- 가상호스트: {', '.join(web_enum['vhosts'])}")
 
-        # whatweb은 비활성화되었으므로 해당 섹션 제거
 
         # ffuf 디렉토리/파일 탐색 결과
         specialized_scans = results.get('specialized_scans', {})
@@ -980,67 +1122,80 @@ class OSINTStager:
                         sections.append(f"원본 데이터 구조: {type(ffuf_data)} - {list(ffuf_data.keys()) if isinstance(ffuf_data, dict) else 'N/A'}")
 
         # CVE 취약점 정보 섹션 (개선된 버전)
-        if self.cve_results:
+        vulnerabilities = results.get('vulnerabilities', {})
+        cve_results = getattr(self, 'cve_results', [])  # 기존 형태 호환성
+        
+        if vulnerabilities or cve_results:
             sections.append(f"\n## 발견된 취약점 및 Exploit")
-            sections.append(f"searchsploit으로 {len(self.cve_results)}개의 알려진 취약점/Exploit을 발견했습니다:")
+            total_vulns = len(cve_results) if cve_results else sum(len(v) for v in vulnerabilities.values())
+            sections.append(f"searchsploit으로 {total_vulns}개의 알려진 취약점/Exploit을 발견했습니다:")
             
-            # CVE 및 EDB 중요도에 따른 정렬 (CVE 있는 것 우선, 연도 역순)
-            def sort_key(x):
-                if x.get('cve'):
-                    year = x['cve'].split('-')[1] if '-' in x['cve'] else '0000'
-                    return (1, year)  # CVE 있는 것이 우선
-                else:
-                    return (0, x.get('edb_id', 'EDB-0'))  # EDB만 있는 것은 나중에
+            # 압축된 형태 처리
+            if vulnerabilities:
+                for i, (service_port, vuln_list) in enumerate(vulnerabilities.items()):
+                    if i >= 15:  # 상위 15개만 표시
+                        break
+                    sections.append(f"\n### {i+1}. {service_port}")
+                    sections.append(f"**취약점**: {', '.join(vuln_list)}")
             
-            sorted_vulns = sorted(self.cve_results, key=sort_key, reverse=True)
-            
-            for i, vuln_info in enumerate(sorted_vulns[:15]):  # 상위 15개 표시
-                # CVE 또는 EDB-ID 표시
-                if vuln_info.get('cve'):
-                    vuln_id = vuln_info['cve']
-                    sections.append(f"\n### {i+1}. {vuln_id} (CVE)")
-                    
-                    # CVE 연도 추출 및 위험도 평가
-                    year_parts = vuln_id.split('-')
-                    year = year_parts[1] if len(year_parts) > 1 and year_parts[1].isdigit() else '????'
-                    current_year = datetime.datetime.now().year
-                    age = current_year - int(year) if year.isdigit() else 0
-                    
-                    if age <= 2:
-                        risk_level = "🔴 높음 (최신 취약점)"
-                    elif age <= 5:
-                        risk_level = "🟡 중간 (비교적 최신)"
+            # 기존 형태 호환성
+            elif cve_results:
+                def sort_key(x):
+                    if x.get('cve'):
+                        year = x['cve'].split('-')[1] if '-' in x['cve'] else '0000'
+                        return (1, year)
                     else:
-                        risk_level = "🟢 낮음 (구 취약점)"
+                        return (0, x.get('edb_id', 'EDB-0'))
+                
+                sorted_vulns = sorted(cve_results, key=sort_key, reverse=True)
+                
+                for i, vuln_info in enumerate(sorted_vulns[:15]):
+                    # CVE 또는 EDB-ID 표시
+                    if vuln_info.get('cve'):
+                        vuln_id = vuln_info['cve']
+                        sections.append(f"\n### {i+1}. {vuln_id} (CVE)")
+                        
+                        # CVE 연도 추출 및 위험도 평가
+                        year_parts = vuln_id.split('-')
+                        year = year_parts[1] if len(year_parts) > 1 and year_parts[1].isdigit() else '????'
+                        current_year = datetime.datetime.now().year
+                        age = current_year - int(year) if year.isdigit() else 0
+                        
+                        if age <= 2:
+                            risk_level = " 높음 (최신 취약점)"
+                        elif age <= 5:
+                            risk_level = " 중간 (비교적 최신)"
+                        else:
+                            risk_level = " 낮음 (구 취약점)"
+                        
+                        sections.append(f"**위험도**: {risk_level} ({year}년, {age}년 전)")
+                    else:
+                        vuln_id = vuln_info.get('edb_id', 'Unknown')
+                        sections.append(f"\n### {i+1}. {vuln_id} (Exploit)")
+                        sections.append(f"**위험도**: 🟠 Exploit 코드 존재")
                     
-                    sections.append(f"**위험도**: {risk_level} ({year}년, {age}년 전)")
-                else:
-                    vuln_id = vuln_info.get('edb_id', 'Unknown')
-                    sections.append(f"\n### {i+1}. {vuln_id} (Exploit)")
-                    sections.append(f"**위험도**: 🟠 Exploit 코드 존재")
-                
-                sections.append(f"**제목**: {vuln_info['title']}")
-                
-                # 서비스 정보 표시 (있다면)
-                if vuln_info.get('service') or vuln_info.get('product'):
-                    service_desc = []
-                    if vuln_info.get('port'):
-                        service_desc.append(f"포트 {vuln_info['port']}")
-                    if vuln_info.get('service'):
-                        service_desc.append(vuln_info['service'])
-                    if vuln_info.get('product'):
-                        service_desc.append(vuln_info['product'])
+                    sections.append(f"**제목**: {vuln_info.get('title', 'Unknown')}")
                     
-                    sections.append(f"**대상 서비스**: {' - '.join(service_desc)}")
-                
-                sections.append(f"**세부사항**: {vuln_info['line']}")
-                
-                # Exploit 경로 표시 (있다면)
-                if vuln_info.get('path'):
-                    sections.append(f"**Exploit 경로**: {vuln_info['path']}")
+                    # 서비스 정보 표시 (있다면)
+                    if vuln_info.get('service') or vuln_info.get('product'):
+                        service_desc = []
+                        if vuln_info.get('port'):
+                            service_desc.append(f"포트 {vuln_info['port']}")
+                        if vuln_info.get('service'):
+                            service_desc.append(vuln_info['service'])
+                        if vuln_info.get('product'):
+                            service_desc.append(vuln_info['product'])
+                        
+                        sections.append(f"**대상 서비스**: {' - '.join(service_desc)}")
+                    
+                    sections.append(f"**세부사항**: {vuln_info.get('line', 'N/A')}")
+                    
+                    # Exploit 경로 표시 (있다면)
+                    if vuln_info.get('path'):
+                        sections.append(f"**Exploit 경로**: {vuln_info['path']}")
             
-            if len(self.cve_results) > 15:
-                sections.append(f"\n*총 {len(self.cve_results)}개 취약점 중 상위 15개만 표시*")
+            if len(cve_results) > 15:
+                sections.append(f"\n*총 {len(cve_results)}개 취약점 중 상위 15개만 표시*")
         else:
             sections.append("\n## CVE 취약점 검색 결과")
             sections.append("알려진 CVE 취약점이 발견되지 않았습니다.")
@@ -1049,20 +1204,35 @@ class OSINTStager:
         sections.append("\n## 시스템 환경 정보")
         
         port_info = []
-        discovered_ports = results.get('discovered_ports', {})
+        services = results.get('services', results.get('discovered_ports', {}))
         
-        # discovered_ports가 딕셔너리인지 확인
-        if isinstance(discovered_ports, dict) and discovered_ports:
-            if any(port in ['8080', '8081', '8082', '8083', '8084'] for port in discovered_ports.keys()):
+        # 서비스 정보 분석 (압축된 형태와 기존 형태 모두 지원)
+        if isinstance(services, dict) and services:
+            if any(port in ['8080', '8081', '8082', '8083', '8084'] for port in services.keys()):
                 port_info.append("비표준 포트(8000번대) 사용 확인")
             
-            db_ports = [port for port, info in discovered_ports.items() 
-                       if isinstance(info, dict) and info.get('service', '') in ['postgresql', 'mysql', 'mongodb']]
+            # 압축된 형태에서 DB 서비스 찾기
+            db_ports = []
+            for port, service_info in services.items():
+                if isinstance(service_info, str):
+                    # 압축된 형태: "postgresql 12.1"
+                    if any(db in service_info.lower() for db in ['postgresql', 'mysql', 'mongodb']):
+                        db_ports.append(port)
+                elif isinstance(service_info, dict):
+                    # 기존 형태 호환성
+                    if service_info.get('service', '') in ['postgresql', 'mysql', 'mongodb']:
+                        db_ports.append(port)
+            
             if db_ports:
                 port_info.append(f"데이터베이스 포트 외부 노출: {', '.join(db_ports)}")
             
-            tcpwrapped_count = len([p for p in discovered_ports.values() 
-                                   if isinstance(p, dict) and p.get('service', '') == 'tcpwrapped'])
+            # tcpwrapped 서비스 확인
+            tcpwrapped_count = 0
+            for service_info in services.values():
+                if isinstance(service_info, str) and 'tcpwrapped' in service_info:
+                    tcpwrapped_count += 1
+                elif isinstance(service_info, dict) and service_info.get('service', '') == 'tcpwrapped':
+                    tcpwrapped_count += 1
         else:
             tcpwrapped_count = 0
         if tcpwrapped_count > 0:
@@ -1073,9 +1243,9 @@ class OSINTStager:
 
         # AI 분석 요청 섹션 (CVE 정보 반영)
         cve_mention = ""
-        if self.cve_results:
-            high_risk_cves = [cve for cve in self.cve_results if cve.get('cve') and '-' in cve['cve'] and len(cve['cve'].split('-')) > 1 and cve['cve'].split('-')[1].isdigit() and int(cve['cve'].split('-')[1]) >= datetime.datetime.now().year - 2]
-            cve_mention = f"\n\n특히 {len(self.cve_results)}개의 알려진 CVE 취약점이 발견되었으며, 이 중 {len(high_risk_cves)}개는 최신 취약점입니다. 이러한 CVE 정보를 활용한 공격 시나리오를 우선적으로 고려해주세요."
+        if vulnerabilities or cve_results:
+            total_vulns = len(cve_results) if cve_results else sum(len(v) for v in vulnerabilities.values())
+            cve_mention = f"\n{total_vulns}개의 알려진 CVE 취약점이 발견되었습니다. 이러한 CVE 정보를 활용한 공격 시나리오를 우선적으로 고려해주세요."
         
         sections.append(f"""\n## AI 분석 요청
 
@@ -1149,24 +1319,21 @@ class OSINTStager:
         
         total_time = time.time() - start_time
         
-        # 최종 결과 구조화 (nmap_output 제거)
+        # 최종 결과 구조화 (토큰 효율적 압축 형태)
         final_results = {
             'target': self.target,                        # 스캔 대상
-            'execution_time': f"{total_time:.2f}초",      # 전체 실행 시간
-            'discovered_ports': self.discovered_ports,    # 발견된 포트/서비스
-            'specialized_scans': specialized_results,     # 전문 도구 결과들
-            'cve_vulnerabilities': self.cve_results       # CVE 취약점 목록
+            'services': self._compress_ports(),           # 압축된 포트/서비스 정보
+            'web_enum': self._compress_ffuf(specialized_results),  # 압축된 웹 열거 결과
+            'vulnerabilities': self._compress_cves(),     # 압축된 CVE 취약점
+            'instruction': {
+                "task": "보안 취약점 분석 및 공격 시나리오 도출",
+                "prompt": "다음 OSINT 데이터를 분석하여 1) 주요 공격 진입점, 2) CVE 기반 공격 벡터, 3) 단계별 공격 시나리오를 도출하세요.",
+                "focus": ["services", "web_enum", "vulnerabilities"],
+                "output_format": "구체적인 공격 시나리오와 우선순위를 포함한 분석 결과"
+            }
         }
         
         print(f"\n전체 파이프라인 완료: {total_time:.2f}초")
-        
-        # AI 학습용 instruction 객체 추가
-        final_results['instruction'] = {
-            "task": "보안 취약점 분석 및 공격 시나리오 도출",
-            "prompt": "다음 OSINT 데이터를 분석하여 1) 주요 공격 진입점, 2) CVE 기반 공격 벡터, 3) 단계별 공격 시나리오를 도출하세요.",
-            "focus": ["discovered_ports", "specialized_scans", "cve_vulnerabilities"],
-            "output_format": "구체적인 공격 시나리오와 우선순위를 포함한 분석 결과"
-        }
         
         # 자연어 보고서는 별도 파일용으로만 생성
         natural_context = self.generate_natural_language_context(final_results)
