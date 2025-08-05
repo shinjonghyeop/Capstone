@@ -254,8 +254,8 @@ class OSINTStager:
         
         print(f"실행 명령어: {' '.join(command)}")  # 디버깅용 명령어 출력
         
-        # nmap 스캔 실행 (3분 타임아웃)
-        self.nmap_results = await self.run_command("nmap", command, timeout=180)
+        # nmap 스캔 실행 (5분 타임아웃)
+        self.nmap_results = await self.run_command("nmap", command, timeout=300)
         
         if self.nmap_results:  # 스캔 성공
             print(f"nmap 스캔 성공 ({len(self.nmap_results)} bytes)")
