@@ -1,7 +1,3 @@
-# OSINT 자동화 도구 - 한국어 주석 버전
-# 이 스크립트는 AI 기반 자동 취약점 탐지 프레임워크를 위한 데이터 수집 파이프라인입니다.
-# Hacklipse 팀의 연구과제용으로 개발되었습니다.
-
 # 필수 라이브러리 임포트
 import argparse
 import asyncio          # 비동기 처리를 위한 라이브러리
@@ -23,19 +19,63 @@ class OSINTStager:
     """OSINT(공개정보수집) 자동화 도구 메인 클래스
     
     이 클래스는 대상 시스템에 대한 정보를 자동으로 수집하고 분석합니다.
-    nmap -> 전문도구들 순서로 2단계 파이프라인을 실행합니다.
     
     주요 기능:
     1. 1단계: nmap을 이용한 포트 스캔 및 서비스 탐지
-    2. 2단계: 발견된 서비스별 전문 도구 병렬 실행
+    2. 2단계: 발견된 서비스별 OSINT Tools 병렬 실행
     3. 결과 통합 및 AI 학습용 데이터 형식으로 변환
     """
     
-    def __init__(self, wordlist_path: str = None, ip: str = None, domain: str = None, port:str = None):
-        """OSINTStager 초기화
-        
+    # 상수 정의
+    DEFAULT_TIMEOUT = 300
+    NMAP_TIMEOUT = 300
+    FFUF_TIMEOUT = 600
+    SEARCHSPLOIT_TIMEOUT = 30
+    
+    # 웹 서비스 식별 키워드
+    WEB_SERVICES = ['http', 'https', 'http-proxy', 'ssl/http']
+    
+    # 데이터베이스 서비스 식별 키워드
+    DB_SERVICES = ['postgresql', 'mysql', 'mongodb']
+    
+    # ffuf 스캔 설정
+    FFUF_CONFIGS = {
+        'directories': {
+            'wordlist': 'Discovery/Web-Content/raft-medium-directories.txt',
+            'threads': 100,
+            'filename': '01_directories.json'
+        },
+        'files': {
+            'wordlist': 'Discovery/Web-Content/raft-medium-files.txt', 
+            'threads': 100,
+            'filename': '02_files.json'
+        },
+        'extensions': {
+            'wordlist': 'Discovery/Web-Content/common.txt',
+            'threads': 100,
+            'filename': '03_extensions.json',
+            'extensions': '.php,.html,.htm,.js,.txt,.xml,.json,.log,.bak,.backup,.old,.tmp,.sql,.conf,.config,.ini,.env,.yml,.yaml'
+        },
+        'hidden': {
+            'wordlist': 'Discovery/Web-Content/quickhits.txt',
+            'threads': 100,
+            'filename': '04_hidden.json'
+        },
+        'vhosts': {
+            'wordlist': 'Discovery/DNS/subdomains-top1million-5000.txt',
+            'threads': 100,
+            'filename': '05_vhosts.json'
+        }
+    }
+    
+    # nmap 스캔 옵션
+    NMAP_SCAN_OPTIONS = ['-sT', '-sV', '-sC', '-Pn', '-O']
+    NMAP_SCRIPTS = 'banner,http-title,ssl-cert'
+    
+    def __init__(self, wordlist_path: str = None, ip: str = None, domain: str = None, port: str = None):
+        """
         Args:
-            wordlist_path (str): SecLists 워드리스트 경로 (옵션)
+            wordlist_path (str): SecLists 워드리스트 경로
             ip (str): IP 주소 (-i 옵션)
             domain (str): 도메인명 (-d 옵션)
         """
@@ -65,13 +105,13 @@ class OSINTStager:
         else:
             raise ValueError("대상을 지정해주세요: -i <ip> -d <domain> 또는 -i <ip>")
             
-        self.nmap_results = None          # nmap 스캔 결과 저장
-        self.discovered_ports = {}        # 발견된 포트와 서비스 정보 딕셔너리
-        self.web_urls = []               # 발견된 웹 서비스 URL 리스트
-        self.temp_files = []             # 생성된 임시 파일들 추적 (정리용)
+        self.nmap_results = None            # nmap 스캔 결과 저장
+        self.discovered_ports = {}          # 발견된 포트와 서비스 정보 딕셔너리
+        self.web_urls = []                  # 발견된 웹 서비스 URL 리스트
+        self.temp_files = []                # 생성된 임시 파일들 추적 (정리용)
         self.seclists_path = wordlist_path  # 사용자가 지정한 워드리스트 경로
-        self.nmap_xml_file = None        # nmap XML 결과 파일 경로
-        self.cve_results = []            # searchsploit으로 발견된 CVE 목록
+        self.nmap_xml_file = None           # nmap XML 결과 파일 경로
+        self.cve_results = []               # searchsploit으로 발견된 CVE 목록
     
     def _is_ip_address(self, target: str) -> bool:
         """IP 주소 여부 검사
@@ -170,9 +210,9 @@ class OSINTStager:
         """비동기 방식으로 외부 명령어 실행
         
         Args:
-            name (str): 명령어 이름 (로깅용)
-            command (List[str]): 실행할 명령어와 인자들
-            timeout (int): 최대 실행 시간 (초), 기본값 300초
+            name: 명령어 이름 (로깅용)
+            command: 실행할 명령어와 인자들
+            timeout: 최대 실행 시간 (초), 기본값 300초
             
         Returns:
             Optional[str]: 명령어 실행 결과 (성공시) 또는 None (실패시)
@@ -193,10 +233,10 @@ class OSINTStager:
             )
             
             # 명령어 실행 결과에 따른 처리
-            if process.returncode == 0:  # 성공 (return code 0)
+            if process.returncode == 0:  # 성공 (return 0)
                 print(f"[{time.strftime('%H:%M:%S')}] {name} 완료")
                 return stdout.decode('utf-8', errors='ignore')  # UTF-8 디코딩
-            else:  # 실패 (return code != 0)
+            else:  # 실패 (return != 0)
                 error_msg = stderr.decode('utf-8', errors='ignore')
                 print(f"[{time.strftime('%H:%M:%S')}] {name} 실패 (코드: {process.returncode})")
                 print(f"   오류: {error_msg[:200]}...")  # 에러 메시지 일부만 표시
@@ -223,8 +263,9 @@ class OSINTStager:
         print("=" * 50)
         
         # nmap 스캔 결과를 저장할 파일명 생성 (특수문자 치환)
-        nmap_output_file = f'nmap_{self.target.replace(".", "_").replace(":", "_")}.txt'
-        nmap_xml_file = f'nmap_{self.target.replace(".", "_").replace(":", "_")}.xml'
+        target_safe = self._sanitize_filename(self.target)
+        nmap_output_file = f'nmap_{target_safe}.txt'
+        nmap_xml_file = f'nmap_{target_safe}.xml'
         self.nmap_xml_file = nmap_xml_file  # 인스턴스 변수에 저장
         self.temp_files.append(nmap_output_file)  # 나중에 정리할 파일 목록에 추가
         self.temp_files.append(nmap_xml_file)     # XML 파일도 정리 대상에 추가
@@ -232,30 +273,14 @@ class OSINTStager:
         # nmap은 항상 IP 주소로 스캔 (도메인 매핑의 경우 target_ip 사용)
         scan_target = self.target_ip if hasattr(self, 'target_ip') and self.target_ip else self.target
         if self.port:
-            command = [
-            'sudo', 'nmap', 
-            '-sT', '-sV', '-sC', '-Pn',     # 기본 스캔 옵션
-            '-O', '-p', self.port,           # 운영체제 탐지
-            '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
-            '-oN', nmap_output_file,
-            '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
-            scan_target
-            ]
+            command = self._build_nmap_command(nmap_output_file, nmap_xml_file, scan_target, self.port)
         else:     
-            command = [
-                'sudo', 'nmap', 
-                '-sT', '-sV', '-sC', '-Pn',     # 기본 스캔 옵션
-                '-O',            # 운영체제 탐지
-                '--script=banner,http-title,ssl-cert',  # SSL 인증서 정보 추가
-                '-oN', nmap_output_file,
-                '-oX', nmap_xml_file,     # XML 형식으로 결과 저장 (searchsploit용)
-                scan_target
-            ]
+            command = self._build_nmap_command(nmap_output_file, nmap_xml_file, scan_target)
         
         print(f"실행 명령어: {' '.join(command)}")  # 디버깅용 명령어 출력
         
-        # nmap 스캔 실행 (5분 타임아웃)
-        self.nmap_results = await self.run_command("nmap", command, timeout=300)
+        # nmap 스캔 실행
+        self.nmap_results = await self.run_command("nmap", command, timeout=self.NMAP_TIMEOUT)
         
         if self.nmap_results:  # 스캔 성공
             print(f"nmap 스캔 성공 ({len(self.nmap_results)} bytes)")
@@ -306,11 +331,8 @@ class OSINTStager:
                         }
                         
                         # 웹 서비스인 경우 URL 생성 (나중에 웹 스캔에 사용)
-                        if service in ['http', 'https', 'http-proxy', 'ssl/http']:
-                            # SSL/HTTPS 여부 판단
-                            protocol = 'https' if 'ssl' in service or service == 'https' else 'http'
-                            # 기본 포트(80, 443)가 아닌 경우 포트 번호 포함
-                            url = f"{protocol}://{self.target}:{port}" if port not in ['80', '443'] else f"{protocol}://{self.target}"
+                        if self._is_web_service(service):
+                            url = self._build_web_url(service, port)
                             self.web_urls.append(url)  # 웹 URL 목록에 추가
         
         # 디버깅용 출력 - 파싱 결과 확인
@@ -318,6 +340,41 @@ class OSINTStager:
         for port, info in self.discovered_ports.items():
             print(f"  포트 {port}: {info['service']} - {info['version']}")
         print()
+    
+    def _sanitize_filename(self, filename: str) -> str:
+        """파일명에서 특수문자 제거"""
+        return filename.replace(".", "_").replace(":", "_")
+    
+    def _build_nmap_command(self, output_file: str, xml_file: str, target: str, port: str = None) -> list:
+        """상황에 따른 nmap 명령어 생성"""
+        command = ['sudo', 'nmap'] + self.NMAP_SCAN_OPTIONS
+        
+        if port:
+            command.extend(['-p', port])
+            
+        command.extend([
+            f'--script={self.NMAP_SCRIPTS}',
+            '-oN', output_file,
+            '-oX', xml_file,
+            target
+        ])
+        
+        return command
+    
+    def _is_web_service(self, service: str) -> bool:
+        """웹 서비스 여부 확인"""
+        return any(web_service in service for web_service in self.WEB_SERVICES)
+    
+    def _build_web_url(self, service: str, port: str) -> str:
+        """웹 서비스 URL 생성"""
+        # SSL/HTTPS 여부 판단
+        protocol = 'https' if 'ssl' in service or service == 'https' else 'http'
+        
+        # 기본 포트(80, 443)가 아닌 경우 포트 번호 포함
+        if port not in ['80', '443']:
+            return f"{protocol}://{self.target}:{port}"
+        else:
+            return f"{protocol}://{self.target}"
     
     def _print_discovery_summary(self):
         """발견된 서비스들의 요약 정보를 사용자에게 출력"""
@@ -355,9 +412,6 @@ class OSINTStager:
                 tasks.append(self.run_ffuf(url))
                 task_names.append(f"ffuf_{url}")
                 
-                # whatweb - 웹 기술 스택 분석 (사용 기술 식별) - 비활성화
-                # tasks.append(self.run_whatweb(url))
-                # task_names.append(f"whatweb_{url}")
 
         
         
@@ -491,42 +545,10 @@ class OSINTStager:
                  '-o', f'{results_dir}/04_hidden.json', '-of', 'json']
             ))
         
-        # 5. VHost 퍼징 (도메인 타겟에서 웹 서비스가 있을 때만 실행)
-        # IP-도메인 매핑이 있거나 도메인 타겟인 경우 VHost 퍼징 실행
-        can_vhost_fuzz = (self.ip_domain_mapping or not self._is_ip_address(self.target)) and self.web_urls
-        
-        if can_vhost_fuzz:
-            subdomain_wordlist = f"{seclists_path}/Discovery/DNS/subdomains-top1million-5000.txt"
-            #subdomain_wordlist = f"{seclists_path}/Discovery/DNS/namelist.txt"
-            if os.path.exists(subdomain_wordlist):
-                # 발견된 웹 URL 중 HTTPS 우선, 없으면 첫 번째 URL 사용
-                vhost_base_url = None
-                for web_url in self.web_urls:
-                    if web_url.startswith('https://'):
-                        vhost_base_url = web_url
-                        break
-                if not vhost_base_url:
-                    vhost_base_url = self.web_urls[0]  # HTTPS가 없으면 첫 번째 URL
-                
-                # VHost 퍼징 실행 (응답 길이와 상태코드로 필터링)
-                vhost_command = ['ffuf', '-w', subdomain_wordlist, '-u', vhost_base_url,
-                     '-H', f'Host: FUZZ.{self.target}',
-                     '-mc', '200,204,301,302,307,401,403,500,503', '-fc', '404',
-                     '-fs', '162,163,164,165,166',  # 기본 404 응답 길이 필터링
-                     '-t', '100', '-s', '-ac',
-                     '-o', f'{results_dir}/05_vhosts.json', '-of', 'json']
-                
-                # 디버깅을 위한 명령어 출력
-                print(f"  VHost 퍼징 명령어: {' '.join(vhost_command)}")
-                
-                scan_tasks.append(("vhosts", vhost_command))
-                print(f"  VHost 퍼징 예정: {vhost_base_url} (Host: FUZZ.{self.target})")
-                print(f"  대상 도메인: {self.target}")
-        else:
-            if self._is_ip_address(self.target) and not self.ip_domain_mapping:
-                print("  VHost 퍼징 건너뜀 (IP 주소 타겟, 도메인 매핑 없음)")
-            else:
-                print("  VHost 퍼징 건너뜀 (웹 서비스 미발견)")
+        # VHost 스캔 추가 (도메인 타겟에서 웹 서비스가 있을 때만)
+        vhost_task = self._create_vhost_scan_task(seclists_path, results_dir)
+        if vhost_task:
+            scan_tasks.append(vhost_task)
         
         # 각 스캔 단계를 순차적으로 실행
         scan_results = {}
@@ -563,6 +585,90 @@ class OSINTStager:
         print(f"[{time.strftime('%H:%M:%S')}] ffuf 전체 스캔 완료")
         return json.dumps(combined_results, indent=2)
     
+    def _create_ffuf_scan_tasks(self, seclists_path: str, url: str, results_dir: str) -> list:
+        """다양한 ffuf 스캔 태스크 생성"""
+        scan_tasks = []
+        
+        for scan_type, config in self.FFUF_CONFIGS.items():
+            if scan_type == 'vhosts':  # VHost는 별도 매서드에서 처리
+                continue
+                
+            wordlist_path = f"{seclists_path}/{config['wordlist']}"
+            if os.path.exists(wordlist_path):
+                command = self._build_ffuf_command(wordlist_path, url, config, results_dir)
+                scan_tasks.append((scan_type, command))
+        
+        return scan_tasks
+    
+    def _build_ffuf_command(self, wordlist: str, url: str, config: dict, results_dir: str) -> list:
+        """ffuf 명령어 빌드"""
+        command = [
+            'ffuf', '-w', wordlist, '-u', f'{url}/FUZZ',
+            '-mc', '200,204,301,302,307,401,403',
+            '-fc', '404,500', '-fs', '0',
+            '-t', str(config['threads']), '-ac', '-s',
+            '-o', f"{results_dir}/{config['filename']}", '-of', 'json'
+        ]
+        
+        # 확장자 스캔인 경우 확장자 옵션 추가
+        if 'extensions' in config:
+            command.extend(['-e', config['extensions']])
+            
+        return command
+    
+    def _create_vhost_scan_task(self, seclists_path: str, results_dir: str) -> tuple:
+        """가상 호스트 스캔 태스크 생성"""
+        # 도메인 타겟이고 웹 서비스가 있는 경우만 실행
+        can_vhost_fuzz = (self.ip_domain_mapping or not self._is_ip_address(self.target)) and self.web_urls
+        
+        if not can_vhost_fuzz:
+            if self._is_ip_address(self.target) and not self.ip_domain_mapping:
+                print("  VHost 스캔 건너뛰 (IP 주소 타겟, 도메인 매핑 없음)")
+            else:
+                print("  VHost 스캔 건너뛰 (웹 서비스 미발견)")
+            return None
+            
+        vhost_config = self.FFUF_CONFIGS['vhosts']
+        wordlist_path = f"{seclists_path}/{vhost_config['wordlist']}"
+        
+        if not os.path.exists(wordlist_path):
+            return None
+            
+        # HTTPS 우선 URL 선택
+        vhost_base_url = self._select_best_url_for_vhost()
+        
+        command = [
+            'ffuf', '-w', wordlist_path, '-u', vhost_base_url,
+            '-H', f'Host: FUZZ.{self.target}',
+            '-mc', '200,204,301,302,307,401,403,500,503',
+            '-fc', '404', '-fs', '162,163,164,165,166',
+            '-t', str(vhost_config['threads']), '-s', '-ac',
+            '-o', f"{results_dir}/{vhost_config['filename']}", '-of', 'json'
+        ]
+        
+        print(f"  VHost 스캔 예정: {vhost_base_url} (Host: FUZZ.{self.target})")
+        return ("vhosts", command)
+    
+    def _select_best_url_for_vhost(self) -> str:
+        """가상 호스트 스캔에 가장 적합한 URL 선택 (HTTPS 우선)"""
+        for web_url in self.web_urls:
+            if web_url.startswith('https://'):
+                return web_url
+        return self.web_urls[0] if self.web_urls else None
+    
+    def _extract_major_version(self, version: str) -> str:
+        """버전 문자열에서 주요 버전 추출 (예: "2.4.49" -> "2.4")"""
+        return '.'.join(version.split('.')[:2]) if '.' in version else version
+    
+    def _remove_duplicates_and_empty(self, items: list) -> list:
+        """리스트에서 중복과 빈 문자열 제거"""
+        unique_items = []
+        for item in items:
+            clean_item = item.strip()
+            if clean_item and clean_item not in unique_items:
+                unique_items.append(clean_item)
+        return unique_items
+    
     def _read_ffuf_result(self, filepath: str) -> dict:
         """ffuf JSON 결과 파일 읽기 (압축된 형태로)"""
         try:
@@ -586,21 +692,6 @@ class OSINTStager:
         except:
             return {"error": f"Could not read {filepath}"}
     
-    async def run_whatweb(self, url: str) -> str:
-        """whatweb을 이용한 웹 기술 스택 분석
-        
-        웹 애플리케이션에서 사용된 기술들을 식별합니다.
-        (웹 서버, 프레임워크, CMS, 라이브러리, 플러그인 등)
-        """
-        command = [
-            'whatweb', 
-            '--no-errors',           # 에러 출력 억제
-            '--colour=never',        # 색상 완전 비활성화
-            '-a', '3',               # 공격성 레벨 3 (상세 분석)
-            '-v',                    # 상세 출력
-            url
-        ]
-        return await self.run_command(f"whatweb ({url})", command, timeout=60)
     
     
     
@@ -624,8 +715,7 @@ class OSINTStager:
         if not services:
             print("XML에서 서비스 정보를 추출할 수 없습니다.")
             return "No services found in XML"
-        
-        print(f"XML에서 {len(services)}개 서비스 발견, searchsploit 검색 시작...")
+        print(f" {len(services)}개 서비스 발견, searchsploit 검색 시작...")
         
         all_results = []
         total_cves = 0
@@ -646,16 +736,11 @@ class OSINTStager:
                     
                 print(f"  포트 {port}: '{search_term}' 검색 중...")
                 
-                # searchsploit 실행 (-p 옵션으로 경로 정보도 함께 출력)
-                command = ['searchsploit', '-p', search_term]
-                result = await self.run_command(f"searchsploit ({search_term})", command, timeout=30)
+                # 2단계 검색: 1) 일반 검색으로 EDB-ID 수집 2) -p 옵션으로 상세 정보 수집
+                found_cves = await self._two_stage_searchsploit(search_term, service_info, port)
                 
-                if result and result.strip():
-                    # 결과에서 CVE 추출
-                    found_cves = self._parse_cve_results(result, service_info)
-                    if found_cves > 0:
-                        all_results.append(f"\n=== {search_term} (포트 {port}) ===\n{result}")
-                        total_cves += found_cves
+                if found_cves > 0:
+                    total_cves += found_cves
                 
                 # 과도한 요청 방지를 위한 짧은 대기
                 await asyncio.sleep(0.5)
@@ -729,33 +814,16 @@ class OSINTStager:
         """
         search_terms = []
         
-        # 1. 제품명 + 버전 (가장 구체적)
+        # 정확한 버전만 검색 (노이즈 제거를 위해)
         if product and version:
-            # 버전에서 주요 버전만 추출 (예: "2.4.49" -> "2.4")
-            main_version = '.'.join(version.split('.')[:2]) if '.' in version else version
             search_terms.append(f"{product} {version}")
-            search_terms.append(f"{product} {main_version}")
-        
-        # 2. 제품명만
-        if product:
+        elif product:
             search_terms.append(product)
         
-        # 3. 서비스명 + 버전
-        if service and version and service.lower() != product.lower():
-            search_terms.append(f"{service} {version}")
-        
-        # 4. 서비스명만
-        if service and service not in [product.lower(), product]:
-            search_terms.append(service)
-        
         # 중복 제거 및 빈 문자열 제거
-        unique_terms = []
-        for term in search_terms:
-            clean_term = term.strip()
-            if clean_term and clean_term not in unique_terms:
-                unique_terms.append(clean_term)
+        unique_terms = self._remove_duplicates_and_empty(search_terms)
         
-        return unique_terms[:3]  # 상위 3개만 반환 (성능상)
+        return unique_terms[:1]  # 1개만 반환 (정확성 향상)
     
     def _parse_cve_results(self, searchsploit_output: str, service_info: Dict[str, str] = None) -> int:
         """searchsploit 출력에서 CVE 정보 추출 및 저장
@@ -768,6 +836,10 @@ class OSINTStager:
             int: 새로 발견된 CVE 개수
         """
         if not searchsploit_output:
+            return 0
+            
+        # searchsploit에서 결과를 찾지 못한 경우 무시
+        if "Could not find EDB-ID" in searchsploit_output or "No Results" in searchsploit_output:
             return 0
             
         found_count = 0
@@ -847,6 +919,133 @@ class OSINTStager:
                     found_count += 1
         
         return found_count
+    
+    async def _two_stage_searchsploit(self, search_term: str, service_info: Dict[str, str], port: str) -> int:
+        """
+        2단계 searchsploit 검색
+        1단계: 일반 검색으로 EDB-ID 수집
+        2단계: EDB-ID로 상세 CVE 정보 수집
+        """
+        # 1단계: 일반 검색
+        command = ['searchsploit', search_term]
+        result = await self.run_command(f"searchsploit ({search_term})", command, timeout=30)
+        
+        if not result or not result.strip():
+            return 0
+            
+        # EDB-ID 추출
+        edb_ids = self._extract_edb_ids_from_output(result)
+        if not edb_ids:
+            return 0
+            
+        total_found = 0
+        
+        # 2단계: 각 EDB-ID에 대해 상세 정보 수집
+        for edb_id in edb_ids:
+            detailed_info = await self._get_cve_details(edb_id)
+            if detailed_info:
+                found_cves = self._parse_detailed_cve_info(detailed_info, service_info)
+                total_found += found_cves
+                
+        return total_found
+    
+    def _extract_edb_ids_from_output(self, searchsploit_output: str) -> list:
+        """
+        searchsploit 출력에서 EDB-ID 추출
+        예: "multiple/webapps/50383.sh" -> "50383"
+        """
+        edb_ids = []
+        lines = searchsploit_output.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            # 결과 라인인지 확인 (경로 포함)
+            if '|' in line and ('/exploits/' in line or '/shellcodes/' in line):
+                # 경로에서 파일명 추출
+                path_part = line.split('|')[-1].strip()
+                # 파일명에서 EDB-ID 추출 (예: "50383.sh" -> "50383")
+                filename = path_part.split('/')[-1]
+                edb_match = re.match(r'(\d+)\.[a-zA-Z]+$', filename)
+                if edb_match:
+                    edb_id = edb_match.group(1)
+                    edb_ids.append(edb_id)
+                    
+        return edb_ids[:5]  # 최대 5개로 제한
+    
+    async def _get_cve_details(self, edb_id: str) -> str:
+        """
+        EDB-ID로 상세 CVE 정보 수집
+        searchsploit -p {edb_id} 실행
+        """
+        command = ['searchsploit', '-p', edb_id]
+        result = await self.run_command(f"searchsploit -p ({edb_id})", command, timeout=30)
+        
+        if result and "Could not find EDB-ID" not in result:
+            return result
+        return None
+    
+    def _parse_detailed_cve_info(self, detailed_output: str, service_info: Dict[str, str] = None) -> int:
+        """
+        searchsploit -p 출력에서 CVE 정보 추출
+        예:
+          Exploit: Apache HTTP Server 2.4.49 - Path Traversal
+              URL: https://www.exploit-db.com/exploits/50383
+             Path: /path/to/exploit
+            Codes: CVE-2021-41773
+         Verified: True
+        """
+        if not detailed_output:
+            return 0
+            
+        lines = detailed_output.split('\n')
+        cve_info = {
+            'title': '',
+            'url': '',
+            'path': '',
+            'cve': '',
+            'verified': False
+        }
+        
+        for line in lines:
+            line = line.strip()
+            if line.startswith('Exploit:'):
+                cve_info['title'] = line.replace('Exploit:', '').strip()
+            elif line.startswith('URL:'):
+                cve_info['url'] = line.replace('URL:', '').strip()
+            elif line.startswith('Path:'):
+                cve_info['path'] = line.replace('Path:', '').strip()
+            elif line.startswith('Codes:'):
+                codes = line.replace('Codes:', '').strip()
+                # CVE 번호 추출
+                cve_matches = re.findall(r'CVE-\d{4}-\d{4,7}', codes)
+                if cve_matches:
+                    cve_info['cve'] = cve_matches[0]
+            elif line.startswith('Verified:'):
+                cve_info['verified'] = 'True' in line
+                
+        # CVE 정보가 있으면 저장
+        if cve_info['cve'] or cve_info['title']:
+            # 중복 확인
+            if cve_info['cve'] not in [item.get('cve', '') for item in self.cve_results]:
+                result_info = {
+                    'cve': cve_info['cve'],
+                    'title': cve_info['title'][:100],
+                    'url': cve_info['url'],
+                    'path': cve_info['path'],
+                    'verified': cve_info['verified'],
+                    'line': f"{cve_info['title']} | {cve_info['url']}"[:200]
+                }
+                
+                # 서비스 정보 추가
+                if service_info:
+                    result_info['service'] = service_info.get('service', '')
+                    result_info['product'] = service_info.get('product', '')
+                    result_info['port'] = service_info.get('port', '')
+                    
+                self.cve_results.append(result_info)
+                return 1
+                
+        return 0
 
 
     def _compress_ports(self) -> dict:
@@ -1275,6 +1474,169 @@ class OSINTStager:
         
         return "\n\n".join(sections)
     
+    def _generate_report_header(self, results: Dict) -> str:
+        """보고서 헤더 생성"""
+        return f""" 보안 정찰 정보 보고서
+
+대상: {results['target']}
+
+다음은 {results['target']}에 대한 OSINT 수집 결과입니다. 이 정보를 바탕으로 공격 시나리오를 분석해주세요."""
+    
+    def _generate_port_scan_section(self, results: Dict) -> list:
+        """포트 스캔 결과 섹션 생성"""
+        sections = []
+        sections.append("## 포트 스캔 결과 (nmap)")
+        
+        services = results.get('services', results.get('discovered_ports', {}))
+        if isinstance(services, dict) and services:
+            sections.append(f"총 {len(services)}개 포트가 열려있음:")
+            for port, service_info in services.items():
+                if isinstance(service_info, str):
+                    sections.append(f"- **포트 {port}**: {service_info}")
+                elif isinstance(service_info, dict):
+                    service = service_info.get('service', 'unknown')
+                    version = service_info.get('version', 'unknown')
+                    sections.append(f"- **포트 {port}**: {service} ({version})")
+        
+        return sections
+    
+    def _generate_web_services_section(self, results: Dict) -> list:
+        """웹 서비스 정보 섹션 생성"""
+        sections = []
+        web_enum = results.get('ffuf_enum', {})
+        web_urls = results.get('ffuf_urls', [])
+        
+        if web_enum or web_urls:
+            sections.append("## 웹 서비스 정보")
+            
+            if web_urls:
+                sections.append(f"HTTP/HTTPS 서비스 {len(web_urls)}개 발견:")
+                for url in web_urls:
+                    sections.append(f"- {url}")
+            
+            if web_enum:
+                sections.extend(self._format_web_enum_results(web_enum))
+        
+        return sections
+    
+    def _format_web_enum_results(self, web_enum: dict) -> list:
+        """웹 열거 결과 포맷팅"""
+        sections = []
+        
+        if isinstance(web_enum, dict) and any(port.isdigit() for port in web_enum.keys()):
+            sections.append("포트별 웹 열거 결과:")
+            for port, port_data in web_enum.items():
+                if isinstance(port_data, dict):
+                    sections.append(f"\n**포트 {port}:**")
+                    if port_data.get('dirs'):
+                        sections.append(f"  - 디렉토리: {', '.join(port_data['dirs'])}")
+                    if port_data.get('files'):
+                        sections.append(f"  - 파일: {', '.join(port_data['files'])}")
+                    if port_data.get('extensions'):
+                        sections.append(f"  - 확장자: {', '.join(port_data['extensions'])}")
+                    if port_data.get('hidden'):
+                        sections.append(f"  - 히든파일: {', '.join(port_data['hidden'])}")
+                    if port_data.get('vhosts'):
+                        sections.append(f"  - 가상호스트: {', '.join(port_data['vhosts'])}")
+        else:
+            sections.append("웹 열거 결과:")
+            if web_enum.get('dirs'):
+                sections.append(f"- 디렉토리: {', '.join(web_enum['dirs'])}")
+            if web_enum.get('files'):
+                sections.append(f"- 파일: {', '.join(web_enum['files'])}")
+        
+        return sections
+    
+    def _generate_vulnerabilities_section(self, results: Dict) -> list:
+        """취약점 정보 섹션 생성"""
+        sections = []
+        vulnerabilities = results.get('vulnerabilities', {})
+        cve_results = getattr(self, 'cve_results', [])
+        
+        if vulnerabilities or cve_results:
+            sections.append("## 발견된 취약점 및 Exploit")
+            total_vulns = len(cve_results) if cve_results else sum(len(v) for v in vulnerabilities.values())
+            sections.append(f"searchsploit으로 {total_vulns}개의 알려진 취약점/Exploit을 발견했습니다:")
+            
+            if vulnerabilities:
+                for i, (service_port, vuln_list) in enumerate(vulnerabilities.items()):
+                    if i >= 15:
+                        break
+                    sections.append(f"\n### {i+1}. {service_port}")
+                    sections.append(f"**취약점**: {', '.join(vuln_list)}")
+        else:
+            sections.append("\n## CVE 취약점 검색 결과")
+            sections.append("알려진 CVE 취약점이 발견되지 않았습니다.")
+        
+        return sections
+    
+    def _generate_system_environment_section(self, results: Dict) -> list:
+        """시스템 환경 정보 섹션 생성"""
+        sections = []
+        sections.append("## 시스템 환경 정보")
+        
+        port_info = []
+        services = results.get('services', results.get('discovered_ports', {}))
+        
+        if isinstance(services, dict) and services:
+            # 비표준 포트 확인
+            if any(port in ['8080', '8081', '8082', '8083', '8084'] for port in services.keys()):
+                port_info.append("비표준 포트(8000번대) 사용 확인")
+            
+            # 데이터베이스 서비스 확인
+            db_ports = self._find_database_ports(services)
+            if db_ports:
+                port_info.append(f"데이터베이스 포트 외부 노출: {', '.join(db_ports)}")
+            
+            # tcpwrapped 서비스 확인
+            tcpwrapped_count = self._count_tcpwrapped_services(services)
+            if tcpwrapped_count > 0:
+                port_info.append(f"접근 제어된 서비스 {tcpwrapped_count}개 확인")
+        
+        for info in port_info:
+            sections.append(f"- {info}")
+        
+        return sections
+    
+    def _find_database_ports(self, services: dict) -> list:
+        """데이터베이스 서비스 포트 찾기"""
+        db_ports = []
+        for port, service_info in services.items():
+            if isinstance(service_info, str):
+                if any(db in service_info.lower() for db in self.DB_SERVICES):
+                    db_ports.append(port)
+            elif isinstance(service_info, dict):
+                if service_info.get('service', '') in self.DB_SERVICES:
+                    db_ports.append(port)
+        return db_ports
+    
+    def _count_tcpwrapped_services(self, services: dict) -> int:
+        """tcpwrapped 서비스 개수 계산"""
+        count = 0
+        for service_info in services.values():
+            if isinstance(service_info, str) and 'tcpwrapped' in service_info:
+                count += 1
+            elif isinstance(service_info, dict) and service_info.get('service', '') == 'tcpwrapped':
+                count += 1
+        return count
+    
+    def _generate_analysis_request_section(self, results: Dict) -> list:
+        """분석 요청 섹션 생성"""
+        sections = []
+        
+        # CVE 언급 부분
+        vulnerabilities = results.get('vulnerabilities', {})
+        cve_results = getattr(self, 'cve_results', [])
+        
+        cve_mention = ""
+        if vulnerabilities or cve_results:
+            total_vulns = len(cve_results) if cve_results else sum(len(v) for v in vulnerabilities.values())
+            cve_mention = f"\n{total_vulns}개의 알려진 CVE 취약점이 발견되었습니다. 이러한 CVE 정보를 활용한 공격 시나리오를 우선적으로 고려해주세요."
+        
+        sections.append(f"## AI 분석 요청\n\n위의 수집된 정보를 바탕으로 다음을 분석해주세요:\n\n1. **공격 가능성이 높은 진입점** 식별\n2. **CVE 기반 우선 공격 벡터** 도출\n3. **단계별 공격 시나리오** 수립\n4. **취약점들을 연계한 공격 체인** 구성\n5. **각 공격 경로의 성공 가능성** 평가\n6. **공격자 관점에서의 우선순위** 제시{cve_mention}\n\n특히 발견된 웹 서비스들과 데이터베이스 노출 상황을 고려하여 실제 공격에서 어떤 순서로 접근할지 구체적인 시나리오를 제시해주세요.")
+        
+        return sections
+    
     def _clean_ansi_codes(self, text: str) -> str:
         """터미널 출력에서 ANSI 색상 코드와 특수 문자 제거
         
@@ -1367,9 +1729,9 @@ async def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 사용 예시:
-  python3 pipe.py -i 192.168.1.100
-  python3 pipe.py -i 192.168.1.100 -d example.com
-  python3 pipe.py -d example.com --verbose
+  python3 pipe.py -i IP -w Wordlist_PATH
+  python3 pipe.py -i IP -d DOMAIN -w Wordlist_PATH
+  python3 pipe.py -i IP -p PORT (PORT가 주어졌을 경우)
         """
     )
     
@@ -1390,12 +1752,6 @@ async def main():
     )
     
     parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='상세한 진행상황 출력'
-    )
-    
-    parser.add_argument(
         '-p', '--port',
         default=None,
         help='포트 지정'
@@ -1406,21 +1762,11 @@ async def main():
         help='SecLists 워드리스트 경로 (예: /usr/share/seclists)'
     )
     
-    parser.add_argument(
-        '-t', '--timeout',
-        type=int,
-        default=300,
-        help='스캔 타임아웃 (초, default: 300)'
-    )
-    
     args = parser.parse_args()
     
     # 입력 검증
     if not args.ip and not args.domain:
         print("오류: 대상을 지정해주세요:")
-        print("  옵션 1: -i <ip> -d <domain> (IP-도메인 매핑)")
-        print("  옵션 2: -i <ip> (IP만)")
-        print("  옵션 3: -d <domain> (도메인만)")
         return
     
     if args.ip and args.domain:
@@ -1429,9 +1775,6 @@ async def main():
         print(f"IP 대상: {args.ip}")
     elif args.domain:
         print(f"도메인 대상: {args.domain}")
-    if args.verbose:
-        print(f"출력 경로: {args.output}")
-        print(f"타임아웃: {args.timeout}초")
     
     # OSINT 스캐너 인스턴스 생성 및 실행
     scanner = OSINTStager(
@@ -1445,8 +1788,7 @@ async def main():
         # 전체 파이프라인 실행
         results, natural_context = await scanner.execute_full_pipeline()
         
-        # 결과 파일 저장
-        import os
+        # 저장할 폴더 생성
         os.makedirs(args.output, exist_ok=True)
         
         # JSON 결과 파일 저장
@@ -1461,7 +1803,7 @@ async def main():
         
         print(f"\n결과가 {output_file}에 저장되었습니다.")
         
-        # 자연어 보고서 저장 (사람이 읽기용)
+        # 보고서 저장 
         if natural_context:
             report_file = os.path.join(
                 args.output,
@@ -1469,12 +1811,10 @@ async def main():
             )
             with open(report_file, 'w', encoding='utf-8') as f:
                 f.write(natural_context)
-            print(f"자연어 보고서가 {report_file}에 저장되었습니다.")
+            print(f"보고서가 {report_file}에 저장되었습니다.")
         
         # 실행 결과 요약 출력
         print("\n" + "="*50)
-        print("실행 요약")
-        print("="*50)
         print(f"대상: {results['target']}")
         discovered_ports = results.get('discovered_ports', {})
         web_urls = results.get('web_urls', [])
@@ -1484,20 +1824,12 @@ async def main():
         print(f"웹 서비스: {len(web_urls) if isinstance(web_urls, list) else 0}개")
         print(f"전문 스캔: {len(specialized_scans) if isinstance(specialized_scans, dict) else 0}개")
         
-        if args.verbose and isinstance(discovered_ports, dict) and discovered_ports:
-            print("\n발견된 서비스 상세:")
-            for port, info in discovered_ports.items():
-                if isinstance(info, dict):
-                    service = info.get('service', 'unknown')
-                    version = info.get('version', 'unknown')
-                    print(f"   {port}/tcp: {service} ({version})")
-        
     finally:
-        # 항상 임시 파일 정리 (보안과 디스크 공간을 위해)
+        # 스캔 과정 중 생긴 임시 파일들 정리
         scanner.cleanup_temp_files()
 
 def print_banner():
-    """Hacklipse OSINT 파이프라인 시작 배너 출력"""
+    """Hacklipse OSINT 시작 배너 출력"""
     banner = r"""
     __  _____   ________ __ __    ________  _____ ______
    / / / /   | / ____/ //_// /   /  _/ __ \/ ___// ____/
@@ -1511,9 +1843,8 @@ def print_banner():
  \___/|___/___|_|\_| |_|   |_| |_| .__/\___|_|_|_||_\___|
                                  |_|                     
 """
-    
+
     print(banner)
-    print("2025 인공지능빅데이터센터 연구과제")
     print("AI 학습용 데이터 수집 및 분석 자동화")
     print("=" * 60)
     print()
@@ -1524,9 +1855,6 @@ def check_sudo_privileges():
     nmap 등의 도구는 SYN 스캔을 위해 root 권한이 필요합니다.
     권한이 없으면 자동으로 sudo로 재실행을 시도합니다.
     """
-    import os
-    import sys
-    
     # 이미 root 권한인지 확인
     if os.geteuid() == 0:
         return True
@@ -1553,59 +1881,18 @@ def check_sudo_privileges():
         
     except Exception as e:
         print(f"sudo 권한 획득 실패: {e}")
-        print("수동으로 다음 명령어를 실행하세요:")
-        print(f"sudo {' '.join(sys.argv)}")
         sys.exit(1)
-
-def check_required_tools():
-    """필수 보안 도구들 설치 여부 확인
-    
-    스크립트 실행에 필요한 도구들이 설치되어 있는지 확인하고
-    누락된 도구에 대한 설치 방법을 안내합니다.
-    """
-    required_tools = {
-        'nmap': 'sudo apt install nmap',
-    }
-    
-    missing_tools = []
-    
-    for tool, install_cmd in required_tools.items():
-        try:
-            result = subprocess.run(['which', tool], 
-                                  capture_output=True, timeout=5)
-            if result.returncode == 0:
-                print(f"{tool} 설치됨")
-            else:
-                missing_tools.append((tool, install_cmd))
-        except:
-            missing_tools.append((tool, install_cmd))
-    
-    if missing_tools:
-        print("\n누락된 도구들:")
-        for tool, cmd in missing_tools:
-            print(f"   {tool}: {cmd}")
-        print("\n설치 후 다시 실행해주세요.")
-        return False
-    
-    return True
-
+        
 if __name__ == "__main__":
     """메인 실행 진입점"""
-    import sys
     
-    # 멋진 배너 출력
+    # 배너 출력
     print_banner()
     
     # 1. sudo 권한 확인 및 자동 상승
     check_sudo_privileges()
     
-    # 2. 필수 도구 설치 여부 확인
-    if not check_required_tools():
-        sys.exit(1)
-    
-
-    
-    # 3. 메인 파이프라인 실행
+    # 3. 메인 코드 실행
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
