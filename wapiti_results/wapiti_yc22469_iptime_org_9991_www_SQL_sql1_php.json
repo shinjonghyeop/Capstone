@@ -491,23 +491,7 @@
     "Cleartext Submission of Password": [],
     "Weak credentials": [],
     "CRLF Injection": [],
-    "Content Security Policy Configuration": [
-      {
-        "method": "GET",
-        "path": "/",
-        "info": "CSP is not set for URL: https://pentest-ground.com:81/",
-        "level": 1,
-        "parameter": null,
-        "referer": "",
-        "module": "csp",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:81/\"",
-        "wstg": [
-          "WSTG-CONF-12",
-          "OSHP-Content-Security-Policy"
-        ]
-      }
-    ],
+    "Content Security Policy Configuration": [],
     "Cross Site Request Forgery": [],
     "Potentially dangerous file": [],
     "Command execution": [],
@@ -516,85 +500,10 @@
     "Fingerprint web server": [],
     "Htaccess Bypass": [],
     "HTML Injection": [],
-    "Clickjacking Protection": [
-      {
-        "method": "GET",
-        "path": "/",
-        "info": "X-Frame-Options is not set",
-        "level": 1,
-        "parameter": null,
-        "referer": "",
-        "module": "http_headers",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:81/\"",
-        "wstg": [
-          "OSHP-X-Frame-Options"
-        ]
-      }
-    ],
-    "HTTP Strict Transport Security (HSTS)": [
-      {
-        "method": "GET",
-        "path": "/",
-        "info": "Strict-Transport-Security is not set",
-        "level": 1,
-        "parameter": null,
-        "referer": "",
-        "module": "http_headers",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:81/\"",
-        "wstg": [
-          "WSTG-CONF-07",
-          "OSHP-HTTP-Strict-Transport-Security"
-        ]
-      }
-    ],
-    "MIME Type Confusion": [
-      {
-        "method": "GET",
-        "path": "/",
-        "info": "X-Content-Type-Options is not set",
-        "level": 1,
-        "parameter": null,
-        "referer": "",
-        "module": "http_headers",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:81/\"",
-        "wstg": [
-          "OSHP-X-Content-Type-Options"
-        ]
-      }
-    ],
-    "HttpOnly Flag cookie": [
-      {
-        "method": "GET",
-        "path": "/",
-        "info": "HttpOnly flag is not set on the cookie 'SessionID' set at 'https://pentest-ground.com:81/'",
-        "level": 1,
-        "parameter": null,
-        "referer": "",
-        "module": "cookieflags",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:81/\"",
-        "wstg": [
-          "WSTG-SESS-02"
-        ]
-      },
-      {
-        "method": "POST",
-        "path": "/login",
-        "info": "HttpOnly flag is not set on the cookie 'session' set at 'https://pentest-ground.com:81/login'",
-        "level": 1,
-        "parameter": null,
-        "referer": "https://pentest-ground.com:81/login",
-        "module": "cookieflags",
-        "http_request": "POST /login HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\ncontent-type: application/x-www-form-urlencoded\nreferer: https://pentest-ground.com:81/login\ncookie: SessionID=encrypted-session-id\ncontent-length: 49\nContent-Type: application/x-www-form-urlencoded\n\nusername=alice&password=Letm3in_&remember_me=true",
-        "curl_command": "curl \"https://pentest-ground.com:81/login\" -e \"https://pentest-ground.com:81/login\" -d \"username=alice&password=Letm3in_&remember_me=true\"",
-        "wstg": [
-          "WSTG-SESS-02"
-        ]
-      }
-    ],
+    "Clickjacking Protection": [],
+    "HTTP Strict Transport Security (HSTS)": [],
+    "MIME Type Confusion": [],
+    "HttpOnly Flag cookie": [],
     "Unencrypted Channels": [],
     "Inconsistent Redirection": [],
     "Information Disclosure - Full Path": [],
@@ -602,66 +511,8 @@
     "Log4Shell": [],
     "NS takeover": [],
     "Open Redirect": [],
-    "Reflected Cross Site Scripting": [
-      {
-        "method": "POST",
-        "path": "/1/edit",
-        "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter title",
-        "level": 2,
-        "parameter": "title",
-        "referer": "https://pentest-ground.com:81/1/edit",
-        "module": "xss",
-        "http_request": "POST /1/edit HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\ncontent-type: application/x-www-form-urlencoded\nreferer: https://pentest-ground.com:81/1/edit\ncookie: SessionID=encrypted-session-id\ncontent-length: 667\nContent-Type: application/x-www-form-urlencoded\n\ntitle=%3C%2Ftitle%3E%3CScRiPt%3Ealert%28%27w9aapilb4k%27%29%3C%2FsCrIpT%3E&content=Lorem%20Ipsum%20is%20simply%20dummy%20text%20of%20the%20printing%20and%20typesetting%20industry.%20Lorem%20Ipsum%20has%20been%20the%20industry%27s%20standard%20dummy%20text%20ever%20since%20the%201500s%2C%20when%20an%20unknown%20printer%20took%20a%20galley%20of%20type%20and%20scrambled%20it%20to%20make%20a%20type%20specimen%20book.%20It%20has%20survived%20not%20only%20five%20centuries%2C%20but%20also%20the%20leap%20into%20electronic%20typesetting%2C%20remaining%20essentially%20unchanged.%20It%20was%20popularised%20in%20the%201960s%20with%20the%20release%20of%20Letraset%20sheets%20containing%20Lorem%20Ipsum%20passages%2C%20and%20more%20recently%20with%20desktop%20publishing%20software%20like%20Aldus%20PageMaker%20including%20versions%20of%20Lorem%20Ipsum.",
-        "curl_command": "curl \"https://pentest-ground.com:81/1/edit\" -e \"https://pentest-ground.com:81/1/edit\" -d \"title=%3C%2Ftitle%3E%3CScRiPt%3Ealert%28%27w9aapilb4k%27%29%3C%2FsCrIpT%3E&content=Lorem%20Ipsum%20is%20simply%20dummy%20text%20of%20the%20printing%20and%20typesetting%20industry.%20Lorem%20Ipsum%20has%20been%20the%20industry%27s%20standard%20dummy%20text%20ever%20since%20the%201500s%2C%20when%20an%20unknown%20printer%20took%20a%20galley%20of%20type%20and%20scrambled%20it%20to%20make%20a%20type%20specimen%20book.%20It%20has%20survived%20not%20only%20five%20centuries%2C%20but%20also%20the%20leap%20into%20electronic%20typesetting%2C%20remaining%20essentially%20unchanged.%20It%20was%20popularised%20in%20the%201960s%20with%20the%20release%20of%20Letraset%20sheets%20containing%20Lorem%20Ipsum%20passages%2C%20and%20more%20recently%20with%20desktop%20publishing%20software%20like%20Aldus%20PageMaker%20including%20versions%20of%20Lorem%20Ipsum.\"",
-        "wstg": [
-          "WSTG-INPV-01"
-        ]
-      },
-      {
-        "method": "POST",
-        "path": "/2/edit",
-        "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter title",
-        "level": 2,
-        "parameter": "title",
-        "referer": "https://pentest-ground.com:81/2/edit",
-        "module": "xss",
-        "http_request": "POST /2/edit HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\ncontent-type: application/x-www-form-urlencoded\nreferer: https://pentest-ground.com:81/2/edit\ncookie: SessionID=encrypted-session-id\ncontent-length: 978\nContent-Type: application/x-www-form-urlencoded\n\ntitle=%3C%2Ftitle%3E%3CScRiPt%3Ealert%28%27wjrhmjhht5%27%29%3C%2FsCrIpT%3E&content=%22Sed%20ut%20perspiciatis%20unde%20omnis%20iste%20natus%20error%20sit%20voluptatem%20accusantium%20doloremque%20laudantium%2C%20totam%20rem%20aperiam%2C%20eaque%20ipsa%20quae%20ab%20illo%20inventore%20veritatis%20et%20quasi%20architecto%20beatae%20vitae%20dicta%20sunt%20explicabo.%20Nemo%20enim%20ipsam%20voluptatem%20quia%20voluptas%20sit%20aspernatur%20aut%20odit%20aut%20fugit%2C%20sed%20quia%20consequuntur%20magni%20dolores%20eos%20qui%20ratione%20voluptatem%20sequi%20nesciunt.%20Neque%20porro%20quisquam%20est%2C%20qui%20dolorem%20ipsum%20quia%20dolor%20sit%20amet%2C%20consectetur%2C%20adipisci%20velit%2C%20sed%20quia%20non%20numquam%20eius%20modi%20tempora%20incidunt%20ut%20labore%20et%20dolore%20magnam%20aliquam%20quaerat%20voluptatem.%20Ut%20enim%20ad%20minima%20veniam%2C%20quis%20nostrum%20exercitationem%20ullam%20corporis%20suscipit%20laboriosam%2C%20nisi%20ut%20aliquid%20ex%20ea%20commodi%20consequatur%3F%20Quis%20autem%20vel%20eum%20iure%20reprehenderit%20qui%20in%20ea%20voluptate%20velit%20esse%20quam%20nihil%20molestiae%20consequatur%2C%20vel%20illum%20qui%20dolorem%20eum%20fugiat%20quo%20voluptas%20nulla%20pariatur%3F%22",
-        "curl_command": "curl \"https://pentest-ground.com:81/2/edit\" -e \"https://pentest-ground.com:81/2/edit\" -d \"title=%3C%2Ftitle%3E%3CScRiPt%3Ealert%28%27wjrhmjhht5%27%29%3C%2FsCrIpT%3E&content=%22Sed%20ut%20perspiciatis%20unde%20omnis%20iste%20natus%20error%20sit%20voluptatem%20accusantium%20doloremque%20laudantium%2C%20totam%20rem%20aperiam%2C%20eaque%20ipsa%20quae%20ab%20illo%20inventore%20veritatis%20et%20quasi%20architecto%20beatae%20vitae%20dicta%20sunt%20explicabo.%20Nemo%20enim%20ipsam%20voluptatem%20quia%20voluptas%20sit%20aspernatur%20aut%20odit%20aut%20fugit%2C%20sed%20quia%20consequuntur%20magni%20dolores%20eos%20qui%20ratione%20voluptatem%20sequi%20nesciunt.%20Neque%20porro%20quisquam%20est%2C%20qui%20dolorem%20ipsum%20quia%20dolor%20sit%20amet%2C%20consectetur%2C%20adipisci%20velit%2C%20sed%20quia%20non%20numquam%20eius%20modi%20tempora%20incidunt%20ut%20labore%20et%20dolore%20magnam%20aliquam%20quaerat%20voluptatem.%20Ut%20enim%20ad%20minima%20veniam%2C%20quis%20nostrum%20exercitationem%20ullam%20corporis%20suscipit%20laboriosam%2C%20nisi%20ut%20aliquid%20ex%20ea%20commodi%20consequatur%3F%20Quis%20autem%20vel%20eum%20iure%20reprehenderit%20qui%20in%20ea%20voluptate%20velit%20esse%20quam%20nihil%20molestiae%20consequatur%2C%20vel%20illum%20qui%20dolorem%20eum%20fugiat%20quo%20voluptas%20nulla%20pariatur%3F%22\"",
-        "wstg": [
-          "WSTG-INPV-01"
-        ]
-      }
-    ],
-    "Secure Flag cookie": [
-      {
-        "method": "GET",
-        "path": "/",
-        "info": "Secure flag is not set on the cookie: 'SessionID' set at 'https://pentest-ground.com:81/'",
-        "level": 1,
-        "parameter": null,
-        "referer": "",
-        "module": "cookieflags",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:81/\"",
-        "wstg": [
-          "WSTG-SESS-02"
-        ]
-      },
-      {
-        "method": "POST",
-        "path": "/login",
-        "info": "Secure flag is not set on the cookie: 'session' set at 'https://pentest-ground.com:81/login'",
-        "level": 1,
-        "parameter": null,
-        "referer": "https://pentest-ground.com:81/login",
-        "module": "cookieflags",
-        "http_request": "POST /login HTTP/1.1\nhost: pentest-ground.com:81\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\ncontent-type: application/x-www-form-urlencoded\nreferer: https://pentest-ground.com:81/login\ncookie: SessionID=encrypted-session-id\ncontent-length: 49\nContent-Type: application/x-www-form-urlencoded\n\nusername=alice&password=Letm3in_&remember_me=true",
-        "curl_command": "curl \"https://pentest-ground.com:81/login\" -e \"https://pentest-ground.com:81/login\" -d \"username=alice&password=Letm3in_&remember_me=true\"",
-        "wstg": [
-          "WSTG-SESS-02"
-        ]
-      }
-    ],
+    "Reflected Cross Site Scripting": [],
+    "Secure Flag cookie": [],
     "Spring4Shell": [],
     "SQL Injection": [],
     "TLS/SSL misconfigurations": [],
@@ -684,12 +535,12 @@
     "TLS/SSL misconfigurations": []
   },
   "infos": {
-    "target": "https://pentest-ground.com:81/",
-    "date": "Sun, 12 Oct 2025 07:18:02 +0000",
+    "target": "http://yc22469.iptime.org:9991/www/SQL/sql1.php",
+    "date": "Sun, 12 Oct 2025 10:46:53 +0000",
     "version": "Wapiti 3.2.6",
     "scope": "folder",
     "auth": null,
-    "crawled_pages_nbr": 15,
+    "crawled_pages_nbr": 0,
     "detailed_report_level": 0
   }
 }

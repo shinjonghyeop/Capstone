@@ -14,6 +14,9 @@ cd scanners/nuclei/cmd/nuclei
 
 # Build the Go application
 echo "Step 2: Building the nuclei binary..."
+go get -u github.com/Azure/azure-sdk-for-go/sdk/azidentity@latest
+go get -u github.com/Azure/azure-sdk-for-go/sdk/azcore@latest
+go mod tidy
 go build
 
 # Move the built binary to a directory in the system's PATH

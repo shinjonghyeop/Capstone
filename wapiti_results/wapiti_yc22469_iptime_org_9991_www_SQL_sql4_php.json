@@ -491,7 +491,23 @@
     "Cleartext Submission of Password": [],
     "Weak credentials": [],
     "CRLF Injection": [],
-    "Content Security Policy Configuration": [],
+    "Content Security Policy Configuration": [
+      {
+        "method": "GET",
+        "path": "/www/SQL/sql4.php",
+        "info": "CSP is not set for URL: http://yc22469.iptime.org:9991/www/SQL/sql4.php",
+        "level": 1,
+        "parameter": null,
+        "referer": "",
+        "module": "csp",
+        "http_request": "GET /www/SQL/sql4.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql4.php\"",
+        "wstg": [
+          "WSTG-CONF-12",
+          "OSHP-Content-Security-Policy"
+        ]
+      }
+    ],
     "Cross Site Request Forgery": [],
     "Potentially dangerous file": [],
     "Command execution": [],
@@ -500,18 +516,92 @@
     "Fingerprint web server": [],
     "Htaccess Bypass": [],
     "HTML Injection": [],
-    "Clickjacking Protection": [],
+    "Clickjacking Protection": [
+      {
+        "method": "GET",
+        "path": "/www/SQL/sql4.php",
+        "info": "X-Frame-Options is not set",
+        "level": 1,
+        "parameter": null,
+        "referer": "",
+        "module": "http_headers",
+        "http_request": "GET /www/SQL/sql4.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql4.php\"",
+        "wstg": [
+          "OSHP-X-Frame-Options"
+        ]
+      }
+    ],
     "HTTP Strict Transport Security (HSTS)": [],
-    "MIME Type Confusion": [],
+    "MIME Type Confusion": [
+      {
+        "method": "GET",
+        "path": "/www/SQL/sql4.php",
+        "info": "X-Content-Type-Options is not set",
+        "level": 1,
+        "parameter": null,
+        "referer": "",
+        "module": "http_headers",
+        "http_request": "GET /www/SQL/sql4.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql4.php\"",
+        "wstg": [
+          "OSHP-X-Content-Type-Options"
+        ]
+      }
+    ],
     "HttpOnly Flag cookie": [],
-    "Unencrypted Channels": [],
+    "Unencrypted Channels": [
+      {
+        "method": "GET",
+        "path": "/www/SQL/sql4.php",
+        "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+        "level": 1,
+        "parameter": null,
+        "referer": "",
+        "module": "https_redirect",
+        "http_request": "GET /www/SQL/sql4.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql4.php\"",
+        "wstg": [
+          "WSTG-CRYP-03"
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/www/SQL/sql4.php",
+        "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://yc22469.iptime.org:9991/www/SQL/sql4.php. The server did not enforce HTTPS.",
+        "level": 2,
+        "parameter": null,
+        "referer": "http://yc22469.iptime.org:9991/www/SQL/sql4.php",
+        "module": "https_redirect",
+        "http_request": "POST /www/SQL/sql4.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\ncontent-type: application/x-www-form-urlencoded\nreferer: http://yc22469.iptime.org:9991/www/SQL/sql4.php\ncontent-length: 28\nContent-Type: application/x-www-form-urlencoded\n\nnumber=default&submit=Submit",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql4.php\" -e \"http://yc22469.iptime.org:9991/www/SQL/sql4.php\" -d \"number=default&submit=Submit\"",
+        "wstg": [
+          "WSTG-CRYP-03"
+        ]
+      }
+    ],
     "Inconsistent Redirection": [],
     "Information Disclosure - Full Path": [],
     "LDAP Injection": [],
     "Log4Shell": [],
     "NS takeover": [],
     "Open Redirect": [],
-    "Reflected Cross Site Scripting": [],
+    "Reflected Cross Site Scripting": [
+      {
+        "method": "POST",
+        "path": "/www/SQL/sql4.php",
+        "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter number",
+        "level": 2,
+        "parameter": "number",
+        "referer": "http://yc22469.iptime.org:9991/www/SQL/sql4.php",
+        "module": "xss",
+        "http_request": "POST /www/SQL/sql4.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\ncontent-type: application/x-www-form-urlencoded\nreferer: http://yc22469.iptime.org:9991/www/SQL/sql4.php\ncontent-length: 75\nContent-Type: application/x-www-form-urlencoded\n\nnumber=%3CScRiPt%3Ealert%28%22wvsnjx3juv%22%29%3C%2FsCrIpT%3E&submit=Submit",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql4.php\" -e \"http://yc22469.iptime.org:9991/www/SQL/sql4.php\" -d \"number=%3CScRiPt%3Ealert%28%22wvsnjx3juv%22%29%3C%2FsCrIpT%3E&submit=Submit\"",
+        "wstg": [
+          "WSTG-INPV-01"
+        ]
+      }
+    ],
     "Secure Flag cookie": [],
     "Spring4Shell": [],
     "SQL Injection": [],
@@ -535,12 +625,12 @@
     "TLS/SSL misconfigurations": []
   },
   "infos": {
-    "target": "http://yc22469.iptime.org:9991/www/XSS/XSS_level2.php",
-    "date": "Sun, 12 Oct 2025 07:26:06 +0000",
+    "target": "http://yc22469.iptime.org:9991/www/SQL/sql4.php",
+    "date": "Sun, 12 Oct 2025 10:48:12 +0000",
     "version": "Wapiti 3.2.6",
     "scope": "folder",
     "auth": null,
-    "crawled_pages_nbr": 0,
+    "crawled_pages_nbr": 2,
     "detailed_report_level": 0
   }
 }

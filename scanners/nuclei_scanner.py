@@ -19,7 +19,8 @@ def run_scan(url_file: str, headers: str = "", cookies: str = "") -> None:
     print("\n[Nuclei] 스캔 시작...")
     
     # 템플릿 경로 (홈 디렉토리 고정)
-    templates_path = os.path.expanduser("~/.nuclei-templates")
+    templates_path = os.path.expanduser("./nuclei-templates")
+    # templates_path = os.path.expanduser("./scanners/nuclei-templates")
     
     # 결과 저장 디렉토리
     results_dir = "nuclei_results"
@@ -44,11 +45,7 @@ def run_scan(url_file: str, headers: str = "", cookies: str = "") -> None:
     
     # 태그 설정 (고정값)
     tags = [
-        "cve", "cve2023", "cve2024",
-        "rce", "sqli", "xss",
-        "panel", "exposed-panels",
-        "config", "backup", "disclosure",
-        "default-login", "takeover", "misconfig"
+        "hacklipse"
     ]
     command.extend(["-tags", ",".join(tags)])
     
@@ -74,7 +71,7 @@ def run_scan(url_file: str, headers: str = "", cookies: str = "") -> None:
     if cookies:
         command.extend(["-H", f"Cookie: {cookies}"])
     
-    print(f"[Nuclei] 명령어: {' '.join(command[:5])}...")  # 일부만 출력
+    print(f"[Nuclei] 명령어: {' '.join(command)}")  # 일부만 출력
     print(f"[Nuclei] 결과 파일: {output_file}")
     
     try:
@@ -110,3 +107,10 @@ def run_scan(url_file: str, headers: str = "", cookies: str = "") -> None:
     
     print("[Nuclei] 스캔 종료.")
 
+if __name__ == "__main__":
+    """
+    테스트용 메인 함수
+    """
+    test_url_file = "../urls.txt"
+    
+    run_scan(test_url_file)

@@ -494,14 +494,14 @@
     "Content Security Policy Configuration": [
       {
         "method": "GET",
-        "path": "/",
-        "info": "CSP is not set for URL: https://pentest-ground.com:5013/",
+        "path": "/www/SQL/sql3.php",
+        "info": "CSP is not set for URL: http://yc22469.iptime.org:9991/www/SQL/sql3.php",
         "level": 1,
         "parameter": null,
         "referer": "",
         "module": "csp",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:5013\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:5013/\"",
+        "http_request": "GET /www/SQL/sql3.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql3.php\"",
         "wstg": [
           "WSTG-CONF-12",
           "OSHP-Content-Security-Policy"
@@ -519,107 +519,75 @@
     "Clickjacking Protection": [
       {
         "method": "GET",
-        "path": "/",
+        "path": "/www/SQL/sql3.php",
         "info": "X-Frame-Options is not set",
         "level": 1,
         "parameter": null,
         "referer": "",
         "module": "http_headers",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:5013\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:5013/\"",
+        "http_request": "GET /www/SQL/sql3.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql3.php\"",
         "wstg": [
           "OSHP-X-Frame-Options"
         ]
       }
     ],
-    "HTTP Strict Transport Security (HSTS)": [
-      {
-        "method": "GET",
-        "path": "/",
-        "info": "Strict-Transport-Security is not set",
-        "level": 1,
-        "parameter": null,
-        "referer": "",
-        "module": "http_headers",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:5013\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:5013/\"",
-        "wstg": [
-          "WSTG-CONF-07",
-          "OSHP-HTTP-Strict-Transport-Security"
-        ]
-      }
-    ],
+    "HTTP Strict Transport Security (HSTS)": [],
     "MIME Type Confusion": [
       {
         "method": "GET",
-        "path": "/",
+        "path": "/www/SQL/sql3.php",
         "info": "X-Content-Type-Options is not set",
         "level": 1,
         "parameter": null,
         "referer": "",
         "module": "http_headers",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:5013\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:5013/\"",
+        "http_request": "GET /www/SQL/sql3.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql3.php\"",
         "wstg": [
           "OSHP-X-Content-Type-Options"
         ]
       }
     ],
-    "HttpOnly Flag cookie": [
+    "HttpOnly Flag cookie": [],
+    "Unencrypted Channels": [
       {
         "method": "GET",
-        "path": "/",
-        "info": "HttpOnly flag is not set on the cookie 'env' set at 'https://pentest-ground.com:5013/'",
+        "path": "/www/SQL/sql3.php",
+        "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
         "level": 1,
         "parameter": null,
         "referer": "",
-        "module": "cookieflags",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:5013\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:5013/\"",
+        "module": "https_redirect",
+        "http_request": "GET /www/SQL/sql3.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql3.php\"",
         "wstg": [
-          "WSTG-SESS-02"
+          "WSTG-CRYP-03"
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/www/SQL/sql3.php",
+        "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://yc22469.iptime.org:9991/www/SQL/sql3.php. The server did not enforce HTTPS.",
+        "level": 2,
+        "parameter": null,
+        "referer": "http://yc22469.iptime.org:9991/www/SQL/sql3.php",
+        "module": "https_redirect",
+        "http_request": "POST /www/SQL/sql3.php HTTP/1.1\nhost: yc22469.iptime.org:9991\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\ncontent-type: application/x-www-form-urlencoded\nreferer: http://yc22469.iptime.org:9991/www/SQL/sql3.php\ncontent-length: 28\nContent-Type: application/x-www-form-urlencoded\n\nnumber=default&submit=Submit",
+        "curl_command": "curl \"http://yc22469.iptime.org:9991/www/SQL/sql3.php\" -e \"http://yc22469.iptime.org:9991/www/SQL/sql3.php\" -d \"number=default&submit=Submit\"",
+        "wstg": [
+          "WSTG-CRYP-03"
         ]
       }
     ],
-    "Unencrypted Channels": [],
     "Inconsistent Redirection": [],
-    "Information Disclosure - Full Path": [
-      {
-        "method": "GET",
-        "path": "/solutions",
-        "info": "Response contains potential system path: /usr/bin/env",
-        "level": 1,
-        "parameter": null,
-        "referer": "",
-        "module": "information_disclosure",
-        "http_request": "GET /solutions HTTP/1.1\nhost: pentest-ground.com:5013\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\ncookie: env=graphiql:disable",
-        "curl_command": "curl \"https://pentest-ground.com:5013/solutions\"",
-        "wstg": [
-          "WSTG-ERRH-01"
-        ]
-      }
-    ],
+    "Information Disclosure - Full Path": [],
     "LDAP Injection": [],
     "Log4Shell": [],
     "NS takeover": [],
     "Open Redirect": [],
     "Reflected Cross Site Scripting": [],
-    "Secure Flag cookie": [
-      {
-        "method": "GET",
-        "path": "/",
-        "info": "Secure flag is not set on the cookie: 'env' set at 'https://pentest-ground.com:5013/'",
-        "level": 1,
-        "parameter": null,
-        "referer": "",
-        "module": "cookieflags",
-        "http_request": "GET / HTTP/1.1\nhost: pentest-ground.com:5013\nconnection: keep-alive\nuser-agent: Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0\naccept-language: en-US\naccept-encoding: gzip, deflate, br\naccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "curl_command": "curl \"https://pentest-ground.com:5013/\"",
-        "wstg": [
-          "WSTG-SESS-02"
-        ]
-      }
-    ],
+    "Secure Flag cookie": [],
     "Spring4Shell": [],
     "SQL Injection": [],
     "TLS/SSL misconfigurations": [],
@@ -642,12 +610,12 @@
     "TLS/SSL misconfigurations": []
   },
   "infos": {
-    "target": "https://pentest-ground.com:5013/",
-    "date": "Sun, 12 Oct 2025 07:17:27 +0000",
+    "target": "http://yc22469.iptime.org:9991/www/SQL/sql3.php",
+    "date": "Sun, 12 Oct 2025 10:47:41 +0000",
     "version": "Wapiti 3.2.6",
     "scope": "folder",
     "auth": null,
-    "crawled_pages_nbr": 16,
+    "crawled_pages_nbr": 2,
     "detailed_report_level": 0
   }
 }

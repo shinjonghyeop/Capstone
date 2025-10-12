@@ -143,11 +143,11 @@ def run_scan(
                 # 각 헤더를 -H "Name: Value" 형태로 추가
                 cmd += ["-H", h]
 
-        print("[*] 실행:", " ".join(cmd))
+        print("[Wapiti] 실행:", " ".join(cmd))
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout= None)
         except Exception as e:
-            print(f"[!] 실행 오류: {e}")
+            print(f"[Wapiti] 실행 오류: {e}")
             continue
 
         # 파일이 실제로 생성되었는지 확인

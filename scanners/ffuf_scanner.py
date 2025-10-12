@@ -6,8 +6,9 @@ from typing import Dict, Optional
 
 
 # FFUF Configuration
-UNIFIED_WORDLIST = "./scanners/wordlist.txt"
-RECURSION_DEPTH = 3
+# UNIFIED_WORDLIST = "./scanners/wordlist.txt"
+UNIFIED_WORDLIST = "./scanners/wordlist_test.txt"
+RECURSION_DEPTH = 2
 THREADS = 100
 OUTPUT_DIR="./ffuf_output"
 
