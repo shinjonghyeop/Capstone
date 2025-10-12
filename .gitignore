@@ -67,12 +67,9 @@ nmap_*
 *.gnmap
 
 
-# nuclei 스캔 결과
-nuclei_*
 
 # ffuf 결과 디렉토리 및 파일
 ffuf_results_*
-ffuf_*
 
 # whatweb 결과
 whatweb_*
