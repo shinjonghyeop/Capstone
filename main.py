@@ -3,8 +3,7 @@
 
 import asyncio
 import os
-from scanners.ffuf_scanner import run_ffuf
-from scanners import wapiti_scan, nuclei_scan
+from scanners import wapiti_scanner, ffuf_scanner, nuclei_scanner
 
 
 async def async_run_scanners(url_file: str, headers: dict, cookies: dict):
@@ -15,8 +14,8 @@ async def async_run_scanners(url_file: str, headers: dict, cookies: dict):
     try:
         # 비동기 병렬 실행
         await asyncio.gather(
-            asyncio.to_thread(wapiti_scan, url_file, headers, cookies),
-            asyncio.to_thread(nuclei_scan, url_file, headers, cookies)
+            asyncio.to_thread(wapiti_scanner, url_file, headers, cookies),
+            asyncio.to_thread(nuclei_scanner, url_file, headers, cookies)
         )
         print("[+] 모든 스캐너 실행 완료.")
     except Exception as e:
@@ -25,7 +24,7 @@ async def async_run_scanners(url_file: str, headers: dict, cookies: dict):
 
 def main():
     print("=== FFUF + Wapiti + Nuclei Launcher ===")
-		    # ✅ output 디렉터리 확인 및 생성
+		    #  output 디렉터리 확인 및 생성
     
     url = input("URL 입력 (예: http://yc22469.iptime.org:9991/www/homepage.html): ").strip()
     cookies = input("쿠키 입력 (예: sess=abc; uid=1) [없으면 엔터]: ").strip()
@@ -43,7 +42,7 @@ def main():
 
     print(f"\n[+] run_ffuf 실행 중... ({url})")
     try:
-        result = run_ffuf(url, headers=headers, cookies=cookies)
+        result = ffuf_scanner.run_ffuf(url, output_dir=ffuf_scanner.OUTPUT_DIR, cookies=cookies)
         print("[+] run_ffuf 완료.")
     except Exception as e:
         print(f"[!] run_ffuf 실행 중 오류 발생: {e}")
