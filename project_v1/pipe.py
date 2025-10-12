@@ -736,9 +736,8 @@ class OSINTStager:
                     
                 print(f"  포트 {port}: '{search_term}' 검색 중...")
                 
-                # 2단계 검색: 1) 일반 검색으로 EDB-ID 수집 2) -p 옵션으로 상세 정보 수집
-                found_cves = await self._two_stage_searchsploit(search_term, service_info, port)
-                
+                # JSON 형식으로 SearchSploit 검색
+                found_cves = await self._json_searchsploit(search_term, service_info, port)
                 if found_cves > 0:
                     total_cves += found_cves
                 
@@ -920,34 +919,77 @@ class OSINTStager:
         
         return found_count
     
-    async def _two_stage_searchsploit(self, search_term: str, service_info: Dict[str, str], port: str) -> int:
+    async def _json_searchsploit(self, search_term: str, service_info: Dict[str, str], port: str) -> int:
         """
-        2단계 searchsploit 검색
-        1단계: 일반 검색으로 EDB-ID 수집
-        2단계: EDB-ID로 상세 CVE 정보 수집
+        JSON 형식으로 searchsploit 검색
+        --json 옵션을 사용하여 한 번의 호출로 CVE 정보 수집
         """
-        # 1단계: 일반 검색
-        command = ['searchsploit', search_term]
-        result = await self.run_command(f"searchsploit ({search_term})", command, timeout=30)
+        command = ['searchsploit', search_term, '--json']
+        result = await self.run_command(f"searchsploit --json ({search_term})", command, timeout=30)
         
         if not result or not result.strip():
             return 0
             
-        # EDB-ID 추출
-        edb_ids = self._extract_edb_ids_from_output(result)
-        if not edb_ids:
-            return 0
+        try:
+            import json
+            search_data = json.loads(result)
             
-        total_found = 0
-        
-        # 2단계: 각 EDB-ID에 대해 상세 정보 수집
-        for edb_id in edb_ids:
-            detailed_info = await self._get_cve_details(edb_id)
-            if detailed_info:
-                found_cves = self._parse_detailed_cve_info(detailed_info, service_info)
-                total_found += found_cves
+            total_found = 0
+            
+            # RESULTS_EXPLOIT에서 CVE 정보 추출
+            exploits = search_data.get('RESULTS_EXPLOIT', [])
+            for exploit in exploits:
+                cve_info = {
+                    'cve': exploit.get('Codes', ''),
+                    'title': exploit.get('Title', ''),
+                    'url': f"https://www.exploit-db.com/exploits/{exploit.get('EDB-ID', '')}",
+                    'path': exploit.get('Path', ''),
+                    'verified': exploit.get('Verified', '0') == '1',
+                    'edb_id': exploit.get('EDB-ID', ''),
+                    'date_published': exploit.get('Date_Published', ''),
+                    'author': exploit.get('Author', ''),
+                    'platform': exploit.get('Platform', ''),
+                    'type': exploit.get('Type', '')
+                }
                 
-        return total_found
+                # 서비스 정보 추가
+                if service_info:
+                    cve_info['service'] = service_info.get('service', '')
+                    cve_info['product'] = service_info.get('product', '')
+                    cve_info['port'] = service_info.get('port', '')
+                
+                # CVE나 제목이 있으면 저장
+                if cve_info['cve'] or cve_info['title']:
+                    result_info = {
+                        'cve': cve_info['cve'],
+                        'title': cve_info['title'][:100],
+                        'url': cve_info['url'],
+                        'path': cve_info['path'],
+                        'verified': cve_info['verified'],
+                        'edb_id': cve_info['edb_id'],
+                        'date_published': cve_info['date_published'],
+                        'author': cve_info['author'],
+                        'platform': cve_info['platform'],
+                        'type': cve_info['type'],
+                        'line': f"{cve_info['title']} | {cve_info['url']}"[:200]
+                    }
+                    
+                    if service_info:
+                        result_info['service'] = cve_info['service']
+                        result_info['product'] = cve_info['product']
+                        result_info['port'] = cve_info['port']
+                    
+                    self.cve_results.append(result_info)
+                    total_found += 1
+            
+            return total_found
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON 파싱 오류: {e}")
+            return 0
+        except Exception as e:
+            print(f"SearchSploit JSON 처리 오류: {e}")
+            return 0
     
     def _extract_edb_ids_from_output(self, searchsploit_output: str) -> list:
         """
@@ -1023,27 +1065,25 @@ class OSINTStager:
             elif line.startswith('Verified:'):
                 cve_info['verified'] = 'True' in line
                 
-        # CVE 정보가 있으면 저장
+        # CVE 정보가 있으면 바로 저장 (중복 확인 제거)
         if cve_info['cve'] or cve_info['title']:
-            # 중복 확인
-            if cve_info['cve'] not in [item.get('cve', '') for item in self.cve_results]:
-                result_info = {
-                    'cve': cve_info['cve'],
-                    'title': cve_info['title'][:100],
-                    'url': cve_info['url'],
-                    'path': cve_info['path'],
-                    'verified': cve_info['verified'],
-                    'line': f"{cve_info['title']} | {cve_info['url']}"[:200]
-                }
+            result_info = {
+                'cve': cve_info['cve'],
+                'title': cve_info['title'][:100],
+                'url': cve_info['url'],
+                'path': cve_info['path'],
+                'verified': cve_info['verified'],
+                'line': f"{cve_info['title']} | {cve_info['url']}"[:200]
+            }
+            
+            # 서비스 정보 추가
+            if service_info:
+                result_info['service'] = service_info.get('service', '')
+                result_info['product'] = service_info.get('product', '')
+                result_info['port'] = service_info.get('port', '')
                 
-                # 서비스 정보 추가
-                if service_info:
-                    result_info['service'] = service_info.get('service', '')
-                    result_info['product'] = service_info.get('product', '')
-                    result_info['port'] = service_info.get('port', '')
-                    
-                self.cve_results.append(result_info)
-                return 1
+            self.cve_results.append(result_info)
+            return 1
                 
         return 0
 
@@ -1055,16 +1095,12 @@ class OSINTStager:
             service = info.get('service', 'unknown')
             version = info.get('version', '')
             
-            # 버전에서 불필요한 정보 제거
+            # 버전에서 불필요한 정보만 제거하고 세부 버전은 모두 보존
             if version:
                 version = re.sub(r'\([^)]*\)', '', version).strip()
                 version = re.sub(r'protocol \d+\.\d+', '', version).strip()
                 version = re.sub(r'Ubuntu Linux.*', '', version).strip()
-                # 주요 버전만 추출 (예: "2.4.49" -> "2.4")
-                if '.' in version:
-                    version_parts = version.split('.')
-                    if len(version_parts) >= 2:
-                        version = '.'.join(version_parts[:2])
+                # 모든 서비스의 세부 버전 정보 보존 (예: "2.4.49" 유지)
             
             compressed[port] = f"{service}" + (f" {version}" if version else "")
         
