@@ -1,0 +1,32 @@
+id: manage-cabinet-register
+
+info:
+  name: Manage Cabinet Register - Exposed
+  author: noel
+  severity: low
+  description: |
+   The path to the Cabinet Storage is omniapp/pages/cabinet/managecabinet.jsf?Action=1. If exposed, it gives an attacker insight into information such as Storage Volume Name, Cabinet Name, it's alias, Deployed AppServer IP Address and Port
+  reference:
+    - https://www.edms-consultants.com/newgen-rlos/
+  metadata:
+    verified: true
+    shodan-query: html:"omniapp"
+    max-request: 1
+  tags: misconfig,cabinet,exposure
+
+http:
+  - method: GET
+    path:
+      - '{{BaseURL}}/omniapp/pages/cabinet/managecabinet.jsf?Action=1'
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - 'Manage Cabinet [Register Cabinet]'
+
+      - type: status
+        status:
+          - 200
+# digest: 4a0a004730450221008e6eb3884668ceba5112a202a4d1c1a3334e4e683e729a794fc59fda6b4a06c002200213c2d6536837de35390075e52f01dc99ba5285d0d92a3d0e215d8498d90125:922c64590222798bb761d5b6d8e72950

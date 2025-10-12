@@ -1,0 +1,35 @@
+id: neocase-hrportal-panel
+
+info:
+  name: Neocase HR Portal Login Panel - Detect
+  author: righettod
+  severity: info
+  description: |
+    Neocase HR Portal login panel was detected.
+  reference:
+    - https://www.neocasesoftware.com/neocase-hr-solution/
+    - https://www.neocasesoftware.com/self-service-portal-module/
+  metadata:
+    verified: true
+    max-request: 1
+  tags: panel,neocase,login,detect
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    matchers:
+      - type: dsl
+        dsl:
+          - 'status_code == 200'
+          - 'contains(to_lower(body), "neocase") && contains(to_lower(body), "hr portal") && contains(to_lower(body), "login")'
+        condition: and
+
+    extractors:
+      - type: regex
+        part: body
+        group: 1
+        regex:
+          - 'name="version"\s+content="([0-9\.]+)"'
+# digest: 490a00463044022054ea4c0cedea939ce8c520a7e3540138ef3d8df71b3dbef6708fe86332ac1115022077a0672fdb6ae6c77844f68b8411ee21aba8686d65dbc24ee4017e928b8955a4:922c64590222798bb761d5b6d8e72950

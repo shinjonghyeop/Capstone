@@ -1,0 +1,32 @@
+id: blue-yonder-panel
+
+info:
+  name: Blue Yonder Panel - Detect
+  author: sorrowx3
+  severity: info
+  description: Blue Yonder login panel was discovered
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N
+    cwe-id: CWE-200
+  metadata:
+    verified: true
+    max-request: 2
+    shodan-query: html:"title=\"blue yonder\""
+  tags: panel,login,blue-yonder,detect
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+      - "{{BaseURL}}/base/home"
+
+    stop-at-first-match: true
+    host-redirects: true
+    max-redirects: 2
+    matchers:
+      - type: dsl
+        dsl:
+          - 'status_code == 200'
+          - 'contains(to_lower(body), "title=\"blue yonder\"")'
+        condition: and
+# digest: 4b0a004830460221009c2e23334aed278a33dd63700c5fa33f87b880587d5244b8cbcb67244adc3c96022100ea848d97ec28b1bcff0c88c8ad322873c448d643db95b3c02a0399c08900b753:922c64590222798bb761d5b6d8e72950

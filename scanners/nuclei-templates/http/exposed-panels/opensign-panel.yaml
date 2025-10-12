@@ -1,0 +1,31 @@
+id: opensign-panel
+
+info:
+  name: OpenSign Login Panel - Detect
+  author: righettod
+  severity: info
+  description: |
+    OpenSign Login panel was discovered.
+  reference:
+    - https://www.opensignlabs.com/
+    - https://github.com/OpenSignLabs/OpenSign
+  metadata:
+    max-request: 2
+    verified: true
+    shodan-query: http.title:"opensign"
+  tags: panel,opensign,login,detect
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/locales/en/translation.json"
+      - "{{BaseURL}}/"
+
+    stop-at-first-match: true
+    matchers:
+      - type: dsl
+        dsl:
+          - 'status_code == 200'
+          - 'contains(body, "OpenSign")'
+        condition: and
+# digest: 490a0046304402203772d36f41099b18cde54c81367716d0f90857f32f69661e9a3bd8f8c2e9ad49022078ec2c15709c764ff5d361c3bfc38becc3c0bf8a5b0a6ce4a8be07987143e168:922c64590222798bb761d5b6d8e72950

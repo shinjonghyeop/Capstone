@@ -1,0 +1,48 @@
+id: flexmls-idx-detect
+
+info:
+  name: Flexmls IDX - Detect
+  author: rxerium,sorrowx3
+  severity: info
+  metadata:
+    verified: true
+    max-request: 1
+    shodan-query: html:"/wp-content/plugins/flexmls-idx"
+  tags: tech,detect,flexmls,idx
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/wp-content/plugins/flexmls-idx/readme.txt"
+
+    payloads:
+      last_version: helpers/wordpress/plugins/flexmls-idx.txt
+
+    extractors:
+      - type: regex
+        part: body
+        internal: true
+        name: internal_detected_version
+        group: 1
+        regex:
+          - '(?i)Stable.tag:\s?([\w.]+)'
+
+      - type: regex
+        part: body
+        name: detected_version
+        group: 1
+        regex:
+          - '(?i)Stable.tag:\s?([\w.]+)'
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: "outdated_version"
+        dsl:
+          - compare_versions(internal_detected_version, concat("< ", last_version))
+
+      - type: regex
+        part: body
+        regex:
+          - '(?i)Stable.tag:\s?([\w.]+)'
+# digest: 4b0a00483046022100c7dbfe8c3ef8adfcc820cfd630a9fc14b359faa49740f70357134576e988e3730221009a685302baf538be6208c6305c1bb81287746f6f7c67c6f690801da2b752ec1b:922c64590222798bb761d5b6d8e72950

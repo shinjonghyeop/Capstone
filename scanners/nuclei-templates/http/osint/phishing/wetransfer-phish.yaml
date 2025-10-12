@@ -1,0 +1,35 @@
+id: wetransfer-phish
+
+info:
+  name: wetransfer phishing Detection
+  author: rxerium
+  severity: info
+  description: |
+    A wetransfer phishing website was detected
+  reference:
+    - https://wetransfer.com
+  metadata:
+    max-request: 1
+  tags: phishing,wetransfer,osint
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    host-redirects: true
+    max-redirects: 2
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        words:
+          - 'WeTransfer - Send Large Files &amp; Share Photos Online'
+
+      - type: status
+        status:
+          - 200
+
+      - type: dsl
+        dsl:
+          - '!contains(host,"wetransfer.com")'
+# digest: 4b0a004830460221008e4d81e9b14129f9c1c0443f39f413a76c7f57542c52ad6f9ea1b616a6add07b022100d77737f45915ea909dda44908849064dc00b12db898233b10a18022055ee9905:922c64590222798bb761d5b6d8e72950
