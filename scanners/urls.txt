@@ -1,5 +1,8 @@
-http://yc22469.iptime.org:9991/www/XSS/XSS_level1.php
-http://yc22469.iptime.org:9991/www/XSS/XSS_level2.php
-http://yc22469.iptime.org:9991/www/XSS/XSS_level3.php
-http://yc22469.iptime.org:9991/www/XSS/XSS_level4.php
-http://yc22469.iptime.org:9991/www/XSS/XSS_level5.php
+http://94.237.48.12:36555
+http://10.201.36.214:61777
+http://www.hacklipse.kr/ping?host=127.0.0.1
+http://www.hacklipse.kr/download?file=test.txt
+http://www.hacklipse.kr/search?q=test
+https://juice-shop.herokuapp.com/
+https://pentest-ground.com:5013/
+https://pentest-ground.com:81/
