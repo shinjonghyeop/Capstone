@@ -1,0 +1,5 @@
+http://yc22469.iptime.org:9991/www/XSS/XSS_level1.php
+http://yc22469.iptime.org:9991/www/XSS/XSS_level2.php
+http://yc22469.iptime.org:9991/www/XSS/XSS_level3.php
+http://yc22469.iptime.org:9991/www/XSS/XSS_level4.php
+http://yc22469.iptime.org:9991/www/XSS/XSS_level5.php
