@@ -1,63 +1,169 @@
 #!/usr/bin/env python3
-# main.py
+"""
+FFUF + Wapiti + Nuclei 통합 취약점 스캐너
+
+웹 애플리케이션에 대해 디렉토리 스캔(FFUF) 후,
+발견된 URL들을 대상으로 취약점 스캔(Wapiti, Nuclei)을 병렬 실행합니다.
+"""
 
 import asyncio
 import os
-from scanners import wapiti_scanner, ffuf_scanner, nuclei_scanner
+import sys
+from typing import Optional, Tuple
+from scanners.wapiti_scanner import run_scan as wapiti_scan
+from scanners.ffuf_scanner import run_ffuf, OUTPUT_DIR
+from scanners.nuclei_scanner import run_scan as nuclei_scan
 
 
-async def async_run_scanners(url_file: str, headers: dict, cookies: dict):
+# 상수 정의
+RESULTS_FILE = "urls.txt"
+BANNER = "=== FFUF + Wapiti + Nuclei Launcher ==="
+
+
+def validate_url(url: str) -> bool:
+    """URL 형식이 올바른지 검증"""
+    if not url:
+        return False
+    return url.startswith(("http://", "https://"))
+
+
+def get_user_input() -> Optional[Tuple[str, str, str]]:
     """
-    /temp/url.txt 파일을 인자로 받아 wapiti_scan, nuclei_scan 을 비동기로 동시에 실행.
+    사용자로부터 스캔 대상 정보를 입력받습니다.
+
+    Returns:
+        (url, cookies, headers) 튜플 또는 취소 시 None
     """
-    print(f"\n[+] 스캐너 실행 시작: {url_file}")
-    try:
-        # 비동기 병렬 실행
-        await asyncio.gather(
-            asyncio.to_thread(wapiti_scanner, url_file, headers, cookies),
-            asyncio.to_thread(nuclei_scanner, url_file, headers, cookies)
-        )
-        print("[+] 모든 스캐너 실행 완료.")
-    except Exception as e:
-        print(f"[!] 스캐너 실행 중 오류 발생: {e}")
+    print(BANNER)
+    print()
 
-
-def main():
-    print("=== FFUF + Wapiti + Nuclei Launcher ===")
-		    #  output 디렉터리 확인 및 생성
-    
+    # URL 입력
     url = input("URL 입력 (예: http://yc22469.iptime.org:9991/www/homepage.html): ").strip()
+    if not validate_url(url):
+        print("[!] 오류: 올바른 URL 형식이 아닙니다. (http:// 또는 https://로 시작해야 합니다)")
+        return None
+
+    # 쿠키 및 헤더 입력
     cookies = input("쿠키 입력 (예: sess=abc; uid=1) [없으면 엔터]: ").strip()
     headers = input("헤더 입력 (예: User-Agent:curl/7.0; Accept:*/*) [없으면 엔터]: ").strip()
 
+    # 입력값 확인
     print("\n[INFO] 입력값 확인")
     print(f"  URL     : {url}")
-    print(f"  Headers : {headers}")
-    print(f"  Cookies : {cookies}")
+    print(f"  Headers : {headers if headers else '(없음)'}")
+    print(f"  Cookies : {cookies if cookies else '(없음)'}")
 
+    # 실행 확인
     confirm = input("\n이 값으로 실행하시겠습니까? (y/n): ").strip().lower()
     if confirm != "y":
         print("[INFO] 실행이 취소되었습니다.")
-        return
+        return None
 
-    print(f"\n[+] run_ffuf 실행 중... ({url})")
+    return url, cookies, headers
+
+
+def run_directory_scan(url: str, cookies: str) -> bool:
+    """
+    FFUF를 실행하여 디렉토리 및 파일을 스캔합니다.
+
+    Args:
+        url: 스캔 대상 URL
+        cookies: 인증용 쿠키 문자열
+
+    Returns:
+        성공 여부
+    """
+    print(f"\n[+] FFUF 디렉토리 스캔 시작... ({url})")
     try:
-        result = ffuf_scanner.run_ffuf(url, output_dir=ffuf_scanner.OUTPUT_DIR, cookies=cookies)
-        print("[+] run_ffuf 완료.")
+        result = run_ffuf(url, output_dir=OUTPUT_DIR, cookies=cookies)
+
+        if result and os.path.exists(result):
+            print(f"[+] FFUF 스캔 완료. 결과: {result}")
+            return True
+        else:
+            print("[!] FFUF 결과 파일이 생성되지 않았습니다.")
+            return False
+
+    except FileNotFoundError:
+        print("[!] ffuf 명령어를 찾을 수 없습니다. ffuf가 설치되어 있는지 확인하세요.")
+        return False
     except Exception as e:
-        print(f"[!] run_ffuf 실행 중 오류 발생: {e}")
-        return
+        print(f"[!] FFUF 실행 중 오류 발생: {e}")
+        return False
 
-    # ffuf 결과 파일 확인
-    url_file = "scanners/url.txt"
-    if not os.path.exists(url_file):
-        print(f"[!] {url_file} 파일이 존재하지 않습니다. run_ffuf 출력 경로를 확인하세요.")
-        return
 
-    print(f"[+] FFUF 결과 파일 발견: {url_file}")
+async def run_vulnerability_scanners(url_file: str, headers: str, cookies: str) -> None:
+    """
+    Wapiti와 Nuclei 스캐너를 비동기로 병렬 실행합니다.
 
-    # 비동기 스캐너 실행
-    asyncio.run(async_run_scanners(url_file, headers, cookies))
+    Args:
+        url_file: 스캔 대상 URL 목록이 저장된 파일 경로
+        headers: HTTP 헤더 문자열
+        cookies: 쿠키 문자열
+    """
+    print(f"\n[+] 취약점 스캐너 실행 시작: {url_file}")
+
+    try:
+        # Wapiti와 Nuclei를 병렬로 실행
+        results = await asyncio.gather(
+            asyncio.to_thread(
+                wapiti_scan,
+                [url_file],
+                cookies=cookies,
+                headers=[headers] if headers else None
+            ),
+            asyncio.to_thread(
+                nuclei_scan,
+                url_file,
+                headers,
+                cookies
+            ),
+            return_exceptions=True
+        )
+
+        # 각 스캐너 결과 확인
+        for idx, result in enumerate(results):
+            scanner_name = ["Wapiti", "Nuclei"][idx]
+            if isinstance(result, Exception):
+                print(f"[!] {scanner_name} 실행 중 오류: {result}")
+
+        print("[+] 모든 취약점 스캐너 실행 완료.")
+
+    except Exception as e:
+        print(f"[!] 스캐너 실행 중 예상치 못한 오류 발생: {e}")
+
+
+def main():
+    """메인 실행 함수"""
+    try:
+        # 사용자 입력 받기
+        user_input = get_user_input()
+        if user_input is None:
+            return
+
+        url, cookies, headers = user_input
+
+        # 1단계: FFUF 디렉토리 스캔
+        if not run_directory_scan(url, cookies):
+            print("[!] FFUF 스캔 실패. 프로그램을 종료합니다.")
+            sys.exit(1)
+
+        # 결과 파일 확인
+        if not os.path.exists(RESULTS_FILE):
+            print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
+            sys.exit(1)
+
+        # 2단계: 취약점 스캐너 실행 (비동기)
+        asyncio.run(run_vulnerability_scanners(RESULTS_FILE, headers, cookies))
+
+        print("\n[+] 모든 스캔 완료!")
+
+    except KeyboardInterrupt:
+        print("\n[!] 사용자에 의해 중단되었습니다.")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n[!] 예상치 못한 오류: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
