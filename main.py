@@ -9,6 +9,7 @@ FFUF + Wapiti + Nuclei 통합 취약점 스캐너
 import asyncio
 import os
 import sys
+import argparse
 from typing import Optional, Tuple, List
 from scanners.wapiti_scanner import run_scan as wapiti_scan
 from scanners.ffuf_scanner import run_ffuf, OUTPUT_DIR
@@ -74,6 +75,19 @@ def get_user_input() -> Optional[Tuple[str, str, str]]:
 
     return url, cookies, headers
 
+def parse_arguments():
+    """명령줄 인자 파싱"""
+    parser = argparse.ArgumentParser(
+        description='FFUF + Wapiti + Nuclei 통합 취약점 스캐너',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    
+    parser.add_argument('--url', type=str, help='스캔 대상 URL')
+    parser.add_argument('--cookies', type=str, default='', help='쿠키 문자열 (예: session=abc; uid=1)')
+    parser.add_argument('--headers', type=str, default='', help='헤더 문자열 (예: User-Agent:curl)')
+    parser.add_argument('--json', action='store_true', help='결과를 JSON 형태로 출력')
+    
+    return parser.parse_args()
 
 def merge_and_deduplicate(ffuf_urls: List[str], crawler_urls: List[str]) -> List[str]:
     """
@@ -231,14 +245,16 @@ async def run_vulnerability_scanners(url_file: str, headers: str, cookies: str) 
         print(f"[!] 스캐너 실행 중 예상치 못한 오류 발생: {e}")
 
 
-async def main_async():
+async def main_async(url: str = None, cookies: str = "", headers: str = ""):
     """메인 실행 함수 (비동기)"""
-    # 사용자 입력 받기
-    user_input = get_user_input()
-    if user_input is None:
-        return
-
-    url, cookies, headers = user_input
+    # url이 있으면 input() 건너뛰기
+    if url:
+        print(f"[INFO] 명령줄 모드로 실행")
+    else:
+        user_input = get_user_input()
+        if user_input is None:
+            return
+        url, cookies, headers = user_input
 
     # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
     if not await run_discovery_stage(url, cookies):
@@ -285,9 +301,21 @@ async def main_async():
 
 
 def main():
-    """메인 엔트리 포인트"""
     try:
-        asyncio.run(main_async())
+        args = parse_arguments()
+        
+        if args.url:
+            if not validate_url(args.url):
+                print("오류: 올바른 URL 형식이 아닙니다.")
+                sys.exit(1)
+            
+            asyncio.run(main_async(
+                url = args.url,
+                cookies = args.cookies,
+                headers = args.headers
+            ))
+        else:
+            asyncio.run(main_async())
     except KeyboardInterrupt:
         print("\n[!] 사용자에 의해 중단되었습니다.")
         sys.exit(0)
