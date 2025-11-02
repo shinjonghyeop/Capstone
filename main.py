@@ -256,6 +256,21 @@ async def main_async():
 
     print("\n[+] 모든 스캔 완료!")
 
+    # 3단계: Wapiti 결과 필터링
+    print("\n[+] Wapiti 결과 필터링 시작...")
+    try:
+        processed_count = filter_dir(
+            input_dir="wapiti_results",
+            output_dir="filtered",
+            pretty=True
+        )
+        if processed_count > 0:
+            print(f"[+] Wapiti 필터링 완료: {processed_count}개 파일 처리됨")
+        else:
+            print("[!] 필터링할 Wapiti 결과가 없습니다.")
+    except Exception as e:
+        print(f"[!] Wapiti 필터링 중 오류 발생: {e}")
+
     # 3단계: Nuclei 결과 필터링
     print("\n[+] Nuclei 결과 필터링 시작...")
     try:
