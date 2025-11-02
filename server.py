@@ -44,7 +44,7 @@ def scan():
         print(f"{'='*60}\n")
         
         # main.py 실행
-        cmd = ['python3', 'test_main.py', '--url', url, '--json']
+        cmd = ['python3', 'main.py', '--url', url, '--json']
         if cookies:
             cmd.extend(['--cookies', cookies])
         if headers:
@@ -57,7 +57,7 @@ def scan():
         json_start = output.rfind('{')
         
         if json_start != -1:
-            json_str = output[json_start:]
+            json_str = output[json_start:]son 
             scan_results = json.loads(json_str)
             
             response = {
