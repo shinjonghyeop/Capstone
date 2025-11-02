@@ -14,6 +14,7 @@ from scanners.wapiti_scanner import run_scan as wapiti_scan
 from scanners.ffuf_scanner import run_ffuf, OUTPUT_DIR
 from scanners.nuclei_scanner import run_scan as nuclei_scan
 from utils.web_crawler import crawl_website
+from utils.nuclei_filter import filter_nuclei_results
 
 
 # 상수 정의
@@ -254,6 +255,21 @@ async def main_async():
     await run_vulnerability_scanners(RESULTS_FILE, headers, cookies)
 
     print("\n[+] 모든 스캔 완료!")
+
+    # 3단계: Nuclei 결과 필터링
+    print("\n[+] Nuclei 결과 필터링 시작...")
+    try:
+        processed_count = filter_nuclei_results(
+            input_dir="nuclei_results",
+            output_dir="filtered",
+            pretty=True
+        )
+        if processed_count > 0:
+            print(f"[+] Nuclei 필터링 완료: {processed_count}개 파일 처리됨")
+        else:
+            print("[!] 필터링할 Nuclei 결과가 없습니다.")
+    except Exception as e:
+        print(f"[!] Nuclei 필터링 중 오류 발생: {e}")
 
 
 def main():

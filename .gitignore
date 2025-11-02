@@ -70,6 +70,7 @@ nmap_*
 
 # ffuf 결과 디렉토리 및 파일
 ffuf_results_*
+filtered/*
 
 # whatweb 결과
 whatweb_*

@@ -1,64 +1,59 @@
-#!/usr/bin/env python3
-import json, sys, argparse
+import json, os, sys
 from typing import Any, Dict, List
 
 STRIP_ALWAYS = {"method", "level", "referer", "module", "http_request"}
 
-def sanitize_item(item: Any) -> Any:
-    """Remove unwanted keys (except 'wstg'). Keep 'parameter' only if it is not null."""
+def _sanitize_item(item: Any) -> Any:
     if not isinstance(item, dict):
         return item
     pruned = dict(item)
-    # remove always (wstg 제외)
     for k in STRIP_ALWAYS:
         pruned.pop(k, None)
-    # remove parameter only when null
     if "parameter" in pruned and pruned["parameter"] is None:
         pruned.pop("parameter", None)
     return pruned
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Filter Wapiti-style JSON: keep only non-empty vulnerabilities, "
-                    "prune fields from each finding (preserve 'wstg'), and drop the top-level 'vulnerabilities' wrapper."
-    )
-    parser.add_argument("input", help="Input JSON file path")
-    parser.add_argument("-o", "--output", help="Output JSON file path (default: stdout)")
-    args = parser.parse_args()
-
-    # Read
-    try:
-        with open(args.input, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except Exception as e:
-        print(f"[!] Failed to read JSON: {e}", file=sys.stderr)
-        sys.exit(1)
-
-    # Validate and filter
+def _filter_one_json(data: Dict[str, Any]) -> Dict[str, List[Any]]:
     vulns: Dict[str, Any] = data.get("vulnerabilities", {})
-    if not isinstance(vulns, dict):
-        print("[!] 'vulnerabilities' key missing or not an object", file=sys.stderr)
-        sys.exit(2)
-
-    # Keep only keys with non-empty list values, and sanitize each item in the list
-    result: Dict[str, List[Any]] = {}
+    result = {}
     for k, v in vulns.items():
         if isinstance(v, list) and len(v) > 0:
-            result[k] = [sanitize_item(it) for it in v]
+            result[k] = [_sanitize_item(it) for it in v]
+    return result
 
-    # Output WITHOUT the top-level 'vulnerabilities' wrapper
-    out = result
+def filter_dir(input_dir: str) -> List[str]:
+    """
+    input_dir: json 파일들이 있는 디렉터리
+    output: ./filterd/ 디렉터리에 필터링된 json들 저장 (현재 실행 경로 기준)
+    return: 저장된 JSON 파일 fullpath 리스트
+    """
+    if not os.path.isdir(input_dir):
+        raise NotADirectoryError(input_dir)
 
-    # Write
-    try:
-        if args.output:
-            with open(args.output, "w", encoding="utf-8") as f:
-                json.dump(out, f, ensure_ascii=False, indent=2)
-        else:
-            print(json.dumps(out, ensure_ascii=False, indent=2))
-    except Exception as e:
-        print(f"[!] Failed to write output: {e}", file=sys.stderr)
-        sys.exit(3)
+    # ※ 변경된 부분 (현재 working directory 기준)
+    outdir = "./filtered"
+    os.makedirs(outdir, exist_ok=True)
 
-if __name__ == "__main__":
-    main()
+    saved = []
+
+    for name in os.listdir(input_dir):
+        src = os.path.join(input_dir, name)
+        if os.path.isfile(src) and name.lower().endswith(".json"):
+            try:
+                with open(src, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception as e:
+                print(f"[!] read fail {src}: {e}")
+                continue
+
+            result = _filter_one_json(data)
+            dst = os.path.join(outdir, name)  # same name in ./filterd
+
+            try:
+                with open(dst, "w", encoding="utf-8") as f:
+                    json.dump(result, f, ensure_ascii=False, indent=2)
+                saved.append(dst)
+            except Exception as e:
+                print(f"[!] write fail {dst}: {e}")
+
+    return saved
