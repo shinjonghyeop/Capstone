@@ -35,6 +35,7 @@ import {
  *  2) Replace `fetchScanResults` with a real fetch.
  */
 
+const API_BASE_URL = 'http://localhost:3000';
 const SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"];
 const SEVERITY_COLORS = {
   critical: "bg-red-600 text-white",
@@ -130,7 +131,7 @@ async function fetchScanResults(url, extras = {}) {
     // cookie/headers가 있으면 POST 시도
     if ((cookie && cookie.trim()) || (headers && headers.trim())) {
       try {
-        const res = await fetch(`/api/scan`, {
+        const res = await fetch(`${API_BASE_URL}/api/scan`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url, cookies: cookie, headers }),
@@ -147,7 +148,7 @@ async function fetchScanResults(url, extras = {}) {
     }
 
     // 기본 GET (기존 동작)
-    const res = await fetch(`/api/scan?url=${encodeURIComponent(url)}`);
+    const res = await fetch(`${API_BASE_URL}/api/scan?url=${encodeURIComponent(url)}`);
     if (!res.ok) throw new Error("non-200");
     const data = await res.json();
     if (!data.findings && (Array.isArray(data) || data.nuclei || data.wapiti)) {
