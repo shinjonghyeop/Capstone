@@ -45,6 +45,7 @@ def extract_vulnerability_info(vuln: Dict[str, Any]) -> Dict[str, Any]:
     # 필요한 필드만 추출
     filtered = {
         'info': {
+            'name': info.get('name', 'N/A'),
             'description': info.get('description', 'N/A'),
             'impact': info.get('impact', 'N/A'),
             'severity': info.get('severity', 'N/A'),
