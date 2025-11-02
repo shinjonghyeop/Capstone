@@ -39,16 +39,16 @@ require (
 	github.com/valyala/fasttemplate v1.2.2
 	github.com/weppos/publicsuffix-go v0.50.0
 	go.uber.org/multierr v1.11.0
-	golang.org/x/net v0.44.0
+	golang.org/x/net v0.46.0
 	golang.org/x/oauth2 v0.30.0
-	golang.org/x/text v0.29.0
+	golang.org/x/text v0.30.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
 	carvel.dev/ytt v0.52.0
 	code.gitea.io/sdk/gitea v0.17.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.1
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.1.0
 	github.com/DataDog/gostackparse v0.7.0
 	github.com/Masterminds/semver/v3 v3.2.1
@@ -123,7 +123,7 @@ require (
 	github.com/zmap/zgrab2 v0.1.8
 	gitlab.com/gitlab-org/api/client-go v0.130.1
 	go.mongodb.org/mongo-driver v1.17.4
-	golang.org/x/term v0.35.0
+	golang.org/x/term v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
 	moul.io/http2curl v1.0.0
 )
@@ -133,11 +133,11 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	git.mills.io/prologic/smtpd v0.0.0-20210710122116-a525b76c287a // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.19.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Mzack9999/go-http-digest-auth-client v0.6.1-0.20220414142836-eb8883508809 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
@@ -231,7 +231,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
@@ -393,10 +393,10 @@ require (
 	go.etcd.io/bbolt v1.4.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	goftp.io/server/v2 v2.0.1 // indirect
-	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621
 	golang.org/x/mod v0.28.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.37.0
 	google.golang.org/protobuf v1.36.6 // indirect

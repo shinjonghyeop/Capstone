@@ -18,10 +18,10 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
     print("\n[Nuclei] 스캔 시작...")
     
     # URL 파일 경로
-    url_file = "../urls.txt"
+    url_file = './urls.txt'
     
     # 템플릿 경로 (홈 디렉토리 고정)
-    templates_path = os.path.expanduser("./nuclei-templates")
+    templates_path = os.path.expanduser("./scanners/nuclei-templates")
     
     # 결과 저장 디렉토리
     results_dir = "nuclei_results"

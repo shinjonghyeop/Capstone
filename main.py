@@ -213,9 +213,8 @@ async def run_vulnerability_scanners(url_file: str, headers: str, cookies: str) 
             ),
             asyncio.to_thread(
                 nuclei_scan,
-                url_file,
-                headers,
-                cookies
+                headers=headers,
+                cookies=cookies
             ),
             return_exceptions=True
         )
