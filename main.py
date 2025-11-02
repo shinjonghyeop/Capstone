@@ -9,10 +9,11 @@ FFUF + Wapiti + Nuclei 통합 취약점 스캐너
 import asyncio
 import os
 import sys
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from scanners.wapiti_scanner import run_scan as wapiti_scan
 from scanners.ffuf_scanner import run_ffuf, OUTPUT_DIR
 from scanners.nuclei_scanner import run_scan as nuclei_scan
+from utils.web_crawler import crawl_website
 
 
 # 상수 정의
@@ -71,6 +72,92 @@ def get_user_input() -> Optional[Tuple[str, str, str]]:
         return None
 
     return url, cookies, headers
+
+
+def merge_and_deduplicate(ffuf_urls: List[str], crawler_urls: List[str]) -> List[str]:
+    """
+    FFUF와 크롤러 결과를 병합하고 중복 제거
+
+    Args:
+        ffuf_urls: FFUF에서 발견한 URL 리스트
+        crawler_urls: 크롤러에서 발견한 URL 리스트
+
+    Returns:
+        중복 제거된 URL 리스트 (정렬됨)
+    """
+    # Set으로 중복 제거
+    unique_urls = set()
+
+    # FFUF 결과 추가
+    if ffuf_urls:
+        for url in ffuf_urls:
+            unique_urls.add(url.strip())
+
+    # 크롤러 결과 추가
+    if crawler_urls:
+        for url in crawler_urls:
+            unique_urls.add(url.strip())
+
+    # 정렬된 리스트로 반환
+    return sorted(list(unique_urls))
+
+
+async def run_discovery_stage(url: str, cookies: str) -> bool:
+    """
+    1단계: FFUF와 웹 크롤러를 병렬로 실행하여 URL 발견
+
+    Args:
+        url: 스캔 대상 URL
+        cookies: 인증용 쿠키 문자열
+
+    Returns:
+        성공 여부
+    """
+    print(f"\n[+] 1단계: Discovery 시작... ({url})")
+    print("[+] FFUF와 웹 크롤러를 병렬 실행합니다...")
+
+    try:
+        # FFUF와 크롤러를 병렬로 실행
+        ffuf_urls, crawler_urls = await asyncio.gather(
+            asyncio.to_thread(run_ffuf, url, OUTPUT_DIR, cookies),
+            asyncio.to_thread(crawl_website, url, cookies, ""),
+            return_exceptions=True
+        )
+
+        # 에러 체크
+        if isinstance(ffuf_urls, Exception):
+            print(f"[!] FFUF 실행 중 오류: {ffuf_urls}")
+            ffuf_urls = []
+
+        if isinstance(crawler_urls, Exception):
+            print(f"[!] 크롤러 실행 중 오류: {crawler_urls}")
+            crawler_urls = []
+
+        # 결과 병합 및 중복 제거
+        all_urls = merge_and_deduplicate(ffuf_urls, crawler_urls)
+
+        # 통계 출력
+        print(f"\n[+] Discovery 완료:")
+        print(f"    FFUF: {len(ffuf_urls)}개 URL")
+        print(f"    크롤러: {len(crawler_urls)}개 URL")
+        print(f"    중복 제거 후: {len(all_urls)}개 URL")
+
+        # urls.txt 저장
+        if all_urls:
+            with open(RESULTS_FILE, 'w') as f:
+                f.write('\n'.join(all_urls))
+            print(f"[+] {RESULTS_FILE} 저장 완료")
+            return True
+        else:
+            print("[!] 발견된 URL이 없습니다.")
+            return False
+
+    except FileNotFoundError:
+        print("[!] ffuf 명령어를 찾을 수 없습니다. ffuf가 설치되어 있는지 확인하세요.")
+        return False
+    except Exception as e:
+        print(f"[!] Discovery 단계 실행 중 오류 발생: {e}")
+        return False
 
 
 def run_directory_scan(url: str, cookies: str) -> bool:
@@ -144,31 +231,35 @@ async def run_vulnerability_scanners(url_file: str, headers: str, cookies: str) 
         print(f"[!] 스캐너 실행 중 예상치 못한 오류 발생: {e}")
 
 
+async def main_async():
+    """메인 실행 함수 (비동기)"""
+    # 사용자 입력 받기
+    user_input = get_user_input()
+    if user_input is None:
+        return
+
+    url, cookies, headers = user_input
+
+    # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
+    if not await run_discovery_stage(url, cookies):
+        print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
+        sys.exit(1)
+
+    # 결과 파일 확인
+    if not os.path.exists(RESULTS_FILE):
+        print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
+        sys.exit(1)
+
+    # 2단계: 취약점 스캐너 실행 (비동기)
+    await run_vulnerability_scanners(RESULTS_FILE, headers, cookies)
+
+    print("\n[+] 모든 스캔 완료!")
+
+
 def main():
-    """메인 실행 함수"""
+    """메인 엔트리 포인트"""
     try:
-        # 사용자 입력 받기
-        user_input = get_user_input()
-        if user_input is None:
-            return
-
-        url, cookies, headers = user_input
-
-        # 1단계: FFUF 디렉토리 스캔
-        if not run_directory_scan(url, cookies):
-            print("[!] FFUF 스캔 실패. 프로그램을 종료합니다.")
-            sys.exit(1)
-
-        # 결과 파일 확인
-        if not os.path.exists(RESULTS_FILE):
-            print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
-            sys.exit(1)
-
-        # 2단계: 취약점 스캐너 실행 (비동기)
-        asyncio.run(run_vulnerability_scanners(RESULTS_FILE, headers, cookies))
-
-        print("\n[+] 모든 스캔 완료!")
-
+        asyncio.run(main_async())
     except KeyboardInterrupt:
         print("\n[!] 사용자에 의해 중단되었습니다.")
         sys.exit(0)

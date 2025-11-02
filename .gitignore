@@ -84,7 +84,7 @@ results_*/
 scan_*/
 osint_results_*
 security_report_*
-
+wapiti_results/*
 # OSINT 도구 로그 파일들
 *.log
 logs/

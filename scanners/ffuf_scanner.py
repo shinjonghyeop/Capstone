@@ -2,7 +2,7 @@ import os
 import subprocess
 import json
 import shutil
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 
 # FFUF Configuration
@@ -13,9 +13,9 @@ THREADS = 100
 OUTPUT_DIR="./ffuf_output"
 
 
-def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> Optional[str]:
+def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> List[str]:
     """
-    Execute FFUF unified scan (directories + files) and parse to URLs
+    Execute FFUF unified scan (directories + files) and return URLs
 
     Args:
         url: Target URL to scan (e.g., http://localhost)
@@ -23,7 +23,7 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> Optional[str]:
         cookie: Cookie string for authentication (default: 'test=')
 
     Returns:
-        Path to saved URLs text file or None if failed
+        List of discovered URLs or empty list if failed
     """
 
     # Create output directory
@@ -37,10 +37,9 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> Optional[str]:
         cmd = build_ffuf_command(url, UNIFIED_WORDLIST, json_file, cookies)
         execute_ffuf(cmd, "unified")
 
-        # Parse JSON to URLs
+        # Parse JSON to URLs (returns list)
         if os.path.exists(json_file):
-            urls_file = os.path.join('./', "urls.txt")
-            result = parse_json_to_urls(json_file, urls_file)
+            result = parse_json_to_urls(json_file)
 
             # Cleanup: Remove ffuf_output directory
             if os.path.exists(output_dir):
@@ -49,12 +48,12 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> Optional[str]:
                 except Exception as e:
                     print(f"[FFUF] Warning: Failed to cleanup {output_dir}: {e}")
         else:
-            result = None
+            result = []
     else:
         print(f"[FFUF] Wordlist not found: {UNIFIED_WORDLIST}")
-        result = None
+        result = []
 
-    print("[FFUF] Scan completed")
+    print(f"[FFUF] Scan completed: {len(result)} URLs found")
     return result
 
 
@@ -119,17 +118,15 @@ def execute_ffuf(command: list, scan_name: str) -> bool:
         return False
 
 
-def parse_json_to_urls(json_path: str, output_path: str) -> Optional[str]:
+def parse_json_to_urls(json_path: str) -> List[str]:
     """
-    Parse FFUF JSON results and extract URLs to text file
+    Parse FFUF JSON results and extract URLs
 
     Args:
         json_path: Path to FFUF JSON results file
-        output_path: Path to save URLs text file (default: urls.txt in same dir)
 
     Returns:
-        Path to saved URLs file or None if failed
-
+        List of unique URLs or empty list if failed
     """
     try:
         # Read FFUF JSON
@@ -151,23 +148,17 @@ def parse_json_to_urls(json_path: str, output_path: str) -> Optional[str]:
                 unique_urls.append(url)
                 seen.add(url)
 
-        # Write to text file
-        if unique_urls:
-            with open(output_path, 'w') as f:
-                f.write('\n'.join(unique_urls))
-            return output_path
-        else:
-            return None
+        return unique_urls
 
     except FileNotFoundError:
         print(f"[FFUF] File not found: {json_path}")
-        return None
+        return []
     except json.JSONDecodeError as e:
         print(f"[FFUF] Invalid JSON format: {e}")
-        return None
+        return []
     except Exception as e:
         print(f"[FFUF] Error parsing FFUF results: {e}")
-        return None
+        return []
 
 '''
 # Test code
