@@ -1,0 +1,51 @@
+{
+  "Content Security Policy Configuration": [
+    {
+      "path": "/www/FileInclusion/pages/lvl4.php",
+      "info": "CSP is not set for URL: http://localhost:9991/www/FileInclusion/pages/lvl4.php",
+      "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php\"",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ]
+    }
+  ],
+  "Clickjacking Protection": [
+    {
+      "path": "/www/FileInclusion/pages/lvl4.php",
+      "info": "X-Frame-Options is not set",
+      "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php\"",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ]
+    }
+  ],
+  "MIME Type Confusion": [
+    {
+      "path": "/www/FileInclusion/pages/lvl4.php",
+      "info": "X-Content-Type-Options is not set",
+      "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php\"",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ]
+    }
+  ],
+  "Unencrypted Channels": [
+    {
+      "path": "/www/FileInclusion/pages/lvl4.php",
+      "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php\"",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ]
+    },
+    {
+      "path": "/www/FileInclusion/pages/lvl4.php",
+      "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/FileInclusion/pages/lvl4.php?file=1.php. The server did not enforce HTTPS.",
+      "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php?file=1.php\"",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ]
+    }
+  ]
+}

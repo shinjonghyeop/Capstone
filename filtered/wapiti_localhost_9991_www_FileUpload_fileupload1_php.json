@@ -1,0 +1,83 @@
+{
+  "Content Security Policy Configuration": [
+    {
+      "path": "/www/FileUpload/fileupload1.php",
+      "info": "CSP is not set for URL: http://localhost:9991/www/FileUpload/fileupload1.php",
+      "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\"",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ]
+    }
+  ],
+  "Path Traversal": [
+    {
+      "path": "/www/FileUpload/fileupload1.php",
+      "info": "Possible move_uploaded_file() vulnerability via injection in the parameter file (Constraints: prefix)",
+      "parameter": "file",
+      "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\" -e \"http://localhost:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=fileupload1.php\"",
+      "wstg": [
+        "WSTG-ATHZ-01"
+      ]
+    }
+  ],
+  "Clickjacking Protection": [
+    {
+      "path": "/www/FileUpload/fileupload1.php",
+      "info": "X-Frame-Options is not set",
+      "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\"",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ]
+    }
+  ],
+  "MIME Type Confusion": [
+    {
+      "path": "/www/FileUpload/fileupload1.php",
+      "info": "X-Content-Type-Options is not set",
+      "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\"",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ]
+    }
+  ],
+  "Unencrypted Channels": [
+    {
+      "path": "/www/FileUpload/fileupload1.php",
+      "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\"",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ]
+    },
+    {
+      "path": "/www/FileUpload/fileupload1.php",
+      "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/FileUpload/fileupload1.php. The server did not enforce HTTPS.",
+      "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\" -e \"http://localhost:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=pix.gif\"",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ]
+    }
+  ],
+  "Information Disclosure - Full Path": [
+    {
+      "path": "/www/FileUpload/fileupload1.php",
+      "info": "Response contains potential system path: /opt/lampp/temp/phpCp3aEb",
+      "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\" -e \"http://localhost:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=pix.gif\"",
+      "wstg": [
+        "WSTG-ERRH-01"
+      ]
+    }
+  ],
+  "Reflected Cross Site Scripting": [
+    {
+      "path": "/www/FileUpload/fileupload1.php",
+      "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter file",
+      "parameter": "file",
+      "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\" -e \"http://localhost:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=<ImG src=z oNeRror=alert('wptpkn7uz7')>\"",
+      "wstg": [
+        "WSTG-INPV-01"
+      ]
+    }
+  ]
+}
