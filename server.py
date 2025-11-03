@@ -1,26 +1,15 @@
 #!/usr/bin/env python3
 """
 프론트엔드와 API를 한 번에 실행하는 통합 서버
-
-사용법:
-  python3 run.py
-
-브라우저에서 http://localhost:3000 접속
 """
 
-from flask import Flask, send_from_directory, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import subprocess
-import json
 import os
 
-app = Flask(__name__, static_folder='front', static_url_path='')
+app = Flask(__name__)
 CORS(app)
-
-@app.route('/')
-def index():
-    """프론트엔드 제공"""
-    return send_from_directory('front', 'index.html')
 
 @app.route('/api/scan', methods=['GET', 'POST'])
 def scan():
@@ -41,43 +30,58 @@ def scan():
         
         print(f"\n{'='*60}")
         print(f"🔍 스캔 시작: {url}")
-        print(f"{'='*60}\n")
+        print(f"{'='*60}")
         
-        # main.py 실행
-        cmd = ['python3', 'main.py', '--url', url, '--json']
+        # main.py 실행 (test_main.py가 아니라 main.py!)
+        cmd = ['python3', 'main.py', '--url', url]
         if cookies:
             cmd.extend(['--cookies', cookies])
         if headers:
             cmd.extend(['--headers', headers])
         
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        print(f"[명령어] {' '.join(cmd)}")
+        print(f"[작업 디렉토리] {os.getcwd()}")
+        print(f"\n{'='*60}")
+        print("main.py 실행 중... (실시간 로그)")
+        print(f"{'='*60}\n")
         
-        # JSON 결과 파싱
-        output = result.stdout
-        json_start = output.rfind('{')
+        # main.py 실행 - 실시간 로그 출력
+        result = subprocess.run(
+            cmd,
+            timeout=600,
+            # capture_output=True 대신 stdout/stderr를 상속받아서 실시간 출력
+        )
         
-        if json_start != -1:
-            json_str = output[json_start:]son 
-            scan_results = json.loads(json_str)
-            
-            response = {
-                "target": url,
-                "startedAt": "",
-                "finishedAt": "",
-                "tools": ["ffuf", "wapiti", "nuclei"],
-                "findings": scan_results.get("findings", [])
-            }
-            
-            print(f"\n✅ 스캔 완료! 발견된 이슈: {len(response['findings'])}개\n")
-            return jsonify(response), 200
-        else:
-            return jsonify({"error": "결과 파싱 실패", "output": output}), 500
-            
+        print(f"\n{'='*60}")
+        print(f"[Return Code] {result.returncode}")
+        print(f"{'='*60}\n")
+        
+        # 에러 체크
+        if result.returncode != 0:
+            return jsonify({
+                "error": "main.py 실행 실패",
+                "returncode": result.returncode
+            }), 500
+        
+        # 성공
+        return jsonify({
+            "message": "스캔 완료",
+            "target": url
+        }), 200
+        
     except subprocess.TimeoutExpired:
-        return jsonify({"error": "스캔 타임아웃"}), 500
+        return jsonify({"error": "타임아웃 (10분 초과)"}), 500
     except Exception as e:
-        print(f"\n 오류: {e}\n")
+        print(f"\n[ERROR] {e}\n")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
+
 
 if __name__ == '__main__':
     print("""
@@ -85,10 +89,9 @@ if __name__ == '__main__':
     ║                                                        ║
     ║              🚀 HACKLIPSE SCANNER 🚀                  ║
     ║                                                        ║
-    ║   브라우저에서 접속하세요:                               ║
-    ║   👉 http://localhost:3000                            ║
+    ║   API Server: http://localhost:3000                   ║
     ║                                                        ║
     ╚════════════════════════════════════════════════════════╝
     """)
     
-    app.run(host='0.0.0.0', port=3000, debug=False)
+    app.run(host='0.0.0.0', port=3000, debug=True)
