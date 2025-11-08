@@ -7,7 +7,10 @@
 set -e
 
 echo "Starting the installation of nuclei..."
-
+wget https://go.dev/dl/go1.25.4.linux-amd64.tar.gz
+rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.4.linux-amd64.tar.gz
+echo 'export PATH="$PATH:/usr/local/go/bin"' >> ~/.bashrc
+source ~/.bashrc
 # Change directory to the nuclei command source folder
 echo "Step 1: Navigating to the build directory..."
 cd scanners/nuclei/cmd/nuclei
@@ -16,6 +19,7 @@ cd scanners/nuclei/cmd/nuclei
 echo "Step 2: Building the nuclei binary..."
 go get -u github.com/Azure/azure-sdk-for-go/sdk/azidentity@latest
 go get -u github.com/Azure/azure-sdk-for-go/sdk/azcore@latest
+go get -u github.com/projectdiscovery/nuclei/v3@latest
 go mod tidy
 go build
 
@@ -23,7 +27,8 @@ go build
 # This makes the 'nuclei' command available system-wide.
 # Note: This command requires administrator privileges (sudo).
 echo "Step 3: Moving the binary to /usr/local/bin/. You might be asked for your password."
-sudo mv nuclei /usr/local/bin/
+echo 'export PATH="$PATH:$(pwd)"' >> ~/.bashrc
+source ~/.bashrc
 
 # Verify the installation by checking the version
 echo "Step 4: Verifying the installation..."
