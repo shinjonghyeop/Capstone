@@ -3,6 +3,7 @@ beautifulsoup4==4.14.2
 browser_cookie3==0.19.1
 cryptography>=42.0,<44.1
 dnspython==2.8.0
+httpx_ntlm==1.4.0
 humanize==4.14.0
 loguru==0.7.2
 Mako==1.3.2
