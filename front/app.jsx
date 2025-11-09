@@ -11,6 +11,10 @@ import {
   ExternalLink,
   Download,
   XCircle,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 /**
@@ -163,19 +167,36 @@ async function fetchScanResults(url, extras = {}) {
 
 // ------------------------- Client-side Normalization ------------------------- //
 
+function normalizeEndpoint(url) {
+  if (!url) return url;
+  // Remove query parameters
+  if (url.includes('?')) {
+    url = url.split('?')[0];
+  }
+  // Remove fragment
+  if (url.includes('#')) {
+    url = url.split('#')[0];
+  }
+  return url;
+}
+
 function normalizeMixedPayload(raw, target) {
   const findings = [];
 
   function push(f) {
     if (!f || !f.title) return;
     const sev = (f.severity || "info").toLowerCase();
+    const fullUrl = f.endpoint;
+    const endpoint = normalizeEndpoint(f.endpoint);
+
     findings.push({
       id: f.id || `${f.tool || "unknown"}-${findings.length + 1}-${Date.now()}`,
       tool: f.tool || "unknown",
       severity: SEVERITY_ORDER.includes(sev) ? sev : "info",
       title: f.title,
       description: f.description,
-      endpoint: f.endpoint,
+      endpoint: endpoint,
+      fullUrl: fullUrl !== endpoint ? fullUrl : undefined,
       method: f.method,
       cwe: f.cwe,
       cvss: f.cvss,
@@ -296,18 +317,23 @@ function toCSV(findings) {
 // ------------------------------ UI Parts ------------------------------ //
 
 // in front/app.jsx — Header 컴포넌트 내 왼쪽 로고 영역 교체
-function Header() {
+function Header({ onHomeClick }) {
   return (
     <header className="w-full border-b border-slate-200/60 bg-white/70 backdrop-blur sticky top-0 z-20">
       <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* 로고 이미지 */}
-          <img
-            src="/logo.png"
-            alt="Hacklipse"
-            className="h-7 w-auto"
-            draggable={false}
-          />
+          <button
+            onClick={onHomeClick}
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <img
+              src="/logo.png"
+              alt="Hacklipse"
+              className="h-7 w-auto"
+              draggable={false}
+            />
+          </button>
         </div>
         <a
           href="https://owasp.org/"
@@ -428,57 +454,240 @@ function SeverityBadge({ severity }) {
   );
 }
 
-function FindingCard({ f }) {
+function FindingCard({ f, showEndpointGroup = false }) {
   const [open, setOpen] = useState(false);
+  const [showRequest, setShowRequest] = useState(false);
+  const [showResponse, setShowResponse] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function copyCurlCommand() {
+    if (!f.curlCommand) return;
+    navigator.clipboard.writeText(f.curlCommand);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full text-left p-4 flex items-center justify-between"
+        className="w-full text-left p-4 flex items-center justify-between hover:bg-slate-50"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1">
           {f.severity === "high" || f.severity === "critical" ? (
-            <ShieldAlert className="h-5 w-5 text-red-600" />
+            <ShieldAlert className="h-5 w-5 text-red-600 flex-shrink-0" />
           ) : (
-            <ShieldCheck className="h-5 w-5 text-emerald-600" />
+            <ShieldCheck className="h-5 w-5 text-emerald-600 flex-shrink-0" />
           )}
-          <div>
-            <div className="font-medium">{f.title}</div>
-            <div className="text-xs text-slate-500">{f.tool.toUpperCase()} · {f.method || ""} {f.endpoint || ""}</div>
+          <div className="flex-1 min-w-0">
+            <div className="font-medium truncate">{f.title}</div>
+            <div className="text-xs text-slate-500 flex items-center gap-2 flex-wrap">
+              <span className="px-2 py-0.5 bg-slate-100 rounded">{f.tool.toUpperCase()}</span>
+              {f.category && <span>· {f.category}</span>}
+              {f.method && <span>· {f.method}</span>}
+              {showEndpointGroup && <span className="truncate">· {f.endpoint}</span>}
+            </div>
           </div>
         </div>
         <SeverityBadge severity={f.severity} />
       </button>
+
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="px-4 pb-4"
+            className="border-t border-slate-100"
           >
-            {f.description && (
-              <p className="mb-3 text-sm text-slate-700">{f.description}</p>
-            )}
-            <div className="grid gap-2 text-sm">
-              {f.cwe && (
-                <div className="text-slate-600"><span className="font-medium">CWE:</span> {String(f.cwe)}</div>
+            <div className="p-4 space-y-4">
+              {/* Endpoint */}
+              {f.endpoint && (
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <div className="text-xs font-medium text-slate-600 mb-1">Endpoint</div>
+                  <div className="text-sm font-mono break-all">{f.endpoint}</div>
+                </div>
               )}
-              {f.cvss != null && (
-                <div className="text-slate-600"><span className="font-medium">CVSS:</span> {String(f.cvss)}</div>
+
+              {/* Full URL (if different from endpoint) */}
+              {f.fullUrl && f.fullUrl !== f.endpoint && (
+                <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                  <div className="text-xs font-medium text-amber-700 mb-1">Full URL (with payload)</div>
+                  <div className="text-sm font-mono break-all text-amber-900">{f.fullUrl}</div>
+                </div>
               )}
+
+              {/* Description */}
+              {f.description && (
+                <div>
+                  <div className="text-xs font-medium text-slate-600 mb-1">Description</div>
+                  <p className="text-sm text-slate-700">{f.description}</p>
+                </div>
+              )}
+
+              {/* Impact (Nuclei) */}
+              {f.impact && f.impact !== 'N/A' && (
+                <div>
+                  <div className="text-xs font-medium text-slate-600 mb-1">Impact</div>
+                  <p className="text-sm text-slate-700">{f.impact}</p>
+                </div>
+              )}
+
+              {/* Metadata Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {f.parameter && (
+                  <div>
+                    <div className="text-xs font-medium text-slate-600 mb-1">Parameter</div>
+                    <code className="text-sm bg-amber-50 px-2 py-1 rounded">{f.parameter}</code>
+                  </div>
+                )}
+                {f.cve && (
+                  <div>
+                    <div className="text-xs font-medium text-slate-600 mb-1">CVE ID</div>
+                    <a
+                      href={`https://cve.mitre.org/cgi-bin/cvename.cgi?name=${f.cve}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      {f.cve}
+                    </a>
+                  </div>
+                )}
+                {f.ip && (
+                  <div>
+                    <div className="text-xs font-medium text-slate-600 mb-1">IP Address</div>
+                    <code className="text-sm">{f.ip}</code>
+                  </div>
+                )}
+                {f.cwe && (
+                  <div>
+                    <div className="text-xs font-medium text-slate-600 mb-1">CWE</div>
+                    <span className="text-sm">{String(f.cwe)}</span>
+                  </div>
+                )}
+                {f.cvss != null && (
+                  <div>
+                    <div className="text-xs font-medium text-slate-600 mb-1">CVSS</div>
+                    <span className="text-sm">{String(f.cvss)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Evidence */}
               {f.evidence && (
-                <div className="text-slate-600"><span className="font-medium">Evidence:</span> {f.evidence}</div>
+                <div>
+                  <div className="text-xs font-medium text-slate-600 mb-1">Evidence</div>
+                  <p className="text-sm text-slate-700">{f.evidence}</p>
+                </div>
               )}
+
+              {/* Recommendation */}
               {f.recommendation && (
-                <div className="text-slate-600"><span className="font-medium">Recommendation:</span> {f.recommendation}</div>
+                <div>
+                  <div className="text-xs font-medium text-slate-600 mb-1">Recommendation</div>
+                  <p className="text-sm text-slate-700">{f.recommendation}</p>
+                </div>
               )}
+
+              {/* WSTG Tags (Wapiti) */}
+              {f.wstg && f.wstg.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-slate-600 mb-2">OWASP WSTG</div>
+                  <div className="flex flex-wrap gap-2">
+                    {f.wstg.map((tag, i) => (
+                      <a
+                        key={i}
+                        href={`https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100"
+                      >
+                        {tag}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Curl Command with Copy Button */}
+              {f.curlCommand && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-medium text-slate-600">Curl Command</div>
+                    <button
+                      onClick={copyCurlCommand}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded text-xs"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-3 w-3" /> Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3" /> Copy
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <pre className="bg-slate-900 text-slate-100 p-3 rounded-lg text-xs overflow-x-auto">
+                    {f.curlCommand}
+                  </pre>
+                </div>
+              )}
+
+              {/* Request/Response Viewers */}
+              {f.request && (
+                <div>
+                  <button
+                    onClick={() => setShowRequest(!showRequest)}
+                    className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900"
+                  >
+                    {showRequest ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    HTTP Request
+                  </button>
+                  {showRequest && (
+                    <pre className="mt-2 bg-slate-900 text-slate-100 p-3 rounded-lg text-xs overflow-x-auto max-h-60">
+                      {f.request}
+                    </pre>
+                  )}
+                </div>
+              )}
+
+              {f.response && (
+                <div>
+                  <button
+                    onClick={() => setShowResponse(!showResponse)}
+                    className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900"
+                  >
+                    {showResponse ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    HTTP Response
+                  </button>
+                  {showResponse && (
+                    <pre className="mt-2 bg-slate-900 text-slate-100 p-3 rounded-lg text-xs overflow-x-auto max-h-60">
+                      {f.response}
+                    </pre>
+                  )}
+                </div>
+              )}
+
+              {/* References */}
               {Array.isArray(f.references) && f.references.length > 0 && (
-                <div className="text-slate-600">
-                  <span className="font-medium">References:</span>
-                  <ul className="list-disc pl-5">
+                <div>
+                  <div className="text-xs font-medium text-slate-600 mb-2">References</div>
+                  <ul className="list-disc pl-5 text-sm space-y-1">
                     {f.references.map((r, i) => (
-                      <li key={i}><a className="underline hover:no-underline" href={r} target="_blank" rel="noreferrer">{r}</a></li>
+                      <li key={i}>
+                        <a
+                          className="text-blue-600 hover:underline break-all"
+                          href={r}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {r}
+                        </a>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -491,14 +700,149 @@ function FindingCard({ f }) {
   );
 }
 
+function ResultsListView({ onSelectResult, onBack }) {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  React.useEffect(() => {
+    async function loadResults() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/results`);
+        if (!res.ok) throw new Error('Failed to load results');
+        const data = await res.json();
+        setResults(data.results || []);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadResults();
+  }, []);
+
+  async function handleSelectResult(filename) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/results/${filename}`);
+      if (!res.ok) throw new Error('Failed to load result file');
+      const data = await res.json();
+      onSelectResult(data);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] grid place-items-center">
+        <div className="flex flex-col items-center gap-3 text-slate-700">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p>Loading results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-6xl px-6 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">스캔 결과 목록</h2>
+          <p className="text-sm text-slate-600 mt-1">이전 스캔 결과를 선택하세요</p>
+        </div>
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+        >
+          <XCircle className="h-4 w-4" /> 돌아가기
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-rose-700">
+          {error}
+        </div>
+      )}
+
+      {results.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-600">
+          저장된 스캔 결과가 없습니다.
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {results.map((result) => (
+            <button
+              key={result.filename}
+              onClick={() => handleSelectResult(result.filename)}
+              className="rounded-xl border border-slate-200 bg-white p-4 text-left hover:bg-slate-50 flex items-center justify-between"
+            >
+              <div>
+                <div className="font-medium">{result.filename}</div>
+                <div className="text-xs text-slate-500 mt-1">
+                  수정됨: {new Date(result.modified * 1000).toLocaleString('ko-KR')}
+                </div>
+              </div>
+              <div className="text-xs text-slate-500">
+                {(result.size / 1024).toFixed(1)} KB
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ReportView({ data, onReset }) {
   const { findings = [], tools = [], target, startedAt, finishedAt } = data || {};
 
-  const counts = useMemo(() => {
-    const c = { total: findings.length };
-    SEVERITY_ORDER.forEach((s) => (c[s] = findings.filter((f) => f.severity === s).length));
-    return c;
+  // Filter states
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [toolFilter, setToolFilter] = useState('all');
+  const [endpointFilter, setEndpointFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [groupByEndpoint, setGroupByEndpoint] = useState(false);
+
+  // Get unique endpoints
+  const endpoints = useMemo(() => {
+    return Array.from(new Set(findings.map(f => f.endpoint).filter(Boolean)));
   }, [findings]);
+
+  // Apply filters
+  const filteredFindings = useMemo(() => {
+    return findings.filter(f => {
+      if (severityFilter !== 'all' && f.severity !== severityFilter) return false;
+      if (toolFilter !== 'all' && f.tool !== toolFilter) return false;
+      if (endpointFilter !== 'all' && f.endpoint !== endpointFilter) return false;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return (
+          f.title?.toLowerCase().includes(query) ||
+          f.description?.toLowerCase().includes(query) ||
+          f.endpoint?.toLowerCase().includes(query)
+        );
+      }
+      return true;
+    });
+  }, [findings, severityFilter, toolFilter, endpointFilter, searchQuery]);
+
+  // Group by endpoint
+  const groupedFindings = useMemo(() => {
+    if (!groupByEndpoint) return { all: filteredFindings };
+
+    return filteredFindings.reduce((acc, f) => {
+      const key = f.endpoint || 'Unknown';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(f);
+      return acc;
+    }, {});
+  }, [filteredFindings, groupByEndpoint]);
+
+  const counts = useMemo(() => {
+    const c = { total: filteredFindings.length };
+    SEVERITY_ORDER.forEach((s) => (c[s] = filteredFindings.filter((f) => f.severity === s).length));
+    return c;
+  }, [filteredFindings]);
 
   function downloadFile(filename, text) {
     const blob = new Blob([text], { type: "application/json;charset=utf-8" });
@@ -582,22 +926,106 @@ function ReportView({ data, onReset }) {
         <Stat icon={ShieldCheck} label="Info" value={counts.info} tone="bg-slate-100" />
       </div>
 
-      <div className="space-y-3">
-        {findings.length === 0 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">
-            유효한 취약점 결과가 없습니다.
+      {/* Filters */}
+      <div className="mb-6 space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search findings..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 ring-slate-300"
+          />
+        </div>
+
+        {/* Filter Bar */}
+        <div className="flex flex-wrap gap-3 items-center">
+          <select
+            value={severityFilter}
+            onChange={(e) => setSeverityFilter(e.target.value)}
+            className="rounded-lg border px-3 py-2 text-sm"
+          >
+            <option value="all">All Severities</option>
+            {SEVERITY_ORDER.map(s => (
+              <option key={s} value={s}>{s.toUpperCase()}</option>
+            ))}
+          </select>
+
+          <select
+            value={toolFilter}
+            onChange={(e) => setToolFilter(e.target.value)}
+            className="rounded-lg border px-3 py-2 text-sm"
+          >
+            <option value="all">All Tools</option>
+            {tools.map(t => (
+              <option key={t} value={t}>{t.toUpperCase()}</option>
+            ))}
+          </select>
+
+          <select
+            value={endpointFilter}
+            onChange={(e) => setEndpointFilter(e.target.value)}
+            className="rounded-lg border px-3 py-2 text-sm flex-1"
+          >
+            <option value="all">All Endpoints</option>
+            {endpoints.map(ep => (
+              <option key={ep} value={ep}>{ep}</option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => setGroupByEndpoint(!groupByEndpoint)}
+            className={classNames(
+              "px-3 py-2 rounded-lg text-sm",
+              groupByEndpoint
+                ? "bg-slate-900 text-white"
+                : "border border-slate-200 hover:bg-slate-50"
+            )}
+          >
+            Group by Endpoint
+          </button>
+        </div>
+      </div>
+
+      {/* Findings Display */}
+      <div className="space-y-6">
+        {Object.entries(groupedFindings).map(([endpoint, endpointFindings]) => (
+          <div key={endpoint}>
+            {groupByEndpoint && (
+              <div className="mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Globe className="h-4 w-4 text-slate-600" />
+                  <span className="text-sm font-medium text-slate-700">
+                    {endpointFindings.length} finding{endpointFindings.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                  <code className="text-sm font-mono text-slate-800 break-all">{endpoint}</code>
+                </div>
+              </div>
+            )}
+            <div className="space-y-3">
+              {endpointFindings.map((f) => (
+                <FindingCard key={f.id} f={f} showEndpointGroup={!groupByEndpoint} />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {filteredFindings.length === 0 && (
+          <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-600">
+            No findings match your filters.
           </div>
         )}
-        {findings.map((f) => (
-          <FindingCard key={f.id} f={f} />
-        ))}
       </div>
     </div>
   );
 }
 
 export default function HacklipseApp() {
-  const [phase, setPhase] = useState("form"); // form | scanning | report
+  const [phase, setPhase] = useState("form"); // form | scanning | report | results-list
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
@@ -608,6 +1036,26 @@ export default function HacklipseApp() {
       const payload = await fetchScanResults(url, extras);
       setData(payload);
       setPhase("report");
+
+      // 스캔 완료 후 최신 결과 로드 시도 (선택적)
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/results`);
+        if (res.ok) {
+          const results = await res.json();
+          if (results.results && results.results.length > 0) {
+            // 최신 결과가 있으면 자동으로 로드
+            const latestFile = results.results[0].filename;
+            const latestRes = await fetch(`${API_BASE_URL}/api/results/${latestFile}`);
+            if (latestRes.ok) {
+              const latestData = await latestRes.json();
+              setData(latestData);
+            }
+          }
+        }
+      } catch (e) {
+        // 최신 결과 로드 실패해도 기존 페이로드 사용
+        console.log('Failed to load latest result:', e);
+      }
     } catch (e) {
       setError("스캔 결과를 불러오는 데 실패했습니다.");
       setPhase("form");
@@ -620,9 +1068,18 @@ export default function HacklipseApp() {
     setError(null);
   }
 
+  function showResultsList() {
+    setPhase("results-list");
+  }
+
+  function handleSelectResult(resultData) {
+    setData(resultData);
+    setPhase("report");
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <Header />
+      <Header onHomeClick={reset} />
 
       <main className="mx-auto max-w-6xl px-6">
         <AnimatePresence mode="wait">
@@ -635,6 +1092,17 @@ export default function HacklipseApp() {
                 <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-rose-700">{error}</div>
               )}
               <UrlForm onSubmit={handleSubmit} />
+
+              {/* 이전 결과 보기 버튼 */}
+              <div className="mx-auto max-w-2xl mt-6 text-center">
+                <button
+                  onClick={showResultsList}
+                  className="inline-flex items-center gap-2 rounded-lg bg-slate-100 hover:bg-slate-200 px-4 py-2 text-sm"
+                >
+                  <Upload className="h-4 w-4" />
+                  이전 스캔 결과 보기
+                </button>
+              </div>
 
               <section className="mx-auto max-w-2xl mt-6 text-xs text-slate-500">
                 <details className="rounded-lg border p-3 bg-white">
@@ -690,6 +1158,12 @@ export default function HacklipseApp() {
           {phase === "report" && (
             <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <ReportView data={data} onReset={reset} />
+            </motion.div>
+          )}
+
+          {phase === "results-list" && (
+            <motion.div key="results-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <ResultsListView onSelectResult={handleSelectResult} onBack={reset} />
             </motion.div>
           )}
         </AnimatePresence>

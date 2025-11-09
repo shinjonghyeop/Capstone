@@ -10,8 +10,8 @@ echo "Starting the installation of nuclei..."
 wget https://go.dev/dl/go1.25.4.linux-amd64.tar.gz
 rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.4.linux-amd64.tar.gz
 rm go1.25.4.linux-amd64.tar.gz
-echo 'export PATH="$PATH:/usr/local/go/bin"' >> ~/.bashrc
-source ~/.bashrc
+echo 'export PATH="$PATH:/usr/local/go/bin"' >> ~/.zshrc
+source ~/.zshrc
 # Change directory to the nuclei command source folder
 echo "Step 1: Navigating to the build directory..."
 cd scanners
@@ -26,8 +26,8 @@ go build
 # This makes the 'nuclei' command available system-wide.
 # Note: This command requires administrator privileges (sudo).
 echo "Step 3: Moving the binary to /usr/local/bin/. You might be asked for your password."
-echo 'export PATH="$PATH:$(pwd)"' >> ~/.bashrc
-source ~/.bashrc
+echo 'export PATH="$PATH:$(pwd)"' >> ~/.zshrc
+source ~/.zshrc
 
 # Verify the installation by checking the version
 echo "Step 4: Verifying the installation..."

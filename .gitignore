@@ -10,6 +10,8 @@
 wapiti_results/*
 nuclei_results/*
 filtered/*
+merged_results/*
+scanners/nuclei_results/*
 # 바이트코드 및 캐시
 __pycache__/
 *.py[cod]

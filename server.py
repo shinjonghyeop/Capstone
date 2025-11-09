@@ -83,6 +83,198 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 
+@app.route('/api/results', methods=['GET'])
+def list_results():
+    """merged_results/ 디렉토리의 JSON 파일 목록 반환"""
+    try:
+        results_dir = os.path.join(os.getcwd(), 'merged_results')
+
+        if not os.path.exists(results_dir):
+            return jsonify({"results": []}), 200
+
+        files = []
+        for filename in os.listdir(results_dir):
+            if filename.endswith('.json'):
+                filepath = os.path.join(results_dir, filename)
+                stat = os.stat(filepath)
+
+                files.append({
+                    "filename": filename,
+                    "size": stat.st_size,
+                    "created": stat.st_ctime,
+                    "modified": stat.st_mtime
+                })
+
+        # 최신순으로 정렬
+        files.sort(key=lambda x: x['modified'], reverse=True)
+
+        return jsonify({"results": files}), 200
+
+    except Exception as e:
+        print(f"\n[ERROR] {e}\n")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/results/<filename>', methods=['GET'])
+def get_result(filename):
+    """특정 JSON 파일의 내용을 반환"""
+    try:
+        # 보안: 디렉토리 탐색 방지
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({"error": "잘못된 파일명"}), 400
+
+        results_dir = os.path.join(os.getcwd(), 'merged_results')
+        filepath = os.path.join(results_dir, filename)
+
+        if not os.path.exists(filepath):
+            return jsonify({"error": "파일을 찾을 수 없습니다"}), 404
+
+        # JSON 파일 읽기
+        import json
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        # merged_results 포맷을 프론트엔드 친화적으로 변환
+        normalized = normalize_merged_results(data, filename)
+
+        return jsonify(normalized), 200
+
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"JSON 파싱 오류: {str(e)}"}), 500
+    except Exception as e:
+        print(f"\n[ERROR] {e}\n")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+def normalize_endpoint(url):
+    """URL에서 쿼리 파라미터와 프래그먼트를 제거하여 base endpoint만 추출"""
+    if not url:
+        return url
+    # 쿼리 파라미터 제거
+    if '?' in url:
+        url = url.split('?')[0]
+    # 프래그먼트 제거
+    if '#' in url:
+        url = url.split('#')[0]
+    return url
+
+
+def normalize_merged_results(merged_data, filename):
+    """merged_results 포맷을 프론트엔드용으로 정규화"""
+    findings = []
+    tools = set()
+
+    # 각 엔드포인트별로 순회
+    for endpoint_key, scan_data in merged_data.items():
+        # 엔드포인트 이름 복원 (언더스코어를 슬래시로)
+        base_endpoint = endpoint_key.replace('_', '/').replace(' ', '_')
+        base_endpoint = normalize_endpoint(base_endpoint)
+
+        # Nuclei 결과 처리
+        if 'nuclei' in scan_data and scan_data['nuclei']:
+            tools.add('nuclei')
+            for category in ['xss', 'sql', 'cve']:
+                if category in scan_data['nuclei']:
+                    for finding in scan_data['nuclei'][category]:
+                        info = finding.get('info', {})
+                        classification = info.get('classification', {})
+                        cve_ids = classification.get('cve-id', [])
+                        cve_str = ', '.join(cve_ids) if cve_ids else None
+
+                        matched_url = finding.get('matched-at', base_endpoint)
+
+                        findings.append({
+                            'id': f"nuclei-{category}-{len(findings)}",
+                            'tool': 'nuclei',
+                            'category': category.upper(),
+                            'severity': info.get('severity', 'info').lower(),
+                            'title': info.get('name', 'Nuclei Finding'),
+                            'description': info.get('description', ''),
+                            'impact': info.get('impact', 'N/A'),
+                            'endpoint': normalize_endpoint(matched_url),
+                            'fullUrl': matched_url,  # 전체 URL (페이로드 포함) 저장
+                            'method': extract_method(finding.get('request', '')),
+                            'cve': cve_str,
+                            'evidence': finding.get('matcher-name', 'See request/response'),
+                            'request': finding.get('request'),
+                            'response': finding.get('response'),
+                            'curlCommand': finding.get('curl-command'),
+                            'ip': finding.get('ip'),
+                            'references': info.get('reference', []) if isinstance(info.get('reference'), list) else ([info.get('reference')] if info.get('reference') else [])
+                        })
+
+        # Wapiti 결과 처리
+        if 'wapiti' in scan_data and scan_data['wapiti']:
+            tools.add('wapiti')
+            for category, findings_array in scan_data['wapiti'].items():
+                if findings_array:
+                    for finding in findings_array:
+                        wstg = finding.get('wstg', [])
+                        path = finding.get('path', base_endpoint)
+
+                        findings.append({
+                            'id': f"wapiti-{category}-{len(findings)}",
+                            'tool': 'wapiti',
+                            'category': category,
+                            'severity': infer_wapiti_severity(category),
+                            'title': category,
+                            'description': finding.get('info', ''),
+                            'endpoint': normalize_endpoint(path),
+                            'fullUrl': path,  # 전체 URL 저장
+                            'parameter': finding.get('parameter'),
+                            'curlCommand': finding.get('curl_command'),
+                            'wstg': wstg,
+                            'references': [f"https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/{tag}" for tag in wstg]
+                        })
+
+    # 심각도 순으로 정렬
+    severity_order = ['critical', 'high', 'medium', 'low', 'info']
+    findings.sort(key=lambda f: severity_order.index(f['severity']) if f['severity'] in severity_order else 999)
+
+    return {
+        'target': filename,
+        'startedAt': None,
+        'finishedAt': None,
+        'tools': list(tools),
+        'findings': findings
+    }
+
+
+def extract_method(request):
+    """HTTP 요청에서 메소드 추출"""
+    if not request:
+        return 'GET'
+    lines = request.split('\n')
+    if lines:
+        first_line = lines[0]
+        for method in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
+            if first_line.startswith(method):
+                return method
+    return 'GET'
+
+
+def infer_wapiti_severity(category):
+    """Wapiti 카테고리로부터 심각도 추론"""
+    high_severity = ['Reflected Cross Site Scripting', 'SQL Injection', 'File Handling Vulnerability']
+    medium_severity = ['Clickjacking Protection', 'Content Security Policy', 'CSRF Protection']
+    low_severity = ['MIME Type Confusion', 'Unencrypted Channels', 'HTTP Security Headers']
+
+    for h in high_severity:
+        if h in category:
+            return 'high'
+    for m in medium_severity:
+        if m in category:
+            return 'medium'
+    for l in low_severity:
+        if l in category:
+            return 'low'
+    return 'info'
+
+
 if __name__ == '__main__':
     print("""
     ╔════════════════════════════════════════════════════════╗
