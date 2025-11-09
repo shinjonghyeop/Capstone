@@ -5,6 +5,11 @@
 # Python 관련 파일들
 # =============================================================================
 
+
+# results dir
+wapiti_results/*
+nuclei_results/*
+filtered/*
 # 바이트코드 및 캐시
 __pycache__/
 *.py[cod]

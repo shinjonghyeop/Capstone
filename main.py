@@ -256,10 +256,10 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
             return
         url, cookies, headers = user_input
 
-    # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
-    if not await run_discovery_stage(url, cookies):
-        print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
-        sys.exit(1)
+    # # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
+    # if not await run_discovery_stage(url, cookies):
+    #     print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
+    #     sys.exit(1)
 
     # 결과 파일 확인
     if not os.path.exists(RESULTS_FILE):
