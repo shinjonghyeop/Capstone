@@ -17,6 +17,7 @@ from scanners.nuclei_scanner import run_scan as nuclei_scan
 from utils.web_crawler import crawl_website
 from utils.nuclei_filter import filter_nuclei_results
 from utils.wapiti_filter import filter_dir
+from utils.merge_scan_results import merge_filtered_results
 
 # 상수 정의
 RESULTS_FILE = "urls.txt"
@@ -298,6 +299,20 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
             print("[!] 필터링할 Nuclei 결과가 없습니다.")
     except Exception as e:
         print(f"[!] Nuclei 필터링 중 오류 발생: {e}")
+
+    # 4단계: 스캔 결과 병합 (Domain-level)
+    print("\n[+] 4단계: 스캔 결과 병합 시작...")
+    try:
+        merged_count = merge_filtered_results(
+            input_dir="filtered",
+            output_dir="merged_results"
+        )
+        if merged_count > 0:
+            print(f"[+] 스캔 결과 병합 완료: {merged_count}개 도메인 파일 생성됨")
+        else:
+            print("[!] 병합할 결과가 없습니다.")
+    except Exception as e:
+        print(f"[!] 결과 병합 중 오류 발생: {e}")
 
 
 def main():

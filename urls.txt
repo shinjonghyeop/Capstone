@@ -2,5 +2,3 @@ http://localhost:9991/www/XSS/XSS_level1.php
 http://localhost:9991/www/XSS/XSS_level2.php
 http://localhost:9991/www/XSS/XSS_level3.php
 http://localhost:9991/www/XSS/XSS_level4.php
-http://localhost:9991/www/XSS/XSS_level5.php
-http://localhost:9991/www/XSS/xssmainpage.html
