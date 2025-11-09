@@ -22,10 +22,8 @@ go build
 # Note: This command requires administrator privileges (sudo).
 echo "Step 3: Moving the binary to /usr/local/bin/. You might be asked for your password."
 echo 'export PATH="$PATH:$(pwd)"' >> ~/.bashrc
-source ~/.bashrc
 
 # Verify the installation by checking the version
 echo "Step 4: Verifying the installation..."
-nuclei -version
 
 echo "Nuclei has been successfully installed."
