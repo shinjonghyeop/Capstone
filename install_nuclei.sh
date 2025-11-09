@@ -9,18 +9,17 @@ set -e
 echo "Starting the installation of nuclei..."
 wget https://go.dev/dl/go1.25.4.linux-amd64.tar.gz
 rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.4.linux-amd64.tar.gz
+rm go1.25.4.linux-amd64.tar.gz
 echo 'export PATH="$PATH:/usr/local/go/bin"' >> ~/.bashrc
 source ~/.bashrc
 # Change directory to the nuclei command source folder
 echo "Step 1: Navigating to the build directory..."
-cd scanners/nuclei/cmd/nuclei
+cd scanners
 
 # Build the Go application
 echo "Step 2: Building the nuclei binary..."
-go get -u github.com/Azure/azure-sdk-for-go/sdk/azidentity@latest
-go get -u github.com/Azure/azure-sdk-for-go/sdk/azcore@latest
-go get -u github.com/projectdiscovery/nuclei/v3@latest
-go mod tidy
+git clone https://github.com/projectdiscovery/nuclei.git
+cd nuclei/cmd/nuclei
 go build
 
 # Move the built binary to a directory in the system's PATH
