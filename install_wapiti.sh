@@ -15,3 +15,6 @@ if ! command -v pip3 &> /dev/null; then
 fi
 
 python3 -m pip install -r requirements.txt
+cd bin
+echo 'export PATH="$PATH:$(pwd)"' >> ~/.bashrc
+echo "Wapiti has been successfully installed."
