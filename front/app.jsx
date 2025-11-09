@@ -629,7 +629,7 @@ export default function HacklipseApp() {
           {phase === "form" && (
             <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="text-center mt-12 mb-6">
-                <h1 className="text-3xl font-extrabold tracking-tight">최유정</h1>
+                <h1 className="text-3xl font-extrabold tracking-tight">Secure AI Project</h1>
               </div>
               {error && (
                 <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-rose-700">{error}</div>
