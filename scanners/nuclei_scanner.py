@@ -36,7 +36,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
         return
         
     tags_to_scan = ["xss", "sql", "cve"]
-
+    # 각 URL에 대해 병렬로 Nuclei 스캔 실행
     for url in urls:
         url_processes = [] # 각 URL에 대한 프로세스 리스트
         for tag in tags_to_scan:
