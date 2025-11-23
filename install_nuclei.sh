@@ -16,6 +16,11 @@ source ~/.bashrc
 echo "Step 1: Navigating to the build directory..."
 cd scanners
 
+# nuclei.crt Download
+cd nuclei/pkg/keys
+wget https://raw.githubusercontent.com/projectdiscovery/nuclei/refs/heads/dev/pkg/keys/nuclei.crt
+cd ../../../
+
 # Build the Go application
 echo "Step 2: Building the nuclei binary..."
 git clone https://github.com/projectdiscovery/nuclei.git
