@@ -35,10 +35,10 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
         print(f"[Nuclei] URL 파일을 찾을 수 없습니다: {url_file}")
         return
         
-    processes = []
     tags_to_scan = ["xss", "sql", "cve"]
 
     for url in urls:
+        url_processes = [] # 각 URL에 대한 프로세스 리스트
         for tag in tags_to_scan:
             # 출력 파일명 생성 (URL과 태그 포함)
             sanitized_url = re.sub(r'https?://', '', url).replace('/', '_').replace(':', '_')
@@ -82,15 +82,17 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
                     stderr=subprocess.PIPE,
                     text=True
                 )
-                processes.append((proc, output_file))
+                url_processes.append((proc, output_file))
+                
             except FileNotFoundError:
                 print("[Nuclei] 'nuclei' 명령을 찾을 수 없습니다. 설치되었는지 확인하세요.")
                 return
             except Exception as e:
                 print(f"[Nuclei] 프로세스 시작 중 오류 발생: {e}")
 
+    print(f"[Nuclei] {url} 의 태그 스캔들 종료 대기…")
     # 모든 프로세스가 완료될 때까지 대기
-    for proc, output_file in processes:
+    for proc, output_file in url_processes:
         try:
             stdout, stderr = proc.communicate(timeout=900) # 15분 타임아웃
             
