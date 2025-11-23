@@ -16,5 +16,6 @@ fi
 
 python3 -m pip install -r requirements.txt
 cd bin
-echo 'export PATH="$PATH:$(pwd)"' >> ~/.bashrc
+echo 'export PATH="$PATH:$HOME/secure_ai_project/scanners/wapiti/bin"' >> ~/.bashrc
+source ~/.bashrc
 echo "Wapiti has been successfully installed."
