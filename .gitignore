@@ -305,3 +305,4 @@ CLAUDE.md
 !hacklipse-victim/README.md
 !hacklipse-victim/docker-compose.yml
 scanners/nuclei.json
+scanners/nuclei/cmd/nuclei/nuclei
