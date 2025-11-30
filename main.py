@@ -232,15 +232,15 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
             return
         url, cookies, headers = user_input
 
-    # # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
-    # if not await run_discovery_stage(url, cookies):
-    #     print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
-    #     sys.exit(1)
+    # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
+    if not await run_discovery_stage(url, cookies):
+        print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
+        sys.exit(1)
 
-    # # 결과 파일 확인
-    # if not os.path.exists(RESULTS_FILE):
-    #     print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
-    #     sys.exit(1)
+    # 결과 파일 확인
+    if not os.path.exists(RESULTS_FILE):
+        print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
+        sys.exit(1)
 
     # 2단계: 취약점 스캐너 실행 (순차 실행)
     await run_vulnerability_scanners_sync(RESULTS_FILE, headers, cookies)
