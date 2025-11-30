@@ -208,7 +208,9 @@ async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: 
     # 2. Nuclei 스캔 실행
     print("\n[+] Nuclei 스캔 시작...")
     try:
-        await nuclei_scan(
+        # nuclei_scan은 동기 함수이므로 asyncio.to_thread로 감싸기
+        await asyncio.to_thread(
+            nuclei_scan,
             headers=headers,
             cookies=cookies
         )
@@ -230,15 +232,15 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
             return
         url, cookies, headers = user_input
 
-    # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
-    if not await run_discovery_stage(url, cookies):
-        print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
-        sys.exit(1)
+    # # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
+    # if not await run_discovery_stage(url, cookies):
+    #     print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
+    #     sys.exit(1)
 
-    # 결과 파일 확인
-    if not os.path.exists(RESULTS_FILE):
-        print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
-        sys.exit(1)
+    # # 결과 파일 확인
+    # if not os.path.exists(RESULTS_FILE):
+    #     print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
+    #     sys.exit(1)
 
     # 2단계: 취약점 스캐너 실행 (순차 실행)
     await run_vulnerability_scanners_sync(RESULTS_FILE, headers, cookies)

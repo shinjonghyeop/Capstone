@@ -83,23 +83,26 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
                     text=True
                 )
                 stdout, stderr = proc.communicate(timeout=900) # 태그 하나당 최대 15분 대기
-                
+
                 if proc.returncode == 0:
                     print(f"[Nuclei] 스캔 완료: {output_file}")
                     if os.path.exists(output_file) and os.path.getsize(output_file) > 2:
                         print(f"[Nuclei] 발견사항 있음: {output_file}")
                     else:
                         print(f"[Nuclei] 취약점 없음: {output_file}")
-                        
-            except FileNotFoundError:
-                print("[Nuclei] 'nuclei' 명령을 찾을 수 없습니다. 설치되었는지 확인하세요.")
-                return
-            except Exception as e:
-                print(f"[Nuclei] 프로세스 시작 중 오류 발생: {e}")
+                else:
+                    print(f"[Nuclei] 오류 발생 (코드: {proc.returncode}): {output_file}")
+
             except subprocess.TimeoutExpired:
                 print(f"[Nuclei] 타임아웃 (15분 초과): {output_file}")
                 proc.kill()
-                stdout, stderr = proc.communicate()
+                try:
+                    stdout, stderr = proc.communicate(timeout=5)
+                except:
+                    pass
+            except FileNotFoundError:
+                print("[Nuclei] 'nuclei' 명령을 찾을 수 없습니다. 설치되었는지 확인하세요.")
+                return
             except Exception as e:
                 print(f"[Nuclei] 스캔 중 예상치 못한 오류: {e}")
                 

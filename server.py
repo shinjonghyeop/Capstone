@@ -15,7 +15,7 @@ CORS(app)
 
 # Constants
 MERGED_RESULTS_DIR = 'merged_results'
-SCAN_TIMEOUT = 600  # 10 minutes
+SCAN_TIMEOUT = 3600 * 3  # 3 hours
 SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info']
 
 @app.route('/api/scan', methods=['GET', 'POST'])
