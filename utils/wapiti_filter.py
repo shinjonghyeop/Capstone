@@ -1,59 +1,82 @@
-import json, os, sys
+#!/usr/bin/env python3
+"""
+Wapiti JSON 결과 필터링 모듈
+
+Wapiti 스캔 결과에서 불필요한 필드를 제거하고 취약점만 추출합니다.
+"""
+
+import json
+import os
 from typing import Any, Dict, List
 
-STRIP_ALWAYS = {"method", "level", "referer", "module", "http_request"}
+# 항상 제거할 필드
+STRIP_FIELDS = {"method", "level", "referer", "module", "http_request"}
+
 
 def _sanitize_item(item: Any) -> Any:
+    """취약점 항목에서 불필요한 필드 제거"""
     if not isinstance(item, dict):
         return item
-    pruned = dict(item)
-    for k in STRIP_ALWAYS:
-        pruned.pop(k, None)
-    if "parameter" in pruned and pruned["parameter"] is None:
+
+    pruned = {k: v for k, v in item.items() if k not in STRIP_FIELDS}
+
+    # None인 parameter 필드 제거
+    if pruned.get("parameter") is None:
         pruned.pop("parameter", None)
+
     return pruned
 
-def _filter_one_json(data: Dict[str, Any]) -> Dict[str, List[Any]]:
-    vulns: Dict[str, Any] = data.get("vulnerabilities", {})
-    result = {}
-    for k, v in vulns.items():
-        if isinstance(v, list) and len(v) > 0:
-            result[k] = [_sanitize_item(it) for it in v]
-    return result
 
-def filter_dir(input_dir: str) -> List[str]:
+def _filter_vulnerabilities(data: Dict[str, Any]) -> Dict[str, List[Any]]:
+    """JSON 데이터에서 취약점만 추출하고 정리"""
+    vulns = data.get("vulnerabilities", {})
+    return {
+        category: [_sanitize_item(item) for item in items]
+        for category, items in vulns.items()
+        if isinstance(items, list) and items
+    }
+
+
+def filter_dir(input_dir: str, output_dir: str = "./filtered") -> List[str]:
     """
-    input_dir: json 파일들이 있는 디렉터리
-    output: ./filterd/ 디렉터리에 필터링된 json들 저장 (현재 실행 경로 기준)
-    return: 저장된 JSON 파일 fullpath 리스트
+    디렉토리 내 모든 Wapiti JSON 파일을 필터링하여 저장
+
+    Args:
+        input_dir: 입력 디렉토리 경로
+        output_dir: 출력 디렉토리 경로 (기본값: ./filtered)
+
+    Returns:
+        저장된 파일 경로 리스트
     """
     if not os.path.isdir(input_dir):
-        raise NotADirectoryError(input_dir)
+        raise NotADirectoryError(f"디렉토리를 찾을 수 없습니다: {input_dir}")
 
-    # ※ 변경된 부분 (현재 working directory 기준)
-    outdir = "./filtered"
-    os.makedirs(outdir, exist_ok=True)
-
+    os.makedirs(output_dir, exist_ok=True)
     saved = []
 
     for name in os.listdir(input_dir):
+        if not name.lower().endswith(".json"):
+            continue
+
         src = os.path.join(input_dir, name)
-        if os.path.isfile(src) and name.lower().endswith(".json"):
-            try:
-                with open(src, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-            except Exception as e:
-                print(f"[!] read fail {src}: {e}")
-                continue
+        if not os.path.isfile(src):
+            continue
 
-            result = _filter_one_json(data)
-            dst = os.path.join(outdir, name)  # same name in ./filterd
+        try:
+            with open(src, "r", encoding="utf-8") as f:
+                data = json.load(f)
 
-            try:
-                with open(dst, "w", encoding="utf-8") as f:
-                    json.dump(result, f, ensure_ascii=False, indent=2)
-                saved.append(dst)
-            except Exception as e:
-                print(f"[!] write fail {dst}: {e}")
+            result = _filter_vulnerabilities(data)
+            dst = os.path.join(output_dir, name)
+
+            with open(dst, "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+
+            saved.append(dst)
+
+        except json.JSONDecodeError as e:
+            print(f"[!] JSON 파싱 실패 {src}: {e}")
+        except IOError as e:
+            print(f"[!] 파일 처리 실패 {src}: {e}")
 
     return saved

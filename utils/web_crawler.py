@@ -17,6 +17,22 @@ import warnings
 # SSL 경고 무시
 warnings.filterwarnings('ignore', message='Unverified HTTPS request')
 
+# 정적 리소스 확장자 (취약점 스캔에서 제외)
+STATIC_RESOURCE_EXTENSIONS = {
+    # 이미지
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.ico', '.webp',
+    # 비디오/오디오
+    '.mp4', '.avi', '.mov', '.wmv', '.flv', '.mp3', '.wav', '.ogg',
+    # 폰트
+    '.woff', '.woff2', '.ttf', '.eot', '.otf',
+    # 스타일/스크립트 (정적 파일만 - .js는 제외하여 동적 엔드포인트 탐색)
+    '.css', '.map', '.min.js',  # minified JS만 제외
+    # 문서/압축
+    '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.rar', '.tar', '.gz',
+    # 기타
+    '.swf', '.xml', '.json', '.txt'
+}
+
 
 def _parse_cookies(cookie_str: str) -> Dict[str, str]:
     """
@@ -92,6 +108,27 @@ def _normalize_url(url: str) -> str:
     ))
 
     return normalized
+
+
+def _is_static_resource(url: str) -> bool:
+    """
+    URL이 정적 리소스인지 확인 (이미지, CSS, 폰트 등)
+
+    Args:
+        url: 확인할 URL
+
+    Returns:
+        정적 리소스면 True
+    """
+    parsed = urlparse(url)
+    path = parsed.path.lower()
+
+    # 확장자 확인
+    for ext in STATIC_RESOURCE_EXTENSIONS:
+        if path.endswith(ext):
+            return True
+
+    return False
 
 
 def _is_same_domain(url1: str, url2: str) -> bool:
@@ -251,6 +288,11 @@ def crawl_website(
         if not _is_same_domain(start_url, current_url):
             continue
 
+        # 정적 리소스면 스킵
+        if _is_static_resource(current_url):
+            visited.add(current_url)  # 방문 기록은 남기되
+            continue  # 크롤링은 하지 않음
+
         visited.add(current_url)
         discovered_urls.add(current_url)
         page_count += 1
@@ -288,8 +330,10 @@ def crawl_website(
                         normalized = _normalize_url(url)
                         if normalized and normalized not in visited:
                             if _is_same_domain(start_url, normalized):
-                                to_visit.append(normalized)
-                                discovered_urls.add(normalized)
+                                # 정적 리소스가 아닌 경우에만 추가
+                                if not _is_static_resource(normalized):
+                                    to_visit.append(normalized)
+                                    discovered_urls.add(normalized)
 
                 # JavaScript 응답인 경우
                 elif 'javascript' in content_type or final_url.endswith('.js'):
@@ -300,8 +344,10 @@ def crawl_website(
                         normalized = _normalize_url(url)
                         if normalized and normalized not in visited:
                             if _is_same_domain(start_url, normalized):
-                                to_visit.append(normalized)
-                                discovered_urls.add(normalized)
+                                # 정적 리소스가 아닌 경우에만 추가
+                                if not _is_static_resource(normalized):
+                                    to_visit.append(normalized)
+                                    discovered_urls.add(normalized)
 
         except requests.exceptions.Timeout:
             print(f"[!] 타임아웃: {current_url}")
@@ -310,49 +356,29 @@ def crawl_website(
         except Exception as e:
             print(f"[!] 오류 발생: {current_url} - {e}")
 
-    print(f"[Crawler] 크롤링 완료: {len(discovered_urls)}개 URL 발견")
+    # 통계 출력
+    print(f"\n[Crawler] 크롤링 완료")
+    print(f"  총 방문: {len(visited)}개 URL")
+    print(f"  발견된 엔드포인트: {len(discovered_urls)}개 URL")
+    print(f"  필터링된 정적 리소스: {len(visited) - len(discovered_urls)}개")
 
     # 리스트로 변환하여 반환
     return sorted(list(discovered_urls))
 
 
-def main():
-    """테스트용 메인 함수"""
+if __name__ == "__main__":
     import sys
 
-    # 테스트 URL
-    test_url = "http://yc22469.iptime.org:9991/www"
-    test_cookies = ""
-    test_headers = ""
+    if len(sys.argv) < 2:
+        print("사용법: python web_crawler.py <URL> [cookies] [headers]")
+        sys.exit(1)
 
-    # 명령행 인자가 있으면 사용
-    if len(sys.argv) > 1:
-        test_url = sys.argv[1]
-    if len(sys.argv) > 2:
-        test_cookies = sys.argv[2]
-    if len(sys.argv) > 3:
-        test_headers = sys.argv[3]
+    url = sys.argv[1]
+    cookies = sys.argv[2] if len(sys.argv) > 2 else ""
+    headers = sys.argv[3] if len(sys.argv) > 3 else ""
 
-    print("=" * 60)
-    print("웹 크롤러 테스트")
-    print("=" * 60)
-    print(f"URL    : {test_url}")
-    print(f"Cookies: {test_cookies if test_cookies else '(없음)'}")
-    print(f"Headers: {test_headers if test_headers else '(없음)'}")
-    print("=" * 60)
-    print()
+    urls = crawl_website(url, cookies, headers)
 
-    # 크롤링 실행
-    urls = crawl_website(test_url, test_cookies, test_headers)
-
-    # 결과 출력
-    print("\n" + "=" * 60)
-    print(f"발견된 URL ({len(urls)}개)")
-    print("=" * 60)
-    for url in urls:
-        print(f"  {url}")
-    print("=" * 60)
-
-
-if __name__ == "__main__":
-    main()
+    print(f"\n발견된 URL ({len(urls)}개):")
+    for u in urls:
+        print(f"  {u}")

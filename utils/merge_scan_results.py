@@ -29,81 +29,68 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set
 from collections import defaultdict
+from datetime import datetime
+
+
+def _strip_prefix_and_extension(filename: str) -> tuple[str, str]:
+    """파일명에서 prefix와 확장자를 제거하고 scanner 타입 반환"""
+    name = filename.replace('.json', '')
+
+    if name.startswith('nuclei_scan_'):
+        return name.replace('nuclei_scan_', ''), 'nuclei'
+    elif name.startswith('wapiti_'):
+        return name.replace('wapiti_', ''), 'wapiti'
+
+    return name, 'unknown'
 
 
 def extract_subdomain_from_filename(filename: str) -> str:
     """
-    Extract subdomain identifier from nuclei or wapiti filename.
+    파일명에서 subdomain 식별자 추출
 
-    Examples:
-        nuclei_scan_localhost_9991_www_XSS_XSS_level1.php_cve_20251102_185057.json
-        -> www_XSS_XSS_level1.php
-
-        wapiti_localhost_9991_www_XSS_XSS_level1_php.json
-        -> www_XSS_XSS_level1_php
-
-    Returns:
-        Normalized subdomain string
+    예시:
+        nuclei_scan_localhost_9991_www_XSS_level1.php_cve_20251102_185057.json
+        -> www_XSS_level1_php
     """
-    # Remove file extension
-    name = filename.replace('.json', '')
+    name, scanner_type = _strip_prefix_and_extension(filename)
 
-    if name.startswith('nuclei_scan_'):
-        # Pattern: nuclei_scan_localhost_9991_{subdomain}_{tag}_{timestamp}
-        # Remove prefix
-        name = name.replace('nuclei_scan_', '')
+    # domain_port 패턴 제거
+    name = re.sub(r'^[^_]+_\d+_', '', name)
 
-        # Remove localhost_9991_ or similar domain prefix
-        # Match pattern: localhost_PORT_ or domain_
-        name = re.sub(r'^[^_]+_\d+_', '', name)
-
-        # Remove tag suffix (cve, sql, xss) and timestamp
-        # Pattern: _{tag}_{timestamp}
+    if scanner_type == 'nuclei':
+        # tag와 timestamp 제거
         name = re.sub(r'_(cve|sql|xss)_\d{8}_\d{6}$', '', name)
-
-        # Normalize: replace .php with _php for consistency
-        name = name.replace('.php', '_php')
-        name = name.replace('.html', '_html')
-
-    elif name.startswith('wapiti_'):
-        # Pattern: wapiti_localhost_9991_{subdomain}
-        # Remove prefix
-        name = name.replace('wapiti_', '')
-
-        # Remove localhost_9991_ or similar domain prefix
-        name = re.sub(r'^[^_]+_\d+_', '', name)
+        # 확장자 정규화
+        name = re.sub(r'\.(php|html)$', lambda m: f'_{m.group(1)}', name)
 
     return name
 
 
 def extract_domain_from_filename(filename: str) -> str:
     """
-    Extract the main domain (host:port) from nuclei or wapiti filename.
+    파일명에서 도메인(host:port) 추출
 
-    Examples:
-        nuclei_scan_localhost_9991_www_XSS_XSS_level1.php_cve_20251102_185057.json
-        -> localhost_9991
-
-        wapiti_localhost_9991_www_XSS_XSS_level1_php.json
-        -> localhost_9991
+    예시:
+        nuclei_scan_localhost_9991_www_XSS.json -> localhost_9991
+        nuclei_scan_example.com_8080_... -> example.com_8080
+        wapiti_example_com_8080_... -> example.com_8080
     """
-    # Remove file extension
-    name = filename.replace('.json', '')
+    name, scanner_type = _strip_prefix_and_extension(filename)
 
-    if name.startswith('nuclei_scan_'):
-        # Pattern: nuclei_scan_localhost_9991_...
-        name = name.replace('nuclei_scan_', '')
-        # Extract domain_port pattern
-        match = re.match(r'^([^_]+_\d+)', name)
-        if match:
-            return match.group(1)
-    elif name.startswith('wapiti_'):
-        # Pattern: wapiti_localhost_9991_...
-        name = name.replace('wapiti_', '')
-        # Extract domain_port pattern
-        match = re.match(r'^([^_]+_\d+)', name)
-        if match:
-            return match.group(1)
+    # 도메인_포트 패턴 추출 (포트 번호 앞까지)
+    match = re.match(r'^(.+?)_(\d+)_', name + '_')
+    if match:
+        domain_part = match.group(1)
+        port = match.group(2)
+
+        # wapiti 파일명에서는 점이 언더스코어로 변환됨
+        if scanner_type == 'wapiti' and '.' not in domain_part:
+            # 언더스코어를 점으로 복원
+            parts = domain_part.split('_')
+            if len(parts) >= 2:
+                domain_part = '.'.join(parts)
+
+        return f"{domain_part}_{port}"
 
     return 'unknown_domain'
 
@@ -215,26 +202,127 @@ def create_subdomain_data(files: Dict[str, List[str]]) -> Dict:
     }
 
 
-def extract_domain_from_subdomain(subdomain: str) -> str:
-    """
-    Extract the main domain/category from subdomain.
+def normalize_endpoint(url: str) -> str:
+    """URL에서 쿼리 파라미터와 프래그먼트를 제거하여 base endpoint만 추출"""
+    if not url:
+        return url
+    return url.split('?')[0].split('#')[0]
 
-    Examples:
-        www_XSS_XSS_level1_php -> www_XSS
-        www_SQL_sql1_php -> www_SQL
-        www_CommandExecution_CommandExec-1_php -> www_CommandExecution
-        www -> www
-    """
-    # Split by underscore and take first meaningful parts
-    parts = subdomain.split('_')
 
-    # Handle special cases
-    if len(parts) >= 2:
-        # Return first two parts (e.g., www_XSS, www_SQL)
-        return f"{parts[0]}_{parts[1]}"
-    else:
-        # Single part (e.g., www)
-        return parts[0]
+def convert_to_frontend_format(domain: str, subdomains: Dict) -> Dict:
+    """
+    Convert merged data to frontend-compatible format.
+
+    Returns:
+        {
+            "target": "domain:port",
+            "startedAt": "...",
+            "finishedAt": "...",
+            "tools": ["nuclei", "wapiti"],
+            "findings": [...]
+        }
+    """
+    findings = []
+    tools_used = set()
+
+    for subdomain_key, subdomain_data in subdomains.items():
+        # Process nuclei results
+        nuclei_data = subdomain_data.get("nuclei", {})
+        for tag, results in nuclei_data.items():
+            if not results:
+                continue
+
+            # results can be a list or dict
+            items = results if isinstance(results, list) else [results]
+
+            for item in items:
+                if not item:
+                    continue
+
+                info = item.get("info", {})
+
+                # Extract CVE if available
+                cve_ids = info.get("classification", {}).get("cve-id", [])
+                cve_str = None
+                if cve_ids:
+                    cve_str = ', '.join(cve_ids) if isinstance(cve_ids, list) else cve_ids
+
+                matched_url = item.get("matched-at", "")
+
+                finding = {
+                    "id": f"nuclei-{tag}-{len(findings)}",
+                    "tool": "nuclei",
+                    "category": tag.upper(),
+                    "severity": (info.get("severity") or "info").lower(),
+                    "title": info.get("name") or f"Nuclei finding ({tag})",
+                    "description": info.get("description", ""),
+                    "impact": info.get("impact", "N/A"),
+                    "endpoint": normalize_endpoint(matched_url),
+                    "fullUrl": matched_url,
+                    "method": item.get("method", "GET"),
+                    "cve": cve_str,
+                    "evidence": item.get("matcher-name", ""),
+                    "recommendation": info.get("remediation", ""),
+                    "references": info.get("reference", []) if isinstance(info.get("reference"), list) else [info.get("reference")] if info.get("reference") else [],
+                    "request": item.get("request", ""),
+                    "response": item.get("response", ""),
+                    "curlCommand": item.get("curl-command", ""),
+                    "ip": item.get("ip", ""),
+                }
+
+                findings.append(finding)
+                tools_used.add("nuclei")
+
+        # Process wapiti results
+        wapiti_data = subdomain_data.get("wapiti", {})
+        # filtered wapiti 파일은 vulnerabilities 키 없이 바로 카테고리가 최상위
+        # 원본 wapiti는 {"vulnerabilities": {...}} 구조
+        vulnerabilities = wapiti_data.get("vulnerabilities", wapiti_data)
+
+        for vuln_type, vuln_list in vulnerabilities.items():
+            if not vuln_list:
+                continue
+
+            for vuln in vuln_list:
+                wstg = vuln.get("wstg", [])
+                path = vuln.get("path", "")
+
+                # Wapiti level을 severity로 변환 (level은 숫자: 1=low, 2=medium, 3=high)
+                level = vuln.get("level", 1)
+                severity_map = {1: "low", 2: "medium", 3: "high"}
+                severity = severity_map.get(level, "info") if isinstance(level, int) else str(level).lower() if level else "info"
+
+                finding = {
+                    "id": f"wapiti-{vuln_type}-{len(findings)}",
+                    "tool": "wapiti",
+                    "category": vuln_type,
+                    "severity": severity,
+                    "title": vuln_type,
+                    "description": vuln.get("info", ""),
+                    "endpoint": normalize_endpoint(path),
+                    "fullUrl": path,
+                    "method": vuln.get("method", ""),
+                    "parameter": vuln.get("parameter", ""),
+                    "evidence": vuln.get("parameter", ""),
+                    "recommendation": vuln.get("solution", ""),
+                    "wstg": wstg,
+                    "references": [f"https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/{tag}" for tag in wstg] if wstg else [],
+                    "curlCommand": vuln.get("curl_command", ""),
+                }
+
+                findings.append(finding)
+                tools_used.add("wapiti")
+
+    # Convert domain format (e.g., "example.com_8080" -> "example.com:8080")
+    target = domain.replace("_", ":", 1) if "_" in domain else domain
+
+    return {
+        "target": target,
+        "startedAt": datetime.now().isoformat(),
+        "finishedAt": datetime.now().isoformat(),
+        "tools": list(tools_used),
+        "findings": findings
+    }
 
 
 def merge_scan_results(input_dir: str, output_dir: str):
@@ -305,12 +393,16 @@ def merge_scan_results(input_dir: str, output_dir: str):
         print(f"  Total nuclei scans: {total_nuclei}")
         print(f"  Total wapiti scans: {total_wapiti}")
 
-        # Write to output file
+        # Convert to frontend format and write to output file
+        frontend_data = convert_to_frontend_format(domain, subdomains)
+
         output_filename = f"{domain}.json"
         output_path = os.path.join(output_dir, output_filename)
 
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(subdomains, f, indent=2, ensure_ascii=False)
+            json.dump(frontend_data, f, indent=2, ensure_ascii=False)
+
+        print(f"  Total findings: {len(frontend_data['findings'])}")
 
         merged_files.append(output_path)
         print(f"  ✓ Created: {output_filename}")

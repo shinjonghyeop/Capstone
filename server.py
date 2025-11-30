@@ -7,20 +7,28 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import subprocess
 import os
+import json
+from typing import Dict, List, Any, Optional
 
 app = Flask(__name__)
 CORS(app)
+
+# Constants
+MERGED_RESULTS_DIR = 'merged_results'
+SCAN_TIMEOUT = 600  # 10 minutes
+SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info']
 
 @app.route('/api/scan', methods=['GET', 'POST'])
 def scan():
     """스캔 API - main.py 실행"""
     try:
+        # 요청 파라미터 추출
         if request.method == 'GET':
             url = request.args.get('url')
             cookies = request.args.get('cookies', '')
             headers = request.args.get('headers', '')
         else:
-            data = request.get_json()
+            data = request.get_json() or {}
             url = data.get('url')
             cookies = data.get('cookies', '')
             headers = data.get('headers', '')
@@ -29,7 +37,7 @@ def scan():
             return jsonify({"error": "URL이 필요합니다"}), 400
         
         print(f"\n{'='*60}")
-        print(f"🔍 스캔 시작: {url}")
+        print(f" 스캔 시작: {url}")
         print(f"{'='*60}")
         
         # main.py 실행 (test_main.py가 아니라 main.py!)
@@ -48,7 +56,7 @@ def scan():
         # main.py 실행 - 실시간 로그 출력
         result = subprocess.run(
             cmd,
-            timeout=600,
+            timeout=SCAN_TIMEOUT,
             # capture_output=True 대신 stdout/stderr를 상속받아서 실시간 출력
         )
         
@@ -87,23 +95,27 @@ def health():
 def list_results():
     """merged_results/ 디렉토리의 JSON 파일 목록 반환"""
     try:
-        results_dir = os.path.join(os.getcwd(), 'merged_results')
+        results_dir = os.path.join(os.getcwd(), MERGED_RESULTS_DIR)
 
         if not os.path.exists(results_dir):
             return jsonify({"results": []}), 200
 
         files = []
         for filename in os.listdir(results_dir):
-            if filename.endswith('.json'):
-                filepath = os.path.join(results_dir, filename)
-                stat = os.stat(filepath)
+            if not filename.endswith('.json'):
+                continue
 
-                files.append({
-                    "filename": filename,
-                    "size": stat.st_size,
-                    "created": stat.st_ctime,
-                    "modified": stat.st_mtime
-                })
+            filepath = os.path.join(results_dir, filename)
+            if not os.path.isfile(filepath):
+                continue
+
+            stat = os.stat(filepath)
+            files.append({
+                "filename": filename,
+                "size": stat.st_size,
+                "created": stat.st_ctime,
+                "modified": stat.st_mtime
+            })
 
         # 최신순으로 정렬
         files.sort(key=lambda x: x['modified'], reverse=True)
@@ -111,59 +123,56 @@ def list_results():
         return jsonify({"results": files}), 200
 
     except Exception as e:
-        print(f"\n[ERROR] {e}\n")
+        print(f"\n[ERROR] list_results: {e}\n")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/results/<filename>', methods=['GET'])
-def get_result(filename):
+def get_result(filename: str):
     """특정 JSON 파일의 내용을 반환"""
     try:
         # 보안: 디렉토리 탐색 방지
         if '..' in filename or '/' in filename or '\\' in filename:
             return jsonify({"error": "잘못된 파일명"}), 400
 
-        results_dir = os.path.join(os.getcwd(), 'merged_results')
+        results_dir = os.path.join(os.getcwd(), MERGED_RESULTS_DIR)
         filepath = os.path.join(results_dir, filename)
 
         if not os.path.exists(filepath):
             return jsonify({"error": "파일을 찾을 수 없습니다"}), 404
 
         # JSON 파일 읽기
-        import json
         with open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        # merged_results 포맷을 프론트엔드 친화적으로 변환
-        normalized = normalize_merged_results(data, filename)
+        # 이미 프론트 포맷으로 저장된 경우 그대로 사용
+        if isinstance(data, dict) and isinstance(data.get('findings'), list):
+            normalized = data if data.get('target') else {**data, 'target': filename}
+        else:
+            # merged_results 포맷을 프론트엔드 친화적으로 변환
+            normalized = normalize_merged_results(data, filename)
 
         return jsonify(normalized), 200
 
     except json.JSONDecodeError as e:
         return jsonify({"error": f"JSON 파싱 오류: {str(e)}"}), 500
     except Exception as e:
-        print(f"\n[ERROR] {e}\n")
+        print(f"\n[ERROR] get_result: {e}\n")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
-def normalize_endpoint(url):
+def normalize_endpoint(url: Optional[str]) -> str:
     """URL에서 쿼리 파라미터와 프래그먼트를 제거하여 base endpoint만 추출"""
     if not url:
-        return url
-    # 쿼리 파라미터 제거
-    if '?' in url:
-        url = url.split('?')[0]
-    # 프래그먼트 제거
-    if '#' in url:
-        url = url.split('#')[0]
-    return url
+        return url or ""
+    return url.split('?')[0].split('#')[0]
 
 
-def normalize_merged_results(merged_data, filename):
+def normalize_merged_results(merged_data: Dict[str, Any], filename: str) -> Dict[str, Any]:
     """merged_results 포맷을 프론트엔드용으로 정규화"""
     findings = []
     tools = set()
@@ -232,8 +241,7 @@ def normalize_merged_results(merged_data, filename):
                         })
 
     # 심각도 순으로 정렬
-    severity_order = ['critical', 'high', 'medium', 'low', 'info']
-    findings.sort(key=lambda f: severity_order.index(f['severity']) if f['severity'] in severity_order else 999)
+    findings.sort(key=lambda f: SEVERITY_ORDER.index(f['severity']) if f['severity'] in SEVERITY_ORDER else 999)
 
     return {
         'target': filename,
@@ -244,34 +252,37 @@ def normalize_merged_results(merged_data, filename):
     }
 
 
-def extract_method(request):
+def extract_method(request: Optional[str]) -> str:
     """HTTP 요청에서 메소드 추출"""
     if not request:
         return 'GET'
+
     lines = request.split('\n')
-    if lines:
-        first_line = lines[0]
-        for method in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']:
-            if first_line.startswith(method):
-                return method
+    if not lines:
+        return 'GET'
+
+    first_line = lines[0]
+    http_methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
+
+    for method in http_methods:
+        if first_line.startswith(method):
+            return method
+
     return 'GET'
 
 
-def infer_wapiti_severity(category):
+def infer_wapiti_severity(category: str) -> str:
     """Wapiti 카테고리로부터 심각도 추론"""
-    high_severity = ['Reflected Cross Site Scripting', 'SQL Injection', 'File Handling Vulnerability']
-    medium_severity = ['Clickjacking Protection', 'Content Security Policy', 'CSRF Protection']
-    low_severity = ['MIME Type Confusion', 'Unencrypted Channels', 'HTTP Security Headers']
+    severity_map = {
+        'high': ['Reflected Cross Site Scripting', 'SQL Injection', 'File Handling Vulnerability'],
+        'medium': ['Clickjacking Protection', 'Content Security Policy', 'CSRF Protection'],
+        'low': ['MIME Type Confusion', 'Unencrypted Channels', 'HTTP Security Headers']
+    }
 
-    for h in high_severity:
-        if h in category:
-            return 'high'
-    for m in medium_severity:
-        if m in category:
-            return 'medium'
-    for l in low_severity:
-        if l in category:
-            return 'low'
+    for severity, keywords in severity_map.items():
+        if any(keyword in category for keyword in keywords):
+            return severity
+
     return 'info'
 
 
@@ -279,9 +290,9 @@ if __name__ == '__main__':
     print("""
     ╔════════════════════════════════════════════════════════╗
     ║                                                        ║
-    ║              🚀 HACKLIPSE SCANNER 🚀                  ║
+    ║                   HACKLIPSE SCANNER                    ║
     ║                                                        ║
-    ║   API Server: http://localhost:3000                   ║
+    ║          API Server: http://localhost:3000             ║
     ║                                                        ║
     ╚════════════════════════════════════════════════════════╝
     """)
