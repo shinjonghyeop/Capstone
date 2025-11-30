@@ -18,10 +18,10 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
     print("\n[Nuclei] 스캔 시작...")
     
     # URL 파일 경로
-    url_file = './urls.txt'
+    url_file = '../urls.txt'
     
     # 템플릿 경로 (홈 디렉토리 고정)
-    templates_path = os.path.expanduser("./scanners/nuclei-templates")
+    templates_path = os.path.expanduser("./nuclei-templates")
     # templates_path = os.path.expanduser("./nuclei-templates")
     # 결과 저장 디렉토리
     results_dir = "nuclei_results"
@@ -35,7 +35,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
         print(f"[Nuclei] URL 파일을 찾을 수 없습니다: {url_file}")
         return
         
-    tags_to_scan = ["xss", "sql", "cve"]
+    tags_to_scan = ["xss", "sqli", "cve"]
     # 각 URL에 대해 동기로 Nuclei 스캔 실행
     for url in urls:
 
@@ -52,6 +52,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
                 "-je", output_file,             # JSON export
                 "-t", templates_path,           # 템플릿 경로
                 "-silent",                      # 조용한 실행
+                #"-debug",                       # 디버그 모드
                 "-rate-limit", "150",           # 초당 요청 제한
                 "-concurrency", "20",           # 동시 실행
                 "-retries", "2",                # 재시도 횟수

@@ -1,0 +1,35 @@
+id: flask-reflected-xss-vuln-param
+
+info:
+  name: Flask App Reflected XSS in /vuln?param
+  author: agent
+  severity: high
+  description: Detects a reflected XSS vulnerability in the /vuln?param= endpoint of the target Flask application. The 'param' value is directly reflected in the response.
+  reference:
+    - https://cwe.mitre.org/data/definitions/79.html
+  classification:
+    cwe-id: CWE-79
+  metadata:
+    max-request: 1
+  tags: xss,flask,reflected,cwe-79
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}?param=%22%3E%3Cscript%3Ealert%28document.domain%29%3C%2Fscript%3E" # Encoded payload
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - '"><script>alert(document.domain)</script>' # Decoded payload
+
+      - type: word
+        part: header
+        words:
+          - "text/html"
+
+      - type: status
+        status:
+          - 200
