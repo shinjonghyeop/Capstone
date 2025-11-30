@@ -3,7 +3,7 @@
 FFUF + Wapiti + Nuclei 통합 취약점 스캐너
 
 웹 애플리케이션에 대해 디렉토리 스캔(FFUF) 후,
-발견된 URL들을 대상으로 취약점 스캔(Wapiti, Nuclei)을 병렬 실행합니다.
+발견된 URL들을 대상으로 취약점 스캔(Wapiti, Nuclei)을 동기 실행합니다.
 """
 
 import asyncio
@@ -21,6 +21,10 @@ from utils.merge_scan_results import merge_filtered_results
 
 # 상수 정의
 RESULTS_FILE = "urls.txt"
+WAPITI_RESULTS_DIR = "wapiti_results"
+NUCLEI_RESULTS_DIR = "nuclei_results"
+FILTERED_RESULTS_DIR = "filtered"
+MERGED_RESULTS_DIR = "merged_results"
 BANNER = r"""
     __  _____   ________ __ __    ________  _____ ______
    / / / /   | / ____/ //_// /   /  _/ __ \/ ___// ____/
@@ -53,7 +57,7 @@ def get_user_input() -> Optional[Tuple[str, str, str]]:
     print()
 
     # URL 입력
-    url = input("URL 입력 (예: http://yc22469.iptime.org:9991/www/homepage.html): ").strip()
+    url = input("URL 입력 (예: http://localhost:8080/index.html): ").strip()
     if not validate_url(url):
         print("[!] 오류: 올바른 URL 형식이 아닙니다. (http:// 또는 https://로 시작해야 합니다)")
         return None
@@ -76,18 +80,18 @@ def get_user_input() -> Optional[Tuple[str, str, str]]:
 
     return url, cookies, headers
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     """명령줄 인자 파싱"""
     parser = argparse.ArgumentParser(
         description='FFUF + Wapiti + Nuclei 통합 취약점 스캐너',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    
+
     parser.add_argument('--url', type=str, help='스캔 대상 URL')
     parser.add_argument('--cookies', type=str, default='', help='쿠키 문자열 (예: session=abc; uid=1)')
     parser.add_argument('--headers', type=str, default='', help='헤더 문자열 (예: User-Agent:curl)')
     parser.add_argument('--json', action='store_true', help='결과를 JSON 형태로 출력')
-    
+
     return parser.parse_args()
 
 def merge_and_deduplicate(ffuf_urls: List[str], crawler_urls: List[str]) -> List[str]:
@@ -176,74 +180,43 @@ async def run_discovery_stage(url: str, cookies: str) -> bool:
         return False
 
 
-def run_directory_scan(url: str, cookies: str) -> bool:
+
+
+async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: str) -> None:
     """
-    FFUF를 실행하여 디렉토리 및 파일을 스캔합니다.
-
-    Args:
-        url: 스캔 대상 URL
-        cookies: 인증용 쿠키 문자열
-
-    Returns:
-        성공 여부
-    """
-    print(f"\n[+] FFUF 디렉토리 스캔 시작... ({url})")
-    try:
-        result = run_ffuf(url, output_dir=OUTPUT_DIR, cookies=cookies)
-
-        if result and os.path.exists(result):
-            print(f"[+] FFUF 스캔 완료. 결과: {result}")
-            return True
-        else:
-            print("[!] FFUF 결과 파일이 생성되지 않았습니다.")
-            return False
-
-    except FileNotFoundError:
-        print("[!] ffuf 명령어를 찾을 수 없습니다. ffuf가 설치되어 있는지 확인하세요.")
-        return False
-    except Exception as e:
-        print(f"[!] FFUF 실행 중 오류 발생: {e}")
-        return False
-
-
-async def run_vulnerability_scanners(url_file: str, headers: str, cookies: str) -> None:
-    """
-    Wapiti와 Nuclei 스캐너를 비동기로 병렬 실행합니다.
+    Wapiti와 Nuclei 스캐너를 순차적으로 실행합니다.
 
     Args:
         url_file: 스캔 대상 URL 목록이 저장된 파일 경로
         headers: HTTP 헤더 문자열
         cookies: 쿠키 문자열
     """
-    print(f"\n[+] 취약점 스캐너 실행 시작: {url_file}")
+    print(f"\n[+] 취약점 스캐너 순차 실행 시작: {url_file}")
 
+    # 1. Wapiti 스캔 실행
+    print("\n[+] Wapiti 스캔 시작...")
     try:
-        # Wapiti와 Nuclei를 병렬로 실행
-        results = await asyncio.gather(
-            asyncio.to_thread(
-                wapiti_scan,
-                [url_file],
-                cookies=cookies,
-                headers=[headers] if headers else None
-            ),
-            asyncio.to_thread(
-                nuclei_scan,
-                headers=headers,
-                cookies=cookies
-            ),
-            return_exceptions=True
+        wapiti_scan(
+            [url_file],
+            cookies=cookies,
+            headers=[headers] if headers else None
         )
-
-        # 각 스캐너 결과 확인
-        for idx, result in enumerate(results):
-            scanner_name = ["Wapiti", "Nuclei"][idx]
-            if isinstance(result, Exception):
-                print(f"[!] {scanner_name} 실행 중 오류: {result}")
-
-        print("[+] 모든 취약점 스캐너 실행 완료.")
-
+        print("[+] Wapiti 스캔 완료.")
     except Exception as e:
-        print(f"[!] 스캐너 실행 중 예상치 못한 오류 발생: {e}")
+        print(f"[!] Wapiti 실행 중 오류: {e}")
+
+    # 2. Nuclei 스캔 실행
+    print("\n[+] Nuclei 스캔 시작...")
+    try:
+        await nuclei_scan(
+            headers=headers,
+            cookies=cookies
+        )
+        print("[+] Nuclei 스캔 완료.")
+    except Exception as e:
+        print(f"[!] Nuclei 실행 중 오류: {e}")
+
+    print("[+] 모든 취약점 스캐너 실행 완료.")
 
 
 async def main_async(url: str = None, cookies: str = "", headers: str = ""):
@@ -267,45 +240,43 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
         print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
         sys.exit(1)
 
-    # 2단계: 취약점 스캐너 실행 (비동기)
-    await run_vulnerability_scanners(RESULTS_FILE, headers, cookies)
+    # 2단계: 취약점 스캐너 실행 (순차 실행)
+    await run_vulnerability_scanners_sync(RESULTS_FILE, headers, cookies)
 
     print("\n[+] 모든 스캔 완료!")
 
     # 3단계: Wapiti 결과 필터링
     print("\n[+] Wapiti 결과 필터링 시작...")
     try:
-        processed_count = filter_dir(
-            input_dir="wapiti_results"
-        )
-        if len(processed_count) > 0:
-            print(f"[+] Wapiti 필터링 완료: {len(processed_count)}개 파일 처리됨")
+        wapiti_processed = filter_dir(input_dir=WAPITI_RESULTS_DIR)
+        if wapiti_processed and len(wapiti_processed) > 0:
+            print(f"[+] Wapiti 필터링 완료: {len(wapiti_processed)}개 파일 처리됨")
         else:
             print("[!] 필터링할 Wapiti 결과가 없습니다.")
     except Exception as e:
         print(f"[!] Wapiti 필터링 중 오류 발생: {e}")
 
-    # 3단계: Nuclei 결과 필터링
+    # 4단계: Nuclei 결과 필터링
     print("\n[+] Nuclei 결과 필터링 시작...")
     try:
-        processed_count = filter_nuclei_results(
-            input_dir="nuclei_results",
-            output_dir="filtered",
+        nuclei_processed = filter_nuclei_results(
+            input_dir=NUCLEI_RESULTS_DIR,
+            output_dir=FILTERED_RESULTS_DIR,
             pretty=True
         )
-        if processed_count > 0:
-            print(f"[+] Nuclei 필터링 완료: {processed_count}개 파일 처리됨")
+        if nuclei_processed > 0:
+            print(f"[+] Nuclei 필터링 완료: {nuclei_processed}개 파일 처리됨")
         else:
             print("[!] 필터링할 Nuclei 결과가 없습니다.")
     except Exception as e:
         print(f"[!] Nuclei 필터링 중 오류 발생: {e}")
 
-    # 4단계: 스캔 결과 병합 (Domain-level)
-    print("\n[+] 4단계: 스캔 결과 병합 시작...")
+    # 5단계: 스캔 결과 병합 (Domain-level)
+    print("\n[+] 5단계: 스캔 결과 병합 시작...")
     try:
         merged_count = merge_filtered_results(
-            input_dir="filtered",
-            output_dir="merged_results"
+            input_dir=FILTERED_RESULTS_DIR,
+            output_dir=MERGED_RESULTS_DIR
         )
         if merged_count > 0:
             print(f"[+] 스캔 결과 병합 완료: {merged_count}개 도메인 파일 생성됨")
@@ -315,19 +286,20 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
         print(f"[!] 결과 병합 중 오류 발생: {e}")
 
 
-def main():
+def main() -> None:
+    """메인 진입점"""
     try:
         args = parse_arguments()
-        
+
         if args.url:
             if not validate_url(args.url):
-                print("오류: 올바른 URL 형식이 아닙니다.")
+                print("[!] 오류: 올바른 URL 형식이 아닙니다.")
                 sys.exit(1)
-            
+
             asyncio.run(main_async(
-                url = args.url,
-                cookies = args.cookies,
-                headers = args.headers
+                url=args.url,
+                cookies=args.cookies,
+                headers=args.headers
             ))
         else:
             asyncio.run(main_async())
