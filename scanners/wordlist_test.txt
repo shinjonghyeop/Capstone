@@ -13,3 +13,4 @@ scripts
 css
 plugins
 administrator
+backup

