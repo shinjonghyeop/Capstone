@@ -113,8 +113,10 @@ def run_scan(
     if not shutil.which("wapiti"):
         raise FileNotFoundError("'wapiti' 명령을 찾을 수 없습니다. PATH를 확인하세요.")
 
-    # 결과 디렉토리 생성
-    os.makedirs(base_dir, exist_ok=True)
+    # 결과 디렉토리 존재할 경우 삭제 후 재생성
+    if os.path.exists(base_dir):
+        shutil.rmtree(base_dir)
+    os.makedirs(base_dir)
 
     saved_files: List[str] = []
 
