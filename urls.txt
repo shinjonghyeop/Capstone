@@ -1,5 +1,4 @@
-http://localhost:9991/www/CommandExecution/CommandExec-2.php
-http://localhost:9991/www/FileInclusion/pages/lvl1.php
-http://localhost:9991/www/FileUpload/fileupload1.php
-http://localhost:9991/www/XSS/XSS_level1.php
-http://localhost:9991/www/XSS/XSS_level2.php
+http://10.65.128.7
+http://10.65.128.7/backup
+http://10.65.128.7/manual
+http://10.65.128.7/text/css

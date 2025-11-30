@@ -30,23 +30,6 @@ USER_PROMPT = """
 """
 # -----------------
 
-def summarize_document(file_path: str, mime_type: str, system_instructions: str, user_prompt: str):
-    """
-    파일을 Gemini API에 업로드하고, 시스템 명령 및 사용자 프롬프트와 함께 요약을 요청합니다.
-    """
-    if not API_KEY:
-        print("오류: GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.")
-        return
-
-    try:
-        # 1. Gemini Client 초기화
-        client = genai.Client(api_key=API_KEY)
-
-        print(f"1. {os.path.basename(file_path)} 파일 업로드 중...")
-        
-        # 2. Files API를 사용하여 파일 업로드
-        # 이 단계에서 파일은 Gemini 서버에 임시로 저장되며, 파일 객체가 반환됩니다.
-
         #------오류코드 주석처리-------- Python SDK가 버전마다 파일 관련 인수 받는 법이 다름
         #uploaded_file = client.files.upload(
         #    file=file_path, 
@@ -74,38 +57,7 @@ def summarize_document(file_path: str, mime_type: str, system_instructions: str,
         response = client.models.generate_content(
             model='gemini-2.5-flash', # 파일 처리에 적합하고 빠른 모델
             contents=[
-                uploaded_file, # 업로드된 파일 자체를 콘텐츠로 포함
-                user_prompt    # 사용자 프롬프트 
-            ],
-            config=genai.types.GenerateContentConfig(
-                system_instruction=system_instructions
-            )
-        )
-        
-        # 4. 결과 출력
-        print("\n--- [ 요약 결과 ] ---")
-        print(response.text)
-        print("---------------------\n")
 
-    except FileNotFoundError:
-        print(f"오류: 지정된 파일 경로를 찾을 수 없습니다. 경로를 확인해 주세요: {FILE_PATH}")
-    except APIError as e:
-        print(f"API 오류가 발생했습니다: {e}")
-    except Exception as e:
-        print(f"알 수 없는 오류 발생: {e}")
-    finally:
-        # 5. 사용이 끝난 파일 삭제 (선택 사항이지만 권장)
-        # 파일을 서버에 계속 남겨두면 비용이 발생할 수 있으므로, 처리가 끝나면 삭제합니다.
-        if 'uploaded_file' in locals() and uploaded_file:
-            print(f"3. 임시 파일 삭제 중... ({uploaded_file.name})")
-            client.files.delete(name=uploaded_file.name)
-            print("   삭제 완료.")
-
-
-if __name__ == "__main__":
-    summarize_document(
-        file_path=FILE_PATH,
-        mime_type=MIME_TYPE,
         system_instructions=SYSTEM_INSTRUCTIONS,
         user_prompt=USER_PROMPT
     )
