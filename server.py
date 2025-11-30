@@ -286,6 +286,161 @@ def infer_wapiti_severity(category: str) -> str:
     return 'info'
 
 
+# ========================================================================
+# AI 보고서 생성 API
+# ========================================================================
+
+@app.route('/api/generate-report/<filename>', methods=['POST'])
+def generate_ai_report(filename: str):
+    """
+    특정 JSON 파일에 대한 AI 보고서 생성
+
+    POST /api/generate-report/localhost_9991.json
+
+    Response:
+    {
+        "success": true,
+        "report_path": "reports/localhost_9991_report_20251130_183045.md",
+        "markdown": "# 보고서 내용..."
+    }
+    """
+    try:
+        # 보안: 디렉토리 트래버설 방지
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({"error": "Invalid filename"}), 400
+
+        # JSON 파일 존재 확인
+        merged_path = os.path.join(MERGED_RESULTS_DIR, filename)
+        if not os.path.exists(merged_path):
+            return jsonify({"error": "Merged result not found"}), 404
+
+        # 보고서 생성
+        from utils.generate_reports import generate_report
+
+        report_path = generate_report(
+            json_file_path=merged_path,
+            output_dir='reports'
+        )
+
+        # 생성된 마크다운 읽기
+        with open(report_path, 'r', encoding='utf-8') as f:
+            markdown_content = f.read()
+
+        return jsonify({
+            "success": True,
+            "report_path": report_path,
+            "markdown": markdown_content
+        }), 200
+
+    except Exception as e:
+        print(f"\n[ERROR] generate_ai_report: {e}\n")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/reports', methods=['GET'])
+def list_reports():
+    """
+    생성된 모든 AI 보고서 목록
+
+    Response:
+    {
+        "reports": [
+            {
+                "filename": "localhost_9991_report_20251130_183045.md",
+                "size": 12345,
+                "created": timestamp,
+                "target": "localhost_9991"
+            }
+        ]
+    }
+    """
+    try:
+        reports_dir = 'reports'
+
+        if not os.path.exists(reports_dir):
+            return jsonify({"reports": []}), 200
+
+        reports = []
+        for filename in os.listdir(reports_dir):
+            if not filename.endswith('.md'):
+                continue
+
+            filepath = os.path.join(reports_dir, filename)
+            if not os.path.isfile(filepath):
+                continue
+
+            stat = os.stat(filepath)
+
+            # 파일명에서 target 추출
+            # 형식: {target}_report_{timestamp}.md
+            target = filename.replace('_report_', '|||').split('|||')[0]
+
+            reports.append({
+                "filename": filename,
+                "size": stat.st_size,
+                "created": stat.st_ctime,
+                "modified": stat.st_mtime,
+                "target": target
+            })
+
+        # 최신순 정렬
+        reports.sort(key=lambda x: x['modified'], reverse=True)
+
+        return jsonify({"reports": reports}), 200
+
+    except Exception as e:
+        print(f"\n[ERROR] list_reports: {e}\n")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/reports/<filename>', methods=['GET'])
+def get_report(filename: str):
+    """
+    특정 보고서의 마크다운 내용 조회
+
+    Response:
+    {
+        "filename": "...",
+        "markdown": "# 보고서...",
+        "target": "localhost_9991",
+        "created": timestamp
+    }
+    """
+    try:
+        # 보안: 디렉토리 트래버설 방지
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({"error": "Invalid filename"}), 400
+
+        filepath = os.path.join('reports', filename)
+
+        if not os.path.exists(filepath):
+            return jsonify({"error": "Report not found"}), 404
+
+        with open(filepath, 'r', encoding='utf-8') as f:
+            markdown = f.read()
+
+        stat = os.stat(filepath)
+        target = filename.replace('_report_', '|||').split('|||')[0]
+
+        return jsonify({
+            "filename": filename,
+            "markdown": markdown,
+            "target": target,
+            "created": stat.st_ctime,
+            "modified": stat.st_mtime
+        }), 200
+
+    except Exception as e:
+        print(f"\n[ERROR] get_report: {e}\n")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     print("""
     ╔════════════════════════════════════════════════════════╗

@@ -15,7 +15,14 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  Sparkles,
+  FileText,
 } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
+import 'highlight.js/styles/github-dark.css';
 
 const API_BASE_URL = 'http://localhost:3000';
 const SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"];
@@ -687,6 +694,122 @@ function ResultsListView({ onSelectResult, onBack }) {
   );
 }
 
+// AI 보고서 뷰 컴포넌트
+function AiReportView({ markdown, onBack }) {
+  const [copied, setCopied] = useState(false);
+
+  function downloadMarkdown() {
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `hacklipse-ai-report-${Date.now()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function copyToClipboard() {
+    navigator.clipboard.writeText(markdown);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="mx-auto max-w-5xl px-6 py-8">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg">
+            <Sparkles className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">AI 보안 진단 보고서</h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Powered by Google Gemini
+            </p>
+          </div>
+        </div>
+
+        {/* 액션 버튼들 */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={copyToClipboard}
+            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4" /> 복사됨!
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" /> 복사
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={downloadMarkdown}
+            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+          >
+            <Download className="h-4 w-4" /> 다운로드
+          </button>
+
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
+          >
+            <XCircle className="h-4 w-4" /> 돌아가기
+          </button>
+        </div>
+      </div>
+
+      {/* 마크다운 렌더링 */}
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="prose prose-slate max-w-none p-8
+                        prose-headings:font-bold
+                        prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl
+                        prose-a:text-blue-600 hover:prose-a:text-blue-800
+                        prose-code:text-sm prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+                        prose-pre:bg-slate-900 prose-pre:text-slate-100
+                        prose-table:border-collapse prose-th:border prose-td:border">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight, rehypeRaw]}
+            components={{
+              // 테이블 스타일링
+              table: ({node, ...props}) => (
+                <div className="overflow-x-auto my-4">
+                  <table className="min-w-full divide-y divide-slate-200" {...props} />
+                </div>
+              ),
+              th: ({node, ...props}) => (
+                <th className="px-4 py-2 bg-slate-100 text-left text-sm font-semibold" {...props} />
+              ),
+              td: ({node, ...props}) => (
+                <td className="px-4 py-2 border-t text-sm" {...props} />
+              ),
+              // 코드 블록
+              code: ({node, inline, ...props}) => (
+                inline
+                  ? <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sm" {...props} />
+                  : <code {...props} />
+              ),
+              // 링크는 새 탭에서 열기
+              a: ({node, ...props}) => (
+                <a {...props} target="_blank" rel="noopener noreferrer" />
+              ),
+            }}
+          >
+            {markdown}
+          </ReactMarkdown>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ReportView({ data, onReset }) {
   const { findings = [], tools = [], target, startedAt, finishedAt } = data || {};
 
@@ -696,6 +819,46 @@ function ReportView({ data, onReset }) {
   const [endpointFilter, setEndpointFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [groupByEndpoint, setGroupByEndpoint] = useState(false);
+
+  // AI 보고서 states
+  const [aiReportMarkdown, setAiReportMarkdown] = useState(null);
+  const [aiReportLoading, setAiReportLoading] = useState(false);
+  const [aiReportError, setAiReportError] = useState(null);
+  const [existingReport, setExistingReport] = useState(null); // 기존 보고서 정보
+  const [checkingReport, setCheckingReport] = useState(true); // 보고서 확인 중
+
+  // 컴포넌트 마운트 시 기존 보고서 확인
+  React.useEffect(() => {
+    async function checkExistingReport() {
+      try {
+        setCheckingReport(true);
+
+        // target에서 파일명 추출
+        const targetName = target.includes('.json')
+          ? target.split(':').pop().replace('.json', '')
+          : target.replace(':', '_');
+
+        // 보고서 목록 조회
+        const res = await fetch(`${API_BASE_URL}/api/reports`);
+        if (!res.ok) throw new Error('Failed to fetch reports');
+
+        const { reports } = await res.json();
+
+        // 현재 target과 일치하는 보고서 찾기
+        const matchingReport = reports.find(r => r.target === targetName);
+
+        if (matchingReport) {
+          setExistingReport(matchingReport);
+        }
+      } catch (e) {
+        console.error('보고서 확인 실패:', e);
+      } finally {
+        setCheckingReport(false);
+      }
+    }
+
+    checkExistingReport();
+  }, [target]);
 
   // Get unique endpoints
   const endpoints = useMemo(() => {
@@ -788,6 +951,96 @@ function ReportView({ data, onReset }) {
     downloadFile("hacklipse-findings.csv", csv);
   }
 
+  // 기존 보고서 불러오기 함수
+  async function loadExistingReport() {
+    if (!existingReport) return;
+
+    setAiReportLoading(true);
+    setAiReportError(null);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reports/${existingReport.filename}`);
+
+      if (!res.ok) {
+        throw new Error('보고서를 불러올 수 없습니다.');
+      }
+
+      const result = await res.json();
+
+      if (!result.markdown || result.markdown.trim() === '') {
+        throw new Error('보고서가 비어있습니다.');
+      }
+
+      setAiReportMarkdown(result.markdown);
+
+    } catch (e) {
+      setAiReportError(e.message);
+    } finally {
+      setAiReportLoading(false);
+    }
+  }
+
+  // AI 보고서 생성 함수
+  async function generateAiReport() {
+    setAiReportLoading(true);
+    setAiReportError(null);
+
+    try {
+      // target에서 파일명 추출
+      const filename = target.includes('.json')
+        ? target.split(':').pop()
+        : `${target.replace(':', '_')}.json`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2분 타임아웃
+
+      const res = await fetch(`${API_BASE_URL}/api/generate-report/${filename}`, {
+        method: 'POST',
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `서버 오류 (${res.status})`);
+      }
+
+      const result = await res.json();
+
+      if (!result.markdown || result.markdown.trim() === '') {
+        throw new Error('생성된 보고서가 비어있습니다.');
+      }
+
+      setAiReportMarkdown(result.markdown);
+
+      // 생성 후 existingReport 상태 업데이트
+      setExistingReport({
+        filename: result.report_path.split('/').pop(),
+        target: target.replace(':', '_')
+      });
+
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        setAiReportError('요청 시간 초과 (2분). 스캔 결과가 너무 큽니다.');
+      } else {
+        setAiReportError(e.message);
+      }
+    } finally {
+      setAiReportLoading(false);
+    }
+  }
+
+  // AI 보고서 뷰 표시
+  if (aiReportMarkdown) {
+    return (
+      <AiReportView
+        markdown={aiReportMarkdown}
+        onBack={() => setAiReportMarkdown(null)}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -799,6 +1052,65 @@ function ReportView({ data, onReset }) {
           <p className="text-xs text-slate-500">시작: {startedAt || "-"} · 종료: {finishedAt || "-"}</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* AI 보고서 버튼 - 조건부 렌더링 */}
+          {checkingReport ? (
+            <button
+              disabled
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium bg-slate-300 text-slate-600 cursor-not-allowed"
+            >
+              <Loader2 className="h-4 w-4 animate-spin" />
+              확인 중...
+            </button>
+          ) : existingReport ? (
+            // 기존 보고서가 있으면 "보기" 버튼
+            <button
+              onClick={loadExistingReport}
+              disabled={aiReportLoading}
+              className={classNames(
+                "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
+                aiReportLoading
+                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                  : "bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600"
+              )}
+            >
+              {aiReportLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  로딩 중...
+                </>
+              ) : (
+                <>
+                  <FileText className="h-4 w-4" />
+                  AI 보고서 보기
+                </>
+              )}
+            </button>
+          ) : (
+            // 보고서가 없으면 "생성" 버튼
+            <button
+              onClick={generateAiReport}
+              disabled={aiReportLoading}
+              className={classNames(
+                "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
+                aiReportLoading
+                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                  : "bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600"
+              )}
+            >
+              {aiReportLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  생성 중...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  AI 보고서 생성
+                </>
+              )}
+            </button>
+          )}
+
           <button onClick={exportCSV} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
             <Download className="h-4 w-4" /> CSV
           </button>
@@ -810,6 +1122,19 @@ function ReportView({ data, onReset }) {
           </button>
         </div>
       </div>
+
+      {/* 에러 메시지 표시 */}
+      {aiReportError && (
+        <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4">
+          <div className="flex items-center gap-2 text-rose-700">
+            <XCircle className="h-5 w-5" />
+            <div>
+              <div className="font-medium">AI 보고서 생성 실패</div>
+              <div className="text-sm mt-1">{aiReportError}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
         <Stat icon={Bug} label="총 이슈" value={counts.total} />
