@@ -1,5 +1,3 @@
-http://localhost:9991/www/CommandExecution/CommandExec-2.php
-http://localhost:9991/www/FileInclusion/pages/lvl1.php
-http://localhost:9991/www/FileUpload/fileupload1.php
-http://localhost:9991/www/XSS/XSS_level1.php
-http://localhost:9991/www/XSS/XSS_level2.php
+http://host8.dreamhack.games:9575/vuln
+http://host8.dreamhack.games:9575/memo
+http://host8.dreamhack.games:9575/flag
