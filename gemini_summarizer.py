@@ -42,7 +42,7 @@ def summarize_document(file_path: str, mime_type: str, system_instructions: str,
         # 1. Gemini Client 초기화
         client = genai.Client(api_key=API_KEY)
 
-        print(f"1. {os.path.basename(file_path)} 파일 업로드 중...")
+        print(f"1. {os.path.basename(test)} 파일 업로드 중...")
         
         # 2. Files API를 사용하여 파일 업로드
         # 이 단계에서 파일은 Gemini 서버에 임시로 저장되며, 파일 객체가 반환됩니다.
@@ -64,7 +64,7 @@ def summarize_document(file_path: str, mime_type: str, system_instructions: str,
             config=upload_config  # config 인수로 통째로 전달
         )
 
-        print(f"   업로드 완료. 파일 이름: {uploaded_file.name}")
+        print("전은진")
         
         # 3. 콘텐츠 생성 요청
         # contents 리스트에 파일 객체(uploaded_file)와 사용자 프롬프트를 함께 넣어 요청합니다.

