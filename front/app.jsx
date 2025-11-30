@@ -17,28 +17,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-/**
- * Hacklipse — Frontend-only demo shell for a web vuln scanning UI (JavaScript version).
- *
- * ✅ What this file gives you now
- *  - Clean, production-style UI with Tailwind
- *  - Centered URL form; on submit it hides, shows a scanning state, then a concise report view
- *  - Report view with summary counts and expandable findings
- *  - Optional manual import of JSON (nuclei/wapiti) with client-side normalization
- *  - Export findings as JSON/CSV
- *
- * 🔌 How to hook your backend later
- *  1) Implement GET /api/scan?url=... returning a normalized payload:
- *     {
- *       target: string,
- *       startedAt: ISODateString,
- *       finishedAt: ISODateString,
- *       tools: string[],
- *       findings: NormalizedFinding[]
- *     }
- *  2) Replace `fetchScanResults` with a real fetch.
- */
-
 const API_BASE_URL = 'http://localhost:3000';
 const SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"];
 const SEVERITY_COLORS = {
@@ -62,8 +40,7 @@ function classNames() {
   return Array.from(arguments).filter(Boolean).join(" ");
 }
 
-// ------------------------- Demo / Fallback Data ------------------------- //
-
+// Demo data for development testing
 const demoPayload = {
   target: "https://demo.example",
   startedAt: new Date(Date.now() - 1000 * 25).toISOString(),
@@ -132,7 +109,6 @@ const demoPayload = {
 async function fetchScanResults(url, extras = {}) {
   const { cookie, headers } = extras || {};
   try {
-    // cookie/headers가 있으면 POST 시도
     if ((cookie && cookie.trim()) || (headers && headers.trim())) {
       try {
         const res = await fetch(`${API_BASE_URL}/api/scan`, {
@@ -147,11 +123,10 @@ async function fetchScanResults(url, extras = {}) {
         }
         return data;
       } catch (_) {
-        // 실패 시 GET로 폴백
+        // Fallback to GET on failure
       }
     }
 
-    // 기본 GET (기존 동작)
     const res = await fetch(`${API_BASE_URL}/api/scan?url=${encodeURIComponent(url)}`);
     if (!res.ok) throw new Error("non-200");
     const data = await res.json();
@@ -165,19 +140,9 @@ async function fetchScanResults(url, extras = {}) {
   }
 }
 
-// ------------------------- Client-side Normalization ------------------------- //
-
 function normalizeEndpoint(url) {
   if (!url) return url;
-  // Remove query parameters
-  if (url.includes('?')) {
-    url = url.split('?')[0];
-  }
-  // Remove fragment
-  if (url.includes('#')) {
-    url = url.split('#')[0];
-  }
-  return url;
+  return url.split('?')[0].split('#')[0];
 }
 
 function normalizeMixedPayload(raw, target) {
@@ -210,7 +175,6 @@ function normalizeMixedPayload(raw, target) {
     });
   }
 
-  // Nuclei JSON Lines or array
   if (Array.isArray(raw)) {
     raw.forEach((item) => {
       const info = item.info || {};
@@ -221,25 +185,16 @@ function normalizeMixedPayload(raw, target) {
         description: info.description,
         endpoint: item["matched-at"] || item.host,
         method: item.method,
-        cwe:
-          (info.tags || "")
-            .split(",")
-            .find((t) => t.trim().toLowerCase().startsWith("cwe-")) || undefined,
+        cwe: (info.tags || "").split(",").find((t) => t.trim().toLowerCase().startsWith("cwe-")) || undefined,
         cvss: info.cvssScore || undefined,
-        evidence:
-          item["matcher-name"] || (item["extracted-results"] || []).join(", "),
-        references: Array.isArray(info.reference)
-          ? info.reference
-          : info.reference
-          ? [info.reference]
-          : [],
+        evidence: item["matcher-name"] || (item["extracted-results"] || []).join(", "),
+        references: Array.isArray(info.reference) ? info.reference : info.reference ? [info.reference] : [],
       });
     });
   }
 
-  // Wapiti object
   if (raw && raw.vulnerabilities) {
-    (raw.vulnerabilities || []).forEach((v) => {
+    raw.vulnerabilities.forEach((v) => {
       const level = (v.level || v.severity || "info").toLowerCase();
       push({
         tool: "wapiti",
@@ -257,7 +212,6 @@ function normalizeMixedPayload(raw, target) {
     });
   }
 
-  // Already normalized
   if (raw && raw.findings && Array.isArray(raw.findings)) {
     raw.findings.forEach(push);
   }
@@ -270,59 +224,13 @@ function normalizeMixedPayload(raw, target) {
     findings,
   };
 }
+// ------------------------------ UI Components ------------------------------ //
 
-// ------------------------------ Utilities ------------------------------ //
-
-function downloadFile(filename, text) {
-  const blob = new Blob([text], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function toCSV(findings) {
-  function esc(s) {
-    return '"' + String(s == null ? "" : s).replaceAll('"', '""') + '"';
-  }
-  const headers = [
-    "tool",
-    "severity",
-    "title",
-    "endpoint",
-    "method",
-    "cwe",
-    "cvss",
-    "evidence",
-  ];
-  const rows = findings.map((f) =>
-    [
-      f.tool,
-      f.severity,
-      f.title,
-      f.endpoint,
-      f.method,
-      f.cwe,
-      f.cvss,
-      f.evidence,
-    ].map(esc).join(",")
-  );
-  return [headers.join(","), ...rows].join("\n");
-}
-
-// ------------------------------ UI Parts ------------------------------ //
-
-// in front/app.jsx — Header 컴포넌트 내 왼쪽 로고 영역 교체
 function Header({ onHomeClick }) {
   return (
     <header className="w-full border-b border-slate-200/60 bg-white/70 backdrop-blur sticky top-0 z-20">
       <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* 로고 이미지 */}
           <button
             onClick={onHomeClick}
             className="cursor-pointer hover:opacity-80 transition-opacity"
@@ -400,7 +308,6 @@ function UrlForm({ onSubmit }) {
           <p className="mt-3 text-sm text-rose-600">올바른 http(s) URL을 입력하세요.</p>
         )}
 
-        {/* 추가 입력란 */}
         <div className="mt-4 grid gap-3">
           <div>
             <label className="text-sm font-medium text-slate-700">(선택) Cookies </label>
@@ -411,8 +318,6 @@ function UrlForm({ onSubmit }) {
               onChange={(e) => setCookie(e.target.value)}
               spellCheck={false}
             />
-            <p className="mt-1 text-xs text-slate-500">
-            </p>
           </div>
 
           <div>
@@ -481,11 +386,11 @@ function FindingCard({ f, showEndpointGroup = false }) {
           )}
           <div className="flex-1 min-w-0">
             <div className="font-medium truncate">{f.title}</div>
-            <div className="text-xs text-slate-500 flex items-center gap-2 flex-wrap">
-              <span className="px-2 py-0.5 bg-slate-100 rounded">{f.tool.toUpperCase()}</span>
-              {f.category && <span>· {f.category}</span>}
-              {f.method && <span>· {f.method}</span>}
-              {showEndpointGroup && <span className="truncate">· {f.endpoint}</span>}
+            <div className="text-xs text-slate-500 flex items-center gap-2 flex-wrap min-w-0">
+              <span className="px-2 py-0.5 bg-slate-100 rounded flex-shrink-0">{f.tool.toUpperCase()}</span>
+              {f.category && <span className="flex-shrink-0">· {f.category}</span>}
+              {f.method && <span className="flex-shrink-0">· {f.method}</span>}
+              {showEndpointGroup && <span className="truncate max-w-[250px] inline-block" title={f.endpoint}>· {f.endpoint}</span>}
             </div>
           </div>
         </div>
@@ -501,7 +406,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
             className="border-t border-slate-100"
           >
             <div className="p-4 space-y-4">
-              {/* Endpoint */}
               {f.endpoint && (
                 <div className="bg-slate-50 rounded-lg p-3">
                   <div className="text-xs font-medium text-slate-600 mb-1">Endpoint</div>
@@ -509,7 +413,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 </div>
               )}
 
-              {/* Full URL (if different from endpoint) */}
               {f.fullUrl && f.fullUrl !== f.endpoint && (
                 <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
                   <div className="text-xs font-medium text-amber-700 mb-1">Full URL (with payload)</div>
@@ -517,7 +420,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 </div>
               )}
 
-              {/* Description */}
               {f.description && (
                 <div>
                   <div className="text-xs font-medium text-slate-600 mb-1">Description</div>
@@ -525,7 +427,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 </div>
               )}
 
-              {/* Impact (Nuclei) */}
               {f.impact && f.impact !== 'N/A' && (
                 <div>
                   <div className="text-xs font-medium text-slate-600 mb-1">Impact</div>
@@ -533,7 +434,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 </div>
               )}
 
-              {/* Metadata Grid */}
               <div className="grid grid-cols-2 gap-3">
                 {f.parameter && (
                   <div>
@@ -574,7 +474,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 )}
               </div>
 
-              {/* Evidence */}
               {f.evidence && (
                 <div>
                   <div className="text-xs font-medium text-slate-600 mb-1">Evidence</div>
@@ -582,7 +481,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 </div>
               )}
 
-              {/* Recommendation */}
               {f.recommendation && (
                 <div>
                   <div className="text-xs font-medium text-slate-600 mb-1">Recommendation</div>
@@ -590,7 +488,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 </div>
               )}
 
-              {/* WSTG Tags (Wapiti) */}
               {f.wstg && f.wstg.length > 0 && (
                 <div>
                   <div className="text-xs font-medium text-slate-600 mb-2">OWASP WSTG</div>
@@ -611,7 +508,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 </div>
               )}
 
-              {/* Curl Command with Copy Button */}
               {f.curlCommand && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -637,7 +533,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 </div>
               )}
 
-              {/* Request/Response Viewers */}
               {f.request && (
                 <div>
                   <button
@@ -672,7 +567,6 @@ function FindingCard({ f, showEndpointGroup = false }) {
                 </div>
               )}
 
-              {/* References */}
               {Array.isArray(f.references) && f.references.length > 0 && (
                 <div>
                   <div className="text-xs font-medium text-slate-600 mb-2">References</div>
@@ -926,9 +820,7 @@ function ReportView({ data, onReset }) {
         <Stat icon={ShieldCheck} label="Info" value={counts.info} tone="bg-slate-100" />
       </div>
 
-      {/* Filters */}
       <div className="mb-6 space-y-4">
-        {/* Search */}
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
@@ -940,7 +832,6 @@ function ReportView({ data, onReset }) {
           />
         </div>
 
-        {/* Filter Bar */}
         <div className="flex flex-wrap gap-3 items-center">
           <select
             value={severityFilter}
@@ -989,7 +880,6 @@ function ReportView({ data, onReset }) {
         </div>
       </div>
 
-      {/* Findings Display */}
       <div className="space-y-6">
         {Object.entries(groupedFindings).map(([endpoint, endpointFindings]) => (
           <div key={endpoint}>
@@ -1025,7 +915,7 @@ function ReportView({ data, onReset }) {
 }
 
 export default function HacklipseApp() {
-  const [phase, setPhase] = useState("form"); // form | scanning | report | results-list
+  const [phase, setPhase] = useState("form");
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
@@ -1037,13 +927,11 @@ export default function HacklipseApp() {
       setData(payload);
       setPhase("report");
 
-      // 스캔 완료 후 최신 결과 로드 시도 (선택적)
       try {
         const res = await fetch(`${API_BASE_URL}/api/results`);
         if (res.ok) {
           const results = await res.json();
           if (results.results && results.results.length > 0) {
-            // 최신 결과가 있으면 자동으로 로드
             const latestFile = results.results[0].filename;
             const latestRes = await fetch(`${API_BASE_URL}/api/results/${latestFile}`);
             if (latestRes.ok) {
@@ -1053,7 +941,6 @@ export default function HacklipseApp() {
           }
         }
       } catch (e) {
-        // 최신 결과 로드 실패해도 기존 페이로드 사용
         console.log('Failed to load latest result:', e);
       }
     } catch (e) {
@@ -1093,7 +980,6 @@ export default function HacklipseApp() {
               )}
               <UrlForm onSubmit={handleSubmit} />
 
-              {/* 이전 결과 보기 버튼 */}
               <div className="mx-auto max-w-2xl mt-6 text-center">
                 <button
                   onClick={showResultsList}
