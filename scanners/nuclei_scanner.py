@@ -22,7 +22,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
     
     # 템플릿 경로 (홈 디렉토리 고정)
     templates_path = os.path.expanduser("./scanners/nuclei-templates")
-    
+    # templates_path = os.path.expanduser("./nuclei-templates")
     # 결과 저장 디렉토리
     results_dir = "nuclei_results"
     os.makedirs(results_dir, exist_ok=True)
@@ -36,9 +36,9 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
         return
         
     tags_to_scan = ["xss", "sql", "cve"]
-    # 각 URL에 대해 병렬로 Nuclei 스캔 실행
+    # 각 URL에 대해 동기로 Nuclei 스캔 실행
     for url in urls:
-        url_processes = [] # 각 URL에 대한 프로세스 리스트
+
         for tag in tags_to_scan:
             # 출력 파일명 생성 (URL과 태그 포함)
             sanitized_url = re.sub(r'https?://', '', url).replace('/', '_').replace(':', '_')
@@ -82,37 +82,43 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
                     stderr=subprocess.PIPE,
                     text=True
                 )
-                url_processes.append((proc, output_file))
+                stdout, stderr = proc.communicate(timeout=900) # 태그 하나당 최대 15분 대기
                 
+                if proc.returncode == 0:
+                    print(f"[Nuclei] 스캔 완료: {output_file}")
+                    if os.path.exists(output_file) and os.path.getsize(output_file) > 2:
+                        print(f"[Nuclei] 발견사항 있음: {output_file}")
+                    else:
+                        print(f"[Nuclei] 취약점 없음: {output_file}")
+                        
             except FileNotFoundError:
                 print("[Nuclei] 'nuclei' 명령을 찾을 수 없습니다. 설치되었는지 확인하세요.")
                 return
             except Exception as e:
                 print(f"[Nuclei] 프로세스 시작 중 오류 발생: {e}")
-
-    print(f"[Nuclei] {url} 의 태그 스캔들 종료 대기…")
-    # 모든 프로세스가 완료될 때까지 대기
-    for proc, output_file in url_processes:
-        try:
-            stdout, stderr = proc.communicate(timeout=900) # 15분 타임아웃
+            except subprocess.TimeoutExpired:
+                print(f"[Nuclei] 타임아웃 (15분 초과): {output_file}")
+                proc.kill()
+                stdout, stderr = proc.communicate()
+            except Exception as e:
+                print(f"[Nuclei] 스캔 중 예상치 못한 오류: {e}")
+                
+    # print(f"[Nuclei] {url} 의 태그 스캔들 종료 대기…")
+    # # 모든 프로세스가 완료될 때까지 대기
+    # for proc, output_file in url_processes:
+    #     try:
+    #         stdout, stderr = proc.communicate(timeout=900) # 15분 타임아웃
             
-            if proc.returncode == 0:
-                print(f"[Nuclei] 스캔 완료: {output_file}")
-                if os.path.exists(output_file) and os.path.getsize(output_file) > 2:
-                    print(f"[Nuclei] 발견사항 있음: {output_file}")
-                else:
-                    print(f"[Nuclei] 취약점 없음: {output_file}")
-            else:
-                print(f"[Nuclei] 오류 발생 (코드: {proc.returncode}): {output_file}")
-                if stderr:
-                    print(f"[Nuclei] 오류 메시지: {stderr[:500]}")
-
-        except subprocess.TimeoutExpired:
-            print(f"[Nuclei] 타임아웃 (15분 초과): {output_file}")
-            proc.kill()
-            stdout, stderr = proc.communicate()
-        except Exception as e:
-            print(f"[Nuclei] 스캔 중 예상치 못한 오류: {e}")
+    #         if proc.returncode == 0:
+    #             print(f"[Nuclei] 스캔 완료: {output_file}")
+    #             if os.path.exists(output_file) and os.path.getsize(output_file) > 2:
+    #                 print(f"[Nuclei] 발견사항 있음: {output_file}")
+    #             else:
+    #                 print(f"[Nuclei] 취약점 없음: {output_file}")
+    #         else:
+    #             print(f"[Nuclei] 오류 발생 (코드: {proc.returncode}): {output_file}")
+    #             if stderr:
+    #                 print(f"[Nuclei] 오류 메시지: {stderr[:500]}")
 
     print("\n[Nuclei] 모든 스캔이 종료되었습니다.")
 
