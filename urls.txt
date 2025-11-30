@@ -1,3 +1,4 @@
-http://host8.dreamhack.games:9575/vuln
-http://host8.dreamhack.games:9575/memo
-http://host8.dreamhack.games:9575/flag
+http://10.65.128.7
+http://10.65.128.7/backup
+http://10.65.128.7/manual
+http://10.65.128.7/text/css
