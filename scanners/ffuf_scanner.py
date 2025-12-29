@@ -75,7 +75,7 @@ def build_ffuf_command(url: str, wordlist: str, output_path: str, cookie: str) -
         '-u', f'{url}/FUZZ',
         '-recursion',
         '-recursion-depth', str(RECURSION_DEPTH),
-        '-recursion-strategy', 'greedy',
+        # '-recursion-strategy', 'greedy',
         '-b', cookie,
         '-t', str(THREADS),
         '-s',   # Silent mode

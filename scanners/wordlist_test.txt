@@ -1,16 +1,1 @@
-cgi-bin
-images
-admin
-includes
-modules
-templates
-cache
-media
-js
-language
-wp-content
-scripts
-css
-plugins
-administrator
-backup
+index.php
