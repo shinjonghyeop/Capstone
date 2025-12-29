@@ -8,7 +8,9 @@ from flask_cors import CORS
 import subprocess
 import os
 import json
+import time
 from typing import Dict, List, Any, Optional
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 CORS(app)
@@ -17,6 +19,86 @@ CORS(app)
 MERGED_RESULTS_DIR = 'merged_results'
 SCAN_TIMEOUT = 3600 * 3  # 3 hours
 SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info']
+
+def _list_result_files(results_dir: str) -> List[Dict[str, Any]]:
+    files = []
+    if not os.path.exists(results_dir):
+        return files
+
+    for filename in os.listdir(results_dir):
+        if not filename.endswith('.json'):
+            continue
+        filepath = os.path.join(results_dir, filename)
+        if not os.path.isfile(filepath):
+            continue
+        stat = os.stat(filepath)
+        files.append({
+            "filename": filename,
+            "path": filepath,
+            "created": stat.st_ctime,
+            "modified": stat.st_mtime
+        })
+
+    files.sort(key=lambda x: x['modified'], reverse=True)
+    return files
+
+
+def _expected_result_filename(target_url: str) -> Optional[str]:
+    parsed = urlparse(target_url)
+    host = parsed.hostname or ""
+    if not host:
+        return None
+    if parsed.port:
+        return f"{host}_{parsed.port}.json"
+    return f"{host}.json"
+
+
+def _select_result_file(
+    files: List[Dict[str, Any]],
+    existing_names: set,
+    target_url: str,
+    started_at: float
+) -> Optional[Dict[str, Any]]:
+    expected = _expected_result_filename(target_url)
+    new_files = [f for f in files if f["filename"] not in existing_names]
+
+    if expected:
+        for f in new_files:
+            if f["filename"] == expected:
+                return f
+    if new_files:
+        return new_files[0]
+
+    modified_files = [
+        f for f in files
+        if f["filename"] in existing_names and f["modified"] >= started_at
+    ]
+    if expected:
+        for f in modified_files:
+            if f["filename"] == expected:
+                return f
+    if modified_files:
+        return modified_files[0]
+
+    if expected:
+        for f in files:
+            if f["filename"] == expected:
+                return f
+
+    return files[0] if files else None
+
+
+def _load_result_data(filepath: str, filename: str) -> Dict[str, Any]:
+    with open(filepath, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    if isinstance(data, dict) and isinstance(data.get('findings'), list):
+        if not data.get('target'):
+            data = {**data, 'target': filename}
+        return data
+
+    return normalize_merged_results(data, filename)
+
 
 @app.route('/api/scan', methods=['GET', 'POST'])
 def scan():
@@ -40,6 +122,10 @@ def scan():
         print(f" 스캔 시작: {url}")
         print(f"{'='*60}")
         
+        results_dir = os.path.join(os.getcwd(), MERGED_RESULTS_DIR)
+        existing_files = {f["filename"] for f in _list_result_files(results_dir)}
+        started_at = time.time()
+
         # main.py 실행 (test_main.py가 아니라 main.py!)
         cmd = ['python3', 'main.py', '--url', url]
         if cookies:
@@ -71,10 +157,19 @@ def scan():
                 "returncode": result.returncode
             }), 500
         
-        # 성공
+        files = _list_result_files(results_dir)
+        selected = _select_result_file(files, existing_files, url, started_at)
+
+        if selected:
+            payload = _load_result_data(selected["path"], selected["filename"])
+            payload["resultFile"] = selected["filename"]
+            return jsonify(payload), 200
+
         return jsonify({
             "message": "스캔 완료",
-            "target": url
+            "target": url,
+            "findings": [],
+            "tools": []
         }), 200
         
     except subprocess.TimeoutExpired:

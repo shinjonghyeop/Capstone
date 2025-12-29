@@ -10,6 +10,7 @@ import asyncio
 import os
 import sys
 import argparse
+import shutil
 from typing import Optional, Tuple, List
 from scanners.wapiti_scanner import run_scan as wapiti_scan
 from scanners.ffuf_scanner import run_ffuf, OUTPUT_DIR
@@ -286,6 +287,22 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
             print("[!] 병합할 결과가 없습니다.")
     except Exception as e:
         print(f"[!] 결과 병합 중 오류 발생: {e}")
+
+    # 임시 결과 정리 (merged_results는 유지)
+    for path in [FILTERED_RESULTS_DIR, WAPITI_RESULTS_DIR, NUCLEI_RESULTS_DIR]:
+        if os.path.exists(path):
+            try:
+                shutil.rmtree(path)
+                print(f"[+] 정리 완료: {path}")
+            except Exception as e:
+                print(f"[!] 정리 실패: {path} - {e}")
+
+    if os.path.exists(RESULTS_FILE):
+        try:
+            os.remove(RESULTS_FILE)
+            print(f"[+] 정리 완료: {RESULTS_FILE}")
+        except Exception as e:
+            print(f"[!] 정리 실패: {RESULTS_FILE} - {e}")
 
 
 def main() -> None:

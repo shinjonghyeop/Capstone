@@ -6,8 +6,10 @@ from typing import Dict, Optional, List
 
 
 # FFUF Configuration
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # UNIFIED_WORDLIST = "./scanners/wordlist.txt"
-UNIFIED_WORDLIST = "./scanners/wordlist_test.txt"
+UNIFIED_WORDLIST = os.path.join(BASE_DIR, "wordlist_test.txt")
+FALLBACK_WORDLIST = os.path.join(BASE_DIR, "wordlist.txt")
 RECURSION_DEPTH = 2
 THREADS = 100
 OUTPUT_DIR="./ffuf_output"
@@ -20,7 +22,7 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> List[str]:
     Args:
         url: Target URL to scan (e.g., http://localhost)
         output_dir: Directory to save JSON results
-        cookie: Cookie string for authentication (default: 'test=')
+        cookies: Cookie string for authentication (default: 'test=')
 
     Returns:
         List of discovered URLs or empty list if failed
@@ -32,9 +34,15 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> List[str]:
     # Unified scan (directories + files + extensions + hidden)
     json_file = os.path.join(output_dir, "ffuf_results.json")
 
-    if os.path.exists(UNIFIED_WORDLIST):
+    wordlist = UNIFIED_WORDLIST
+    if not os.path.exists(wordlist) and os.path.exists(FALLBACK_WORDLIST):
+        wordlist = FALLBACK_WORDLIST
+
+    if os.path.exists(wordlist):
         print(f"[FFUF] Running scan ")
-        cmd = build_ffuf_command(url, UNIFIED_WORDLIST, json_file, cookies)
+        if os.path.exists(json_file):
+            os.remove(json_file)
+        cmd = build_ffuf_command(url, wordlist, json_file, cookies)
         execute_ffuf(cmd, "unified")
 
         # Parse JSON to URLs (returns list)
@@ -50,7 +58,7 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> List[str]:
         else:
             result = []
     else:
-        print(f"[FFUF] Wordlist not found: {UNIFIED_WORDLIST}")
+        print(f"[FFUF] Wordlist not found: {wordlist}")
         result = []
 
     print(f"[FFUF] Scan completed: {len(result)} URLs found")
@@ -160,7 +168,7 @@ def parse_json_to_urls(json_path: str) -> List[str]:
         print(f"[FFUF] Error parsing FFUF results: {e}")
         return []
 
-'''
+
 # Test code
 if __name__ == "__main__":
     """
@@ -169,31 +177,26 @@ if __name__ == "__main__":
     """
 
     # Test configuration
-    test_url = "http://192.168.0.102:9992"
+    test_url = "http://10.66.164.167"
     test_output = "./ffuf_output"
 
     print("=" * 50)
     print("FFUF Scanner Test")
     print("=" * 50)
 
-    result_path = run_ffuf(
+    urls = run_ffuf(
         url=test_url,
         output_dir=test_output,
-        cookie="testtest="
+        cookies="testtest="
     )
 
     print("\n" + "=" * 50)
     print("Results:")
     print("=" * 50)
-    if result_path and os.path.exists(result_path):
-        print(f"  URLs Output: {result_path}")
+    if urls:
         print("\nExtracted URLs:")
-        with open(result_path, 'r') as f:
-            urls = f.read().strip().split('\n')
-            for url in urls:
-                print(f"    {url}")
+        for url in urls:
+            print(f"    {url}")
         print(f"\n  Total URLs: {len(urls)}")
     else:
         print("  No results")
-'''
-

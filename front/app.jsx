@@ -1252,21 +1252,23 @@ export default function HacklipseApp() {
       setData(payload);
       setPhase("report");
 
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/results`);
-        if (res.ok) {
-          const results = await res.json();
-          if (results.results && results.results.length > 0) {
-            const latestFile = results.results[0].filename;
-            const latestRes = await fetch(`${API_BASE_URL}/api/results/${latestFile}`);
-            if (latestRes.ok) {
-              const latestData = await latestRes.json();
-              setData(latestData);
+      if (!payload || !Array.isArray(payload.findings)) {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/results`);
+          if (res.ok) {
+            const results = await res.json();
+            if (results.results && results.results.length > 0) {
+              const latestFile = results.results[0].filename;
+              const latestRes = await fetch(`${API_BASE_URL}/api/results/${latestFile}`);
+              if (latestRes.ok) {
+                const latestData = await latestRes.json();
+                setData(latestData);
+              }
             }
           }
+        } catch (e) {
+          console.log('Failed to load latest result:', e);
         }
-      } catch (e) {
-        console.log('Failed to load latest result:', e);
       }
     } catch (e) {
       setError("스캔 결과를 불러오는 데 실패했습니다.");
