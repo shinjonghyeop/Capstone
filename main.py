@@ -11,17 +11,15 @@ import os
 import sys
 import argparse
 import shutil
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple
 from scanners.wapiti_scanner import run_scan as wapiti_scan
-from scanners.ffuf_scanner import run_ffuf, OUTPUT_DIR
 from scanners.nuclei_scanner import run_scan as nuclei_scan
-from utils.web_crawler import crawl_website
+from crawlers.discover_urls import run_discovery_stage, RESULTS_FILE
 from utils.nuclei_filter import filter_nuclei_results
 from utils.wapiti_filter import filter_dir
 from utils.merge_scan_results import merge_filtered_results
 
 # 상수 정의
-RESULTS_FILE = "urls.txt"
 WAPITI_RESULTS_DIR = "wapiti_results"
 NUCLEI_RESULTS_DIR = "nuclei_results"
 FILTERED_RESULTS_DIR = "filtered"
@@ -46,7 +44,7 @@ def validate_url(url: str) -> bool:
         return False
     return url.startswith(("http://", "https://"))
 
-
+# 테스트용 배포 시 해당 함수 삭제 
 def get_user_input() -> Optional[Tuple[str, str, str]]:
     """
     사용자로부터 스캔 대상 정보를 입력받습니다.
@@ -94,94 +92,6 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument('--json', action='store_true', help='결과를 JSON 형태로 출력')
 
     return parser.parse_args()
-
-def merge_and_deduplicate(ffuf_urls: List[str], crawler_urls: List[str]) -> List[str]:
-    """
-    FFUF와 크롤러 결과를 병합하고 중복 제거
-
-    Args:
-        ffuf_urls: FFUF에서 발견한 URL 리스트
-        crawler_urls: 크롤러에서 발견한 URL 리스트
-
-    Returns:
-        중복 제거된 URL 리스트 (정렬됨)
-    """
-    # Set으로 중복 제거
-    unique_urls = set()
-
-    # FFUF 결과 추가
-    if ffuf_urls:
-        for url in ffuf_urls:
-            unique_urls.add(url.strip())
-
-    # 크롤러 결과 추가
-    if crawler_urls:
-        for url in crawler_urls:
-            unique_urls.add(url.strip())
-
-    # 정렬된 리스트로 반환
-    return sorted(list(unique_urls))
-
-
-async def run_discovery_stage(url: str, cookies: str) -> bool:
-    """
-    1단계: FFUF와 웹 크롤러를 병렬로 실행하여 URL 발견
-
-    Args:
-        url: 스캔 대상 URL
-        cookies: 인증용 쿠키 문자열
-
-    Returns:
-        성공 여부
-    """
-    print(f"\n[+] 1단계: Discovery 시작... ({url})")
-    print("[+] FFUF와 웹 크롤러를 병렬 실행합니다...")
-
-    try:
-        # FFUF와 크롤러를 병렬로 실행
-        ffuf_urls, crawler_urls = await asyncio.gather(
-            asyncio.to_thread(run_ffuf, url, OUTPUT_DIR, cookies),
-            asyncio.to_thread(crawl_website, url, cookies, ""),
-            return_exceptions=True
-        )
-
-        # 에러 체크
-        if isinstance(ffuf_urls, Exception):
-            print(f"[!] FFUF 실행 중 오류: {ffuf_urls}")
-            ffuf_urls = []
-
-        if isinstance(crawler_urls, Exception):
-            print(f"[!] 크롤러 실행 중 오류: {crawler_urls}")
-            crawler_urls = []
-
-        # 결과 병합 및 중복 제거
-        all_urls = merge_and_deduplicate(ffuf_urls, crawler_urls)
-
-        # 통계 출력
-        print(f"\n[+] Discovery 완료:")
-        print(f"    FFUF: {len(ffuf_urls)}개 URL")
-        print(f"    크롤러: {len(crawler_urls)}개 URL")
-        print(f"    중복 제거 후: {len(all_urls)}개 URL")
-
-        # urls.txt 저장
-        if all_urls:
-            with open(RESULTS_FILE, 'w') as f:
-                f.write('\n'.join(all_urls))
-            print(f"[+] {RESULTS_FILE} 저장 완료")
-            return True
-        else:
-            print("[!] 발견된 URL이 없습니다.")
-            return False
-
-    except FileNotFoundError:
-        print("[!] ffuf 명령어를 찾을 수 없습니다. ffuf가 설치되어 있는지 확인하세요.")
-        return False
-    except Exception as e:
-        print(f"[!] Discovery 단계 실행 중 오류 발생: {e}")
-        return False
-
-
-
 
 async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: str) -> None:
     """
@@ -234,7 +144,7 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
         url, cookies, headers = user_input
 
     # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
-    if not await run_discovery_stage(url, cookies):
+    if not await run_discovery_stage(url, cookies, headers):
         print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
         sys.exit(1)
 
