@@ -18,3 +18,4 @@ tld==0.13
 wapiti_arsenic==28.5
 wapiti_swagger==0.1.9
 yaswfp==0.9.3
+aiosqlite

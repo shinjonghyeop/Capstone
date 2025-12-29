@@ -1,6 +1,7 @@
 # scanners/nuclei_scanner.py
 
 import subprocess
+import shutil
 import os
 from datetime import datetime
 from pathlib import Path
@@ -23,9 +24,13 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
     # 템플릿 경로 (홈 디렉토리 고정)
     templates_path = os.path.expanduser("./scanners/nuclei-templates")
     # templates_path = os.path.expanduser("./nuclei-templates")
-    # 결과 저장 디렉토리
+    
+    # 결과 디렉토리 존재할 경우 삭제 후 재생성
     results_dir = "nuclei_results"
-    os.makedirs(results_dir, exist_ok=True)
+    
+    if os.path.exists(results_dir):
+        shutil.rmtree(results_dir)
+    os.makedirs(results_dir)
     
     # URL 파일 읽기
     try:
@@ -35,6 +40,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
         print(f"[Nuclei] URL 파일을 찾을 수 없습니다: {url_file}")
         return
         
+      # rce, lfi, file, file-upload, ssrf 등 태그 추가 예정
     tags_to_scan = ["xss", "sqli", "cve"]
     # 각 URL에 대해 동기로 Nuclei 스캔 실행
     for url in urls:
@@ -91,6 +97,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
                         print(f"[Nuclei] 발견사항 있음: {output_file}")
                     else:
                         print(f"[Nuclei] 취약점 없음: {output_file}")
+                        os.remove(output_file)  # 빈 결과 파일 삭제
                 else:
                     print(f"[Nuclei] 오류 발생 (코드: {proc.returncode}): {output_file}")
 
