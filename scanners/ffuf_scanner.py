@@ -169,6 +169,7 @@ def parse_json_to_urls(json_path: str) -> List[str]:
         return []
 
 
+'''
 # Test code
 if __name__ == "__main__":
     """
@@ -200,3 +201,4 @@ if __name__ == "__main__":
         print(f"\n  Total URLs: {len(urls)}")
     else:
         print("  No results")
+'''
