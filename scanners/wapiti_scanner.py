@@ -1,13 +1,43 @@
 import subprocess
 import os
 import shutil
-from typing import List, Optional
+import json
+import time
+from typing import List, Optional, Dict, Any
 from urllib.parse import urlparse
 import re
 import hashlib
 
 # 기본 저장 디렉토리(이 파일 기준)
 BASE_DIR = "wapiti_results"
+STATUS_FILE = os.getenv("SCAN_STATUS_FILE")
+
+
+def _update_scan_status(step: str, message: str, progress: Optional[Dict[str, Any]] = None) -> None:
+    if not STATUS_FILE:
+        return
+    payload: Dict[str, Any] = {}
+    if os.path.exists(STATUS_FILE):
+        try:
+            with open(STATUS_FILE, "r", encoding="utf-8") as f:
+                payload = json.load(f) or {}
+        except Exception:
+            payload = {}
+
+    payload.update({
+        "phase": "scanning",
+        "step": step,
+        "message": message,
+        "updatedAt": int(time.time())
+    })
+    if progress is not None:
+        payload["progress"] = progress
+
+    try:
+        with open(STATUS_FILE, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False)
+    except Exception:
+        pass
 
 def _load_urls_from_arg(args_list: List[str]) -> List[str]:
     """
@@ -119,8 +149,18 @@ def run_scan(
     os.makedirs(base_dir)
 
     saved_files: List[str] = []
+    total_targets = len(targets)
 
-    for url in targets:
+    for index, url in enumerate(targets, start=1):
+        _update_scan_status(
+            "wapiti",
+            f"Wapiti 진행: {index}/{total_targets}",
+            {
+                "current": index - 1,
+                "total": total_targets,
+                "percent": int(((index - 1) / total_targets) * 100) if total_targets else 0
+            }
+        )
         try:
             parsed = urlparse(url)
             host = parsed.netloc or parsed.path or "target"
@@ -164,5 +204,15 @@ def run_scan(
                 print("[wapiti stdout]\n", proc.stdout.strip())
             if proc.stderr:
                 print("[wapiti stderr]\n", proc.stderr.strip())
+
+        _update_scan_status(
+            "wapiti",
+            f"Wapiti 진행: {index}/{total_targets}",
+            {
+                "current": index,
+                "total": total_targets,
+                "percent": int((index / total_targets) * 100) if total_targets else 0
+            }
+        )
 
     return saved_files

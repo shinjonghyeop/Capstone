@@ -1,0 +1,266 @@
+{
+  "target": "10:64",
+  "startedAt": "2025-11-30T21:32:58.691786",
+  "finishedAt": "2025-11-30T21:32:58.691796",
+  "tools": [
+    "wapiti"
+  ],
+  "findings": [
+    {
+      "id": "wapiti-Cleartext Submission of Password-0",
+      "tool": "wapiti",
+      "category": "Cleartext Submission of Password",
+      "severity": "low",
+      "title": "Cleartext Submission of Password",
+      "description": "Password field password sent in clear text from URL http://10.64.141.227/index.php",
+      "endpoint": "/index.php",
+      "fullUrl": "/index.php",
+      "method": "",
+      "parameter": "password",
+      "evidence": "password",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-07"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-07"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/index.php\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-1",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://10.64.141.227/index.php",
+      "endpoint": "/index.php",
+      "fullUrl": "/index.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/index.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-2",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/index.php",
+      "fullUrl": "/index.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/index.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-3",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/index.php",
+      "fullUrl": "/index.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/index.php\""
+    },
+    {
+      "id": "wapiti-HttpOnly Flag cookie-4",
+      "tool": "wapiti",
+      "category": "HttpOnly Flag cookie",
+      "severity": "low",
+      "title": "HttpOnly Flag cookie",
+      "description": "HttpOnly flag is not set on the cookie 'PHPSESSID' set at 'http://10.64.141.227/index.php'",
+      "endpoint": "/index.php",
+      "fullUrl": "/index.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-SESS-02"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-SESS-02"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/index.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-5",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (cookie in the response) was sent over an unencrypted HTTP connection to http://10.64.141.227/index.php. The server did not enforce HTTPS.",
+      "endpoint": "/index.php",
+      "fullUrl": "/index.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/index.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-6",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (cookie in the request) was sent over an unencrypted HTTP connection to http://10.64.141.227/index.php. The server did not enforce HTTPS.",
+      "endpoint": "/index.php",
+      "fullUrl": "/index.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/index.php\" -e \"http://10.64.141.227/index.php\" -d \"username=alice&password=Letm3in_&submit=Submit\""
+    },
+    {
+      "id": "wapiti-Secure Flag cookie-7",
+      "tool": "wapiti",
+      "category": "Secure Flag cookie",
+      "severity": "low",
+      "title": "Secure Flag cookie",
+      "description": "Secure flag is not set on the cookie: 'PHPSESSID' set at 'http://10.64.141.227/index.php'",
+      "endpoint": "/index.php",
+      "fullUrl": "/index.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-SESS-02"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-SESS-02"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/index.php\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-8",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://10.64.141.227/",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-9",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-10",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-11",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.64.141.227/\""
+    }
+  ]
+}

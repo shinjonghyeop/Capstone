@@ -19,6 +19,34 @@ CORS(app)
 MERGED_RESULTS_DIR = 'merged_results'
 SCAN_TIMEOUT = 3600 * 3  # 3 hours
 SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info']
+SCAN_STATUS_DIR = 'scan_status'
+SCAN_STATE = {
+    "status_file": None,
+    "target": None,
+    "started_at": None
+}
+
+
+def _write_scan_status(status_file: str, payload: Dict[str, Any]) -> None:
+    os.makedirs(os.path.dirname(status_file), exist_ok=True)
+    with open(status_file, 'w', encoding='utf-8') as f:
+        json.dump(payload, f, ensure_ascii=False)
+
+
+def _init_scan_status(target_url: str) -> str:
+    os.makedirs(SCAN_STATUS_DIR, exist_ok=True)
+    safe_target = target_url.replace("://", "_").replace("/", "_").replace(":", "_")
+    filename = f"scan_{safe_target}_{int(time.time())}.json"
+    status_file = os.path.join(os.getcwd(), SCAN_STATUS_DIR, filename)
+    payload = {
+        "phase": "scanning",
+        "step": "queued",
+        "message": "스캔 준비 중",
+        "target": target_url,
+        "updatedAt": int(time.time())
+    }
+    _write_scan_status(status_file, payload)
+    return status_file
 
 def _list_result_files(results_dir: str) -> List[Dict[str, Any]]:
     files = []
@@ -125,6 +153,12 @@ def scan():
         results_dir = os.path.join(os.getcwd(), MERGED_RESULTS_DIR)
         existing_files = {f["filename"] for f in _list_result_files(results_dir)}
         started_at = time.time()
+        status_file = _init_scan_status(url)
+        SCAN_STATE.update({
+            "status_file": status_file,
+            "target": url,
+            "started_at": started_at
+        })
 
         # main.py 실행 (test_main.py가 아니라 main.py!)
         cmd = ['python3', 'main.py', '--url', url]
@@ -140,10 +174,13 @@ def scan():
         print(f"{'='*60}\n")
         
         # main.py 실행 - 실시간 로그 출력
+        env = os.environ.copy()
+        env["SCAN_STATUS_FILE"] = status_file
         result = subprocess.run(
             cmd,
             timeout=SCAN_TIMEOUT,
             # capture_output=True 대신 stdout/stderr를 상속받아서 실시간 출력
+            env=env
         )
         
         print(f"\n{'='*60}")
@@ -152,6 +189,13 @@ def scan():
         
         # 에러 체크
         if result.returncode != 0:
+            _write_scan_status(status_file, {
+                "phase": "error",
+                "step": "failed",
+                "message": "스캔 실행 실패",
+                "target": url,
+                "updatedAt": int(time.time())
+            })
             return jsonify({
                 "error": "main.py 실행 실패",
                 "returncode": result.returncode
@@ -163,8 +207,23 @@ def scan():
         if selected:
             payload = _load_result_data(selected["path"], selected["filename"])
             payload["resultFile"] = selected["filename"]
+            _write_scan_status(status_file, {
+                "phase": "done",
+                "step": "complete",
+                "message": "스캔 완료",
+                "target": url,
+                "updatedAt": int(time.time()),
+                "resultFile": selected["filename"]
+            })
             return jsonify(payload), 200
 
+        _write_scan_status(status_file, {
+            "phase": "done",
+            "step": "complete",
+            "message": "스캔 완료",
+            "target": url,
+            "updatedAt": int(time.time())
+        })
         return jsonify({
             "message": "스캔 완료",
             "target": url,
@@ -173,17 +232,46 @@ def scan():
         }), 200
         
     except subprocess.TimeoutExpired:
+        if SCAN_STATE.get("status_file"):
+            _write_scan_status(SCAN_STATE["status_file"], {
+                "phase": "error",
+                "step": "timeout",
+                "message": "스캔 타임아웃",
+                "target": url,
+                "updatedAt": int(time.time())
+            })
         return jsonify({"error": "타임아웃 (10분 초과)"}), 500
     except Exception as e:
         print(f"\n[ERROR] {e}\n")
         import traceback
         traceback.print_exc()
+        if SCAN_STATE.get("status_file"):
+            _write_scan_status(SCAN_STATE["status_file"], {
+                "phase": "error",
+                "step": "failed",
+                "message": "스캔 처리 중 오류",
+                "target": SCAN_STATE.get("target"),
+                "updatedAt": int(time.time())
+            })
         return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok"}), 200
+
+
+@app.route('/api/scan/status', methods=['GET'])
+def scan_status():
+    status_file = SCAN_STATE.get("status_file")
+    if not status_file or not os.path.exists(status_file):
+        return jsonify({"phase": "idle"}), 200
+    try:
+        with open(status_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"phase": "error", "message": str(e)}), 500
 
 
 @app.route('/api/results', methods=['GET'])
