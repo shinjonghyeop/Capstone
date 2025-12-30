@@ -13,12 +13,7 @@ variables:
 http:
   - method: POST
     path:
-      - "{{BaseURL}}/report"
-      - "{{BaseURL}}/submit"
-      - "{{BaseURL}}/search"
-      - "{{BaseURL}}/feedback"
-      - "{{BaseURL}}/comment"
-      - "{{BaseURL}}/contact"
+      - "{{BaseURL}}"
 
     headers:
       Content-Type: application/x-www-form-urlencoded
