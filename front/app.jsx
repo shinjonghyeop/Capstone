@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ShieldAlert,
   ShieldCheck,
@@ -24,7 +25,8 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import 'highlight.js/styles/github-dark.css';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname}:3000`;
 const SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"];
 const SEVERITY_COLORS = {
   critical: "bg-red-600 text-white",
@@ -627,7 +629,7 @@ function ResultsListView({ onSelectResult, onBack }) {
       const res = await fetch(`${API_BASE_URL}/api/results/${filename}`);
       if (!res.ok) throw new Error('Failed to load result file');
       const data = await res.json();
-      onSelectResult(data);
+      onSelectResult(data, filename);
     } catch (e) {
       setError(e.message);
     }
@@ -778,6 +780,24 @@ function AiReportView({ markdown, onBack }) {
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight, rehypeRaw]}
             components={{
+              h1: ({node, className, ...props}) => (
+                <h1
+                  className={classNames("text-3xl font-bold mt-6 mb-3", className)}
+                  {...props}
+                />
+              ),
+              h2: ({node, className, ...props}) => (
+                <h2
+                  className={classNames("text-2xl font-semibold mt-5 mb-2", className)}
+                  {...props}
+                />
+              ),
+              h3: ({node, className, ...props}) => (
+                <h3
+                  className={classNames("text-xl font-semibold mt-4 mb-2", className)}
+                  {...props}
+                />
+              ),
               // 테이블 스타일링
               table: ({node, ...props}) => (
                 <div className="overflow-x-auto my-4">
@@ -991,15 +1011,9 @@ function ReportView({ data, onReset }) {
         ? target.split(':').pop()
         : `${target.replace(':', '_')}.json`;
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2분 타임아웃
-
       const res = await fetch(`${API_BASE_URL}/api/generate-report/${filename}`, {
-        method: 'POST',
-        signal: controller.signal
+        method: 'POST'
       });
-
-      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const errorData = await res.json();
@@ -1021,11 +1035,7 @@ function ReportView({ data, onReset }) {
       });
 
     } catch (e) {
-      if (e.name === 'AbortError') {
-        setAiReportError('요청 시간 초과 (2분). 스캔 결과가 너무 큽니다.');
-      } else {
-        setAiReportError(e.message);
-      }
+      setAiReportError(e.message);
     } finally {
       setAiReportLoading(false);
     }
@@ -1070,7 +1080,7 @@ function ReportView({ data, onReset }) {
                 "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
                 aiReportLoading
                   ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                  : "bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600"
+                  : "bg-slate-100 hover:bg-slate-200"
               )}
             >
               {aiReportLoading ? (
@@ -1094,7 +1104,7 @@ function ReportView({ data, onReset }) {
                 "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
                 aiReportLoading
                   ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                  : "bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600"
+                  : "bg-slate-100 hover:bg-slate-200"
               )}
             >
               {aiReportLoading ? (
@@ -1243,14 +1253,162 @@ export default function HacklipseApp() {
   const [phase, setPhase] = useState("form");
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [resultFile, setResultFile] = useState(null);
+  const [scanTarget, setScanTarget] = useState(null);
+  const [scanStepIndex, setScanStepIndex] = useState(0);
+  const [scanStatus, setScanStatus] = useState(null);
+  const [scanStatusError, setScanStatusError] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const scanSteps = [
+    {
+      id: "discovery",
+      label: "Discovery",
+      detail: "FFUF/크롤러로 URL 수집"
+    },
+    {
+      id: "wapiti",
+      label: "Wapiti",
+      detail: "Wapiti 취약점 스캔"
+    },
+    {
+      id: "nuclei",
+      label: "Nuclei",
+      detail: "Nuclei 템플릿 스캔"
+    },
+    {
+      id: "merge",
+      label: "Merge",
+      detail: "결과 병합 및 정리"
+    }
+  ];
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.startsWith("/results")) {
+      setPhase("results-list");
+      return;
+    }
+
+    if (path.startsWith("/report/")) {
+      const filename = decodeURIComponent(path.replace("/report/", ""));
+      if (filename && (filename !== resultFile || !data)) {
+        (async () => {
+          try {
+            setError(null);
+            setPhase("scanning");
+            const res = await fetch(`${API_BASE_URL}/api/results/${filename}`);
+            if (!res.ok) throw new Error("Failed to load result file");
+            const resultData = await res.json();
+            setData(resultData);
+            setResultFile(filename);
+            setScanTarget(resultData?.target || null);
+            setPhase("report");
+          } catch (e) {
+            setError("스캔 결과를 불러오는 데 실패했습니다.");
+            setPhase("form");
+            navigate("/");
+          }
+        })();
+        return;
+      }
+      setPhase("report");
+      return;
+    }
+
+    if (path.startsWith("/report")) {
+      setPhase("report");
+      return;
+    }
+
+    if (path.startsWith("/scan")) {
+      setPhase("scanning");
+      return;
+    }
+    setPhase("form");
+  }, [location.pathname, navigate, resultFile, data]);
+
+  useEffect(() => {
+    if (phase !== "scanning" || scanStatus?.step) {
+      setScanStepIndex(0);
+      return;
+    }
+
+    setScanStepIndex(0);
+    const interval = setInterval(() => {
+      setScanStepIndex((prev) => (prev + 1) % scanSteps.length);
+    }, 12000);
+
+    return () => clearInterval(interval);
+  }, [phase, scanSteps.length, scanStatus?.step]);
+
+  useEffect(() => {
+    if (phase !== "scanning") {
+      setScanStatus(null);
+      setScanStatusError(null);
+      return;
+    }
+
+    let active = true;
+
+    async function pollStatus() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/scan/status`);
+        if (!res.ok) throw new Error("Failed to load scan status");
+        const data = await res.json();
+        if (!active) return;
+        if (data && data.phase && data.phase !== "idle") {
+          setScanStatus(data);
+          setScanStatusError(null);
+          if (data.target) {
+            setScanTarget(data.target);
+          }
+          if (data.phase === "done" && data.resultFile) {
+            setResultFile(data.resultFile);
+            navigate(`/report/${encodeURIComponent(data.resultFile)}`);
+            return;
+          }
+          if (data.step) {
+            const stepMap = {
+              queued: 0,
+              discovery: 0,
+              wapiti: 1,
+              nuclei: 2,
+              filter_wapiti: 3,
+              filter_nuclei: 3,
+              merge: 3,
+              cleanup: 3,
+              complete: 3
+            };
+            const nextIndex = stepMap[data.step] ?? 0;
+            setScanStepIndex(nextIndex);
+          }
+        }
+      } catch (e) {
+        if (!active) return;
+        setScanStatusError("진행 상태를 불러올 수 없습니다.");
+      }
+    }
+
+    pollStatus();
+    const interval = setInterval(pollStatus, 3000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [phase]);
 
   async function handleSubmit(url, extras) {
     setError(null);
     setPhase("scanning");
+    setResultFile(null);
+    setScanTarget(url);
+    navigate("/scan");
     try {
       const payload = await fetchScanResults(url, extras);
       setData(payload);
       setPhase("report");
+      navigate("/report");
 
       if (!payload || !Array.isArray(payload.findings)) {
         try {
@@ -1273,6 +1431,9 @@ export default function HacklipseApp() {
     } catch (e) {
       setError("스캔 결과를 불러오는 데 실패했습니다.");
       setPhase("form");
+      setResultFile(null);
+      setScanTarget(null);
+      navigate("/");
     }
   }
 
@@ -1280,19 +1441,31 @@ export default function HacklipseApp() {
     setPhase("form");
     setData(null);
     setError(null);
+    setResultFile(null);
+    setScanTarget(null);
+    navigate("/");
   }
 
   function showResultsList() {
     setPhase("results-list");
+    navigate("/results");
   }
 
-  function handleSelectResult(resultData) {
+  function handleSelectResult(resultData, filename) {
     setData(resultData);
     setPhase("report");
+    setScanTarget(resultData?.target || null);
+    if (filename) {
+      setResultFile(filename);
+      navigate(`/report/${encodeURIComponent(filename)}`);
+    } else {
+      setResultFile(null);
+      navigate("/report");
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-white">
       <Header onHomeClick={reset} />
 
       <main className="mx-auto max-w-6xl px-6">
@@ -1336,6 +1509,9 @@ export default function HacklipseApp() {
                           const normalized = normalizeMixedPayload(parsed, "manual://paste");
                           setData(normalized);
                           setPhase("report");
+                          setResultFile(null);
+                          setScanTarget(normalized?.target || "manual://paste");
+                          navigate("/report");
                         } catch (e) {
                           setError("JSON 파싱 실패: 형식을 확인하세요.");
                         }
@@ -1349,6 +1525,9 @@ export default function HacklipseApp() {
                         const normalized = normalizeMixedPayload(demoPayload, demoPayload.target);
                         setData(normalized);
                         setPhase("report");
+                        setResultFile(null);
+                        setScanTarget(normalized?.target || demoPayload.target);
+                        navigate("/report");
                       }}
                     >
                       데모 보기
@@ -1361,9 +1540,68 @@ export default function HacklipseApp() {
 
           {phase === "scanning" && (
             <motion.div key="loading" className="min-h-[60vh] grid place-items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div className="flex flex-col items-center gap-3 text-slate-700">
+              <div className="flex flex-col items-center gap-4 text-slate-700 w-full">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <p>스캔 결과 정리 중…</p>
+                <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6">
+                  <div className="text-sm text-slate-600">
+                    스캔 대상: <span className="font-medium text-slate-800">{scanTarget || "-"}</span>
+                  </div>
+                  {scanStatus?.message && (
+                    <div className="mt-2 text-xs text-slate-500">
+                      현재 단계: <span className="font-medium text-slate-700">{scanStatus.message}</span>
+                    </div>
+                  )}
+                  {scanStatus?.progress?.total > 0 && (
+                    <div className="mt-1 text-xs text-slate-500">
+                      진행률:{" "}
+                      <span className="font-medium text-slate-700">
+                        {scanStatus.progress.percent ?? Math.round((scanStatus.progress.current / scanStatus.progress.total) * 100)}%
+                      </span>
+                      <span className="text-slate-400 ml-2">
+                        ({scanStatus.progress.current}/{scanStatus.progress.total})
+                      </span>
+                    </div>
+                  )}
+                  {scanStatus?.updatedAt && (
+                    <div className="mt-1 text-[11px] text-slate-400">
+                      마지막 업데이트: {new Date(scanStatus.updatedAt * 1000).toLocaleString("ko-KR")}
+                    </div>
+                  )}
+                  {scanStatusError && (
+                    <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                      {scanStatusError}
+                    </div>
+                  )}
+                  <div className="mt-4 space-y-3">
+                    {scanSteps.map((step, index) => (
+                      <div key={step.id} className="flex items-start gap-3">
+                        <div
+                          className={classNames(
+                            "mt-1 h-2 w-2 rounded-full",
+                            index < scanStepIndex
+                              ? "bg-emerald-500"
+                              : index === scanStepIndex
+                              ? "bg-sky-500"
+                              : "bg-slate-300"
+                          )}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold">{step.label}</span>
+                            <span className="text-xs text-slate-500">
+                              {index < scanStepIndex ? "완료" : index === scanStepIndex ? "진행 중" : "대기"}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 mt-1">{step.detail}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-xs text-slate-400">
+                    단계 표시는 서버 상태 기준으로 표시됩니다.
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}
