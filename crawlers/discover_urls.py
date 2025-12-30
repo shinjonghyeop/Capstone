@@ -7,8 +7,8 @@ import asyncio
 import os
 from typing import List
 
-from ffuf_scanner import run_ffuf, OUTPUT_DIR
-from web_crawler import crawl_website
+from crawlers.ffuf_scanner import run_ffuf, OUTPUT_DIR
+from crawlers.web_crawler import crawl_website
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
