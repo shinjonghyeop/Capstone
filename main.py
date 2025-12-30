@@ -11,6 +11,7 @@ import os
 import sys
 import argparse
 import shutil
+import time
 from typing import Optional, Tuple
 from scanners.wapiti_scanner import run_scan as wapiti_scan
 from scanners.nuclei_scanner import run_scan as nuclei_scan
@@ -18,6 +19,7 @@ from crawlers.discover_urls import run_discovery_stage, RESULTS_FILE
 from utils.nuclei_filter import filter_nuclei_results
 from utils.wapiti_filter import filter_wapiti_results
 from utils.merge_scan_results import merge_filtered_results
+
 
 # 상수 정의
 WAPITI_RESULTS_DIR = "wapiti_results"
@@ -173,10 +175,10 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
     update_status("scanning", "discovery", "Discovery 단계 시작")
 
     # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
-    if not await run_discovery_stage(url, cookies, headers):
-        print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
-        update_status("error", "discovery", "Discovery 단계 실패")
-        sys.exit(1)
+    # if not await run_discovery_stage(url, cookies, headers):
+    #     print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
+    #     update_status("error", "discovery", "Discovery 단계 실패")
+    #     sys.exit(1)
 
     # urls.txt 파일 확인
     if not os.path.exists(RESULTS_FILE):
@@ -192,48 +194,57 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
     # 3단계: Wapiti 결과 필터링
     update_status("scanning", "filter_wapiti", "Wapiti 결과 필터링")
     print("\n[+] Wapiti 결과 필터링 시작...")
-    try:
-        wapiti_processed = filter_wapiti_results(
-            input_dir=WAPITI_RESULTS_DIR,
-            output_dir=FILTERED_RESULTS_DIR
-        )
-        if wapiti_processed and len(wapiti_processed) > 0:
-            print(f"[+] Wapiti 필터링 완료: {len(wapiti_processed)}개 파일 처리됨")
-        else:
-            print("[!] 필터링할 Wapiti 결과가 없습니다.")
-    except Exception as e:
-        print(f"[!] Wapiti 필터링 중 오류 발생: {e}")
+    if os.path.isdir(WAPITI_RESULTS_DIR):
+        try:
+            wapiti_processed = filter_wapiti_results(
+                input_dir=WAPITI_RESULTS_DIR,
+                output_dir=FILTERED_RESULTS_DIR
+            )
+            if wapiti_processed and len(wapiti_processed) > 0:
+                print(f"[+] Wapiti 필터링 완료: {len(wapiti_processed)}개 파일 처리됨")
+            else:
+                print("[!] 필터링할 Wapiti 결과가 없습니다.")
+        except Exception as e:
+            print(f"[!] Wapiti 필터링 중 오류 발생: {e}")
+    else:
+        print(f"[!] Wapiti 결과 디렉토리가 없습니다: {WAPITI_RESULTS_DIR}")
 
     # 4단계: Nuclei 결과 필터링
     update_status("scanning", "filter_nuclei", "Nuclei 결과 필터링")
     print("\n[+] Nuclei 결과 필터링 시작...")
-    try:
-        nuclei_processed = filter_nuclei_results(
-            input_dir=NUCLEI_RESULTS_DIR,
-            output_dir=FILTERED_RESULTS_DIR,
-            pretty=True
-        )
-        if nuclei_processed > 0:
-            print(f"[+] Nuclei 필터링 완료: {nuclei_processed}개 파일 처리됨")
-        else:
-            print("[!] 필터링할 Nuclei 결과가 없습니다.")
-    except Exception as e:
-        print(f"[!] Nuclei 필터링 중 오류 발생: {e}")
+    if os.path.isdir(NUCLEI_RESULTS_DIR):
+        try:
+            nuclei_processed = filter_nuclei_results(
+                input_dir=NUCLEI_RESULTS_DIR,
+                output_dir=FILTERED_RESULTS_DIR,
+                pretty=True
+            )
+            if nuclei_processed > 0:
+                print(f"[+] Nuclei 필터링 완료: {nuclei_processed}개 파일 처리됨")
+            else:
+                print("[!] 필터링할 Nuclei 결과가 없습니다.")
+        except Exception as e:
+            print(f"[!] Nuclei 필터링 중 오류 발생: {e}")
+    else:
+        print(f"[!] Nuclei 결과 디렉토리가 없습니다: {NUCLEI_RESULTS_DIR}")
 
     # 5단계: 스캔 결과 병합 (Domain-level)
     update_status("scanning", "merge", "스캔 결과 병합")
     print("\n[+] 5단계: 스캔 결과 병합 시작...")
-    try:
-        merged_count = merge_filtered_results(
-            input_dir=FILTERED_RESULTS_DIR,
-            output_dir=MERGED_RESULTS_DIR
-        )
-        if merged_count > 0:
-            print(f"[+] 스캔 결과 병합 완료: {merged_count}개 도메인 파일 생성됨")
-        else:
-            print("[!] 병합할 결과가 없습니다.")
-    except Exception as e:
-        print(f"[!] 결과 병합 중 오류 발생: {e}")
+    if os.path.isdir(FILTERED_RESULTS_DIR):
+        try:
+            merged_count = merge_filtered_results(
+                input_dir=FILTERED_RESULTS_DIR,
+                output_dir=MERGED_RESULTS_DIR
+            )
+            if merged_count > 0:
+                print(f"[+] 스캔 결과 병합 완료: {merged_count}개 도메인 파일 생성됨")
+            else:
+                print("[!] 병합할 결과가 없습니다.")
+        except Exception as e:
+            print(f"[!] 결과 병합 중 오류 발생: {e}")
+    else:
+        print(f"[!] 병합할 결과가 없습니다: {FILTERED_RESULTS_DIR}")
 
     # 임시 결과 정리 (merged_results는 유지)
     update_status("scanning", "cleanup", "임시 결과 정리")
