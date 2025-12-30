@@ -3,11 +3,41 @@
 import subprocess
 import shutil
 import os
+import json
+import time
 from datetime import datetime
 from pathlib import Path
 import re
 
 RESULTS_DIR = "nuclei_results"
+STATUS_FILE = os.getenv("SCAN_STATUS_FILE")
+
+def _update_scan_status(step: str, message: str, progress=None) -> None:
+    if not STATUS_FILE:
+        return
+    payload = {}
+    if os.path.exists(STATUS_FILE):
+        try:
+            with open(STATUS_FILE, "r", encoding="utf-8") as f:
+                payload = json.load(f) or {}
+        except Exception:
+            payload = {}
+
+    payload.update({
+        "phase": "scanning",
+        "step": step,
+        "message": message,
+        "updatedAt": int(time.time())
+    })
+    if progress is not None:
+        payload["progress"] = progress
+
+    try:
+        with open(STATUS_FILE, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False)
+    except Exception:
+        pass
+      
 
 def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "") -> None:
     """
@@ -45,8 +75,14 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "")
         
     # rce, lfi, file, file-upload, ssrf 등 태그 추가 예정
     tags_to_scan = ["xss", "sqli", "cve"]
+    total_urls = len(urls)
+    _update_scan_status(
+        "nuclei",
+        f"Nuclei 진행: 0/{total_urls}",
+        {"current": 0, "total": total_urls, "percent": 0}
+    )
     # 각 URL에 대해 동기로 Nuclei 스캔 실행
-    for url in urls:
+    for index, url in enumerate(urls, start=1):
 
         for tag in tags_to_scan:
             # 출력 파일명 생성 (URL과 태그 포함)
@@ -116,6 +152,32 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "")
                 return
             except Exception as e:
                 print(f"[Nuclei] 스캔 중 예상치 못한 오류: {e}")
+        _update_scan_status(
+            "nuclei",
+            f"Nuclei 진행: {index}/{total_urls}",
+            {
+                "current": index,
+                "total": total_urls,
+                "percent": int((index / total_urls) * 100) if total_urls else 0
+            }
+        )
+                
+    # print(f"[Nuclei] {url} 의 태그 스캔들 종료 대기…")
+    # # 모든 프로세스가 완료될 때까지 대기
+    # for proc, output_file in url_processes:
+    #     try:
+    #         stdout, stderr = proc.communicate(timeout=900) # 15분 타임아웃
+            
+    #         if proc.returncode == 0:
+    #             print(f"[Nuclei] 스캔 완료: {output_file}")
+    #             if os.path.exists(output_file) and os.path.getsize(output_file) > 2:
+    #                 print(f"[Nuclei] 발견사항 있음: {output_file}")
+    #             else:
+    #                 print(f"[Nuclei] 취약점 없음: {output_file}")
+    #         else:
+    #             print(f"[Nuclei] 오류 발생 (코드: {proc.returncode}): {output_file}")
+    #             if stderr:
+    #                 print(f"[Nuclei] 오류 메시지: {stderr[:500]}")
 
     print("\n[Nuclei] 모든 스캔이 종료되었습니다.")
 

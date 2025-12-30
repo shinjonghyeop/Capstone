@@ -1,13 +1,42 @@
 import subprocess
 import os
 import shutil
-from typing import List, Optional
+import json
+import time
+from typing import List, Optional, Dict, Any
 from urllib.parse import urlparse
 import re
 import hashlib
 
 # 기본 저장 디렉토리(이 파일 기준)
+STATUS_FILE = os.getenv("SCAN_STATUS_FILE")
 RESULTS_DIR = "wapiti_results"
+
+def _update_scan_status(step: str, message: str, progress: Optional[Dict[str, Any]] = None) -> None:
+    if not STATUS_FILE:
+        return
+    payload: Dict[str, Any] = {}
+    if os.path.exists(STATUS_FILE):
+        try:
+            with open(STATUS_FILE, "r", encoding="utf-8") as f:
+                payload = json.load(f) or {}
+        except Exception:
+            payload = {}
+
+    payload.update({
+        "phase": "scanning",
+        "step": step,
+        "message": message,
+        "updatedAt": int(time.time())
+    })
+    if progress is not None:
+        payload["progress"] = progress
+
+    try:
+        with open(STATUS_FILE, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False)
+    except Exception:
+        pass
 
 def _normalize_headers(header_str: Optional[str]) -> Optional[List[str]]:
     """
@@ -99,13 +128,23 @@ def run_scan(
         raise FileNotFoundError("'wapiti' 명령을 찾을 수 없습니다. PATH를 확인하세요.")
 
     # 결과 디렉토리 존재할 경우 삭제 후 재생성
-    # 현재 main.py에서 디렉터리를 삭제하고 있음,
-    # 때문에 여기서는 makedirs만 수행해도 됨.
     if os.path.exists(RESULTS_DIR):
         shutil.rmtree(RESULTS_DIR)
     os.makedirs(RESULTS_DIR)
 
-    for url in urls:
+    saved_files: List[str] = []
+    total_targets = len(targets)
+
+    for index, url in enumerate(targets, start=1):
+        _update_scan_status(
+            "wapiti",
+            f"Wapiti 진행: {index}/{total_targets}",
+            {
+                "current": index - 1,
+                "total": total_targets,
+                "percent": int(((index - 1) / total_targets) * 100) if total_targets else 0
+            }
+        )
         try:
             parsed = urlparse(url)
             host = parsed.netloc or parsed.path or "target"
@@ -148,8 +187,17 @@ def run_scan(
                 print("[wapiti stdout]\n", proc.stdout.strip())
             if proc.stderr:
                 print("[wapiti stderr]\n", proc.stderr.strip())
+        _update_scan_status(
+            "wapiti",
+            f"Wapiti 진행: {index}/{total_targets}",
+            {
+                "current": index,
+                "total": total_targets,
+                "percent": int((index / total_targets) * 100) if total_targets else 0
+            }
+        )
 
-    return
-
+    return saved_files
+  
 if __name__ == "__main__":
     run_scan("urls.txt")

