@@ -11,6 +11,7 @@ import os
 import sys
 import argparse
 import shutil
+from time import sleep
 from typing import Optional, Tuple
 from scanners.wapiti_scanner import run_scan as wapiti_scan
 from scanners.nuclei_scanner import run_scan as nuclei_scan
@@ -145,7 +146,7 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
             return
         url, cookies, headers = user_input
 
-    # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
+    # # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
     if not await run_discovery_stage(url, cookies, headers):
         print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
         sys.exit(1)
@@ -163,7 +164,10 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
     # 3단계: Wapiti 결과 필터링
     print("\n[+] Wapiti 결과 필터링 시작...")
     try:
-        wapiti_processed = filter_wapiti_results(input_dir=WAPITI_RESULTS_DIR)
+        wapiti_processed = filter_wapiti_results(
+            input_dir=WAPITI_RESULTS_DIR,
+            output_dir=FILTERED_RESULTS_DIR
+        )
         if wapiti_processed and len(wapiti_processed) > 0:
             print(f"[+] Wapiti 필터링 완료: {len(wapiti_processed)}개 파일 처리됨")
         else:

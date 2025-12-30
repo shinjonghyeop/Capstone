@@ -26,15 +26,11 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "")
     # templates_path = os.path.expanduser("./nuclei-templates")
     
     # 결과 디렉토리 존재할 경우 삭제 후 재생성
-    # if os.path.exists(RESULTS_DIR):
-    #     shutil.rmtree(RESULTS_DIR)
-    # os.makedirs(RESULTS_DIR)
-
-    # 결과 확인을 위해 디렉토리 삭제 동작 주석처리
+    # 현재 main.py에서 디렉터리를 삭제하고 있음,
+    # 때문에 여기서는 makedirs만 수행해도 됨.
     if os.path.exists(RESULTS_DIR):
-        pass
-    else:
-        os.makedirs(RESULTS_DIR)
+        shutil.rmtree(RESULTS_DIR)
+    os.makedirs(RESULTS_DIR)
     
     # URL 파일 읽기
     try:

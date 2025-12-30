@@ -1,7 +1,7 @@
 import subprocess
 import os
 import shutil
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urlparse
 import re
 import hashlib
@@ -99,14 +99,11 @@ def run_scan(
         raise FileNotFoundError("'wapiti' 명령을 찾을 수 없습니다. PATH를 확인하세요.")
 
     # 결과 디렉토리 존재할 경우 삭제 후 재생성
-    # if os.path.exists(RESULTS_DIR):
-    #     shutil.rmtree(RESULTS_DIR)
-    # os.makedirs(RESULTS_DIR)
-
+    # 현재 main.py에서 디렉터리를 삭제하고 있음,
+    # 때문에 여기서는 makedirs만 수행해도 됨.
     if os.path.exists(RESULTS_DIR):
-        pass
-    else:
-        os.makedirs(RESULTS_DIR)
+        shutil.rmtree(RESULTS_DIR)
+    os.makedirs(RESULTS_DIR)
 
     for url in urls:
         try:
