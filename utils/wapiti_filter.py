@@ -37,7 +37,7 @@ def _filter_vulnerabilities(data: Dict[str, Any]) -> Dict[str, List[Any]]:
     }
 
 
-def filter_dir(input_dir: str, output_dir: str = "./filtered") -> List[str]:
+def filter_wapiti_results(input_dir: str = "wapiti_results", output_dir: str = "filtered") -> List[str]:
     """
     디렉토리 내 모든 Wapiti JSON 파일을 필터링하여 저장
 

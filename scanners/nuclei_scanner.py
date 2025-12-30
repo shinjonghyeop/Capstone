@@ -9,8 +9,8 @@ from datetime import datetime
 from pathlib import Path
 import re
 
+RESULTS_DIR = "nuclei_results"
 STATUS_FILE = os.getenv("SCAN_STATUS_FILE")
-
 
 def _update_scan_status(step: str, message: str, progress=None) -> None:
     if not STATUS_FILE:
@@ -37,31 +37,30 @@ def _update_scan_status(step: str, message: str, progress=None) -> None:
             json.dump(payload, f, ensure_ascii=False)
     except Exception:
         pass
+      
 
-def run_scan(headers: str = "", cookies: str = "") -> None:
+def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "") -> None:
     """
     Nuclei 스캔을 병렬로 실행하고 결과를 저장합니다.
     urls.txt 파일에서 URL을 읽어 각 URL에 대해 xss, sql, cve 태그를 사용하여 스캔합니다.
     
     Args:
+        url_file: 스캔 대상 URL 파일 경로
         headers: 헤더 문자열 (예: "User-Agent:curl/7.0; Accept:*/*")
         cookies: 쿠키 문자열 (예: "sess=abc; uid=1")
     """
     print("\n[Nuclei] 스캔 시작...")
-    
-    # URL 파일 경로
-    url_file = './urls.txt'
     
     # 템플릿 경로 (홈 디렉토리 고정)
     templates_path = os.path.expanduser("./scanners/nuclei-templates")
     # templates_path = os.path.expanduser("./nuclei-templates")
     
     # 결과 디렉토리 존재할 경우 삭제 후 재생성
-    results_dir = "nuclei_results"
-    
-    if os.path.exists(results_dir):
-        shutil.rmtree(results_dir)
-    os.makedirs(results_dir)
+    # 현재 main.py에서 디렉터리를 삭제하고 있음,
+    # 때문에 여기서는 makedirs만 수행해도 됨.
+    if os.path.exists(RESULTS_DIR):
+        shutil.rmtree(RESULTS_DIR)
+    os.makedirs(RESULTS_DIR)
     
     # URL 파일 읽기
     try:
@@ -70,8 +69,11 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
     except FileNotFoundError:
         print(f"[Nuclei] URL 파일을 찾을 수 없습니다: {url_file}")
         return
+    if not urls:
+        print(f"[Nuclei] URL 파일에서 유효한 URL을 찾을 수 없습니다: {url_file}")
+        return
         
-      # rce, lfi, file, file-upload, ssrf 등 태그 추가 예정
+    # rce, lfi, file, file-upload, ssrf 등 태그 추가 예정
     tags_to_scan = ["xss", "sqli", "cve"]
     total_urls = len(urls)
     _update_scan_status(
@@ -86,7 +88,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
             # 출력 파일명 생성 (URL과 태그 포함)
             sanitized_url = re.sub(r'https?://', '', url).replace('/', '_').replace(':', '_')
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = os.path.join(results_dir, f"nuclei_scan_{sanitized_url}_{tag}_{timestamp}.json")
+            output_file = os.path.join(RESULTS_DIR, f"nuclei_scan_{sanitized_url}_{tag}_{timestamp}.json")
             
             # 기본 명령어 구성
             command = [
@@ -114,7 +116,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
             
             # 쿠키 처리
             if cookies:
-                command.extend(["-H", f"Cookie: {cookies}"])
+                command.extend(["-H", f"Cookies: {cookies}"])
             
             print(f"[Nuclei] 명령어 실행: {' '.join(command)}")
             

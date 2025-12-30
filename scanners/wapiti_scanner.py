@@ -9,9 +9,8 @@ import re
 import hashlib
 
 # 기본 저장 디렉토리(이 파일 기준)
-BASE_DIR = "wapiti_results"
 STATUS_FILE = os.getenv("SCAN_STATUS_FILE")
-
+RESULTS_DIR = "wapiti_results"
 
 def _update_scan_status(step: str, message: str, progress: Optional[Dict[str, Any]] = None) -> None:
     if not STATUS_FILE:
@@ -39,43 +38,24 @@ def _update_scan_status(step: str, message: str, progress: Optional[Dict[str, An
     except Exception:
         pass
 
-def _load_urls_from_arg(args_list: List[str]) -> List[str]:
+def _normalize_headers(header_str: Optional[str]) -> Optional[List[str]]:
     """
-    - 만약 args_list가 단일 항목이고 그 항목이 존재하는 파일이라면
-      파일에서 URL들을 읽음 (빈 줄/주석 '#' 무시).
-    - 아니면 args_list 자체를 URL 리스트로 반환.
+    입력: "Name1: Value1; Name2: Value2" 또는 None
+    반환: ["Name1: Value1", "Name2: Value2"] 또는 None
     """
-    if len(args_list) == 1 and os.path.isfile(args_list[0]):
-        path = args_list[0]
-        urls: List[str] = []
-        with open(path, "r", encoding="utf-8") as f:
-            for line in f:
-                s = line.strip()
-                if not s:
-                    continue
-                if s.startswith("#"):
-                    continue
-                urls.append(s)
-        if not urls:
-            raise SystemExit(f"[!] {path} 파일에서 유효한 URL을 찾을 수 없습니다.")
-        return urls
-    else:
-        return args_list
-
-def _normalize_headers(header_list: Optional[List[str]]) -> Optional[List[str]]:
-    """
-    입력: ["User-Agent: X", "Authorization: Bearer ..."] 또는 None
-    반환: 동일한 리스트 (사용자 코드/외부 CLI에 따라 딕셔너리로 변환 가능)
-    """
-    if not header_list:
+    if not header_str:
         return None
-    # 간단 검증: ':' 포함하는지 확인
-    normalized = []
-    for h in header_list:
-        if ":" not in h:
-            print(f"[!] 경고: 헤더 포맷이 잘못되었습니다: {h} (예: 'Name: Value')")
+    normalized: List[str] = []
+    header_pairs = header_str.split(";")
+    for header_pair in header_pairs:
+        header_pair = header_pair.strip()
+        if not header_pair:
             continue
-        normalized.append(h.strip())
+        if ":" not in header_pair:
+            print(f"[!] 경고: 헤더 포맷이 잘못되었습니다: {header_pair} (예: 'Name: Value')")
+            continue
+        key, value = header_pair.split(":", 1)
+        normalized.append(f"{key.strip()}: {value.strip()}")
     return normalized if normalized else None
 
 def _sanitize_host_for_filename(host: str) -> str:
@@ -106,47 +86,51 @@ def _slug_from_url(parsed) -> str:
     # 너무 길어지지 않도록 제한(윈도 경로 등 고려)
     return slug[:60]
 
-def _unique_path(base_dir: str, stem: str, ext: str) -> str:
+def _unique_path(results_dir: str, stem: str, ext: str) -> str:
     """
     같은 파일명이 이미 있으면 -1, -2 ... 를 붙여 충돌 없이 경로 반환
     """
-    path = os.path.join(base_dir, f"{stem}{ext}")
+    path = os.path.join(results_dir, f"{stem}{ext}")
     if not os.path.exists(path):
         return path
     i = 1
     while True:
-        candidate = os.path.join(base_dir, f"{stem}-{i}{ext}")
+        candidate = os.path.join(results_dir, f"{stem}-{i}{ext}")
         if not os.path.exists(candidate):
             return candidate
         i += 1
 
 def run_scan(
-    targets: List[str],
+    url_file: str = "./urls.txt",          # URL 목록 파일 경로
     output_basename: str = "wapiti",   # 파일명 기본 (파일명만 — 디렉토리 아님)
-    base_dir: str = BASE_DIR,          # 결과를 저장할 디렉토리
     cookies: Optional[str] = None,     # -C "name=value; ..."
-    headers: Optional[List[str]] = None
-) -> List[str]:
+    headers: Optional[str] = None      # "Name1: Value1; Name2: Value2"
+) -> None:
     """
-    targets: URL 목록
-    output_basename: 파일명 기본 (예: "wapiti") -> 결과: <base_dir>/<output_basename>_<host>.json
-    base_dir: 결과 파일을 저장할 디렉토리 (없으면 생성)
-    반환: 저장된 리포트 파일 경로들의 리스트 (파싱은 하지 않음)
+    url_file: URL 목록 파일 경로
+    output_basename: 파일명 기본 (예: "wapiti") -> 결과: <RESULTS_DIR>/<output_basename>_<host>.json
+    반환: 없음
     """
-    if not targets:
-        raise ValueError("targets는 빈 리스트일 수 없습니다.")
-
-    # targets가 단일 파일명이라면 파일에서 URL 읽기
-    if len(targets) == 1 and os.path.isfile(targets[0]):
-        targets = _load_urls_from_arg(targets)
+    if not url_file:
+        raise ValueError("url_file은 비어 있을 수 없습니다.")
+        
+    try:
+        with open(url_file, "r", encoding="utf-8") as f:
+            urls = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        print(f"[Wapiti] URL 파일을 찾을 수 없습니다: {url_file}")
+        return
+    if not urls:
+        print(f"[Wapiti] URL 파일에서 유효한 URL을 찾을 수 없습니다: {url_file}")
+        return
 
     if not shutil.which("wapiti"):
         raise FileNotFoundError("'wapiti' 명령을 찾을 수 없습니다. PATH를 확인하세요.")
 
     # 결과 디렉토리 존재할 경우 삭제 후 재생성
-    if os.path.exists(base_dir):
-        shutil.rmtree(base_dir)
-    os.makedirs(base_dir)
+    if os.path.exists(RESULTS_DIR):
+        shutil.rmtree(RESULTS_DIR)
+    os.makedirs(RESULTS_DIR)
 
     saved_files: List[str] = []
     total_targets = len(targets)
@@ -171,17 +155,17 @@ def run_scan(
         # 파일명: <basename>_<safe_host>.json
         slug = _slug_from_url(parsed)
         filename =f"{output_basename}_{safe_host}_{slug}"
-        report_path = _unique_path(base_dir, filename, ".json")
+        output_file = _unique_path(RESULTS_DIR, filename, ".json")
 
         # Wapiti 명령 조립
-        cmd = ["wapiti", "-u", url, "-f", "json", "-o", report_path]
+        cmd = ["wapiti", "-u", url, "-f", "json", "-o", output_file]
 
         if cookies:
             cmd += ["-C", cookies]
 
-        headers = _normalize_headers(headers)
-        if headers:
-            for h in headers:
+        normalized_headers = _normalize_headers(headers)
+        if normalized_headers:
+            for h in normalized_headers:
                 # 각 헤더를 -H "Name: Value" 형태로 추가
                 cmd += ["-H", h]
 
@@ -193,18 +177,16 @@ def run_scan(
             continue
 
         # 파일이 실제로 생성되었는지 확인
-        if os.path.exists(report_path):
-            saved_files.append(report_path)
-            print(f"[+] 리포트 저장됨: {report_path}")
+        if os.path.exists(output_file):
+            print(f"[+] 리포트 저장됨: {output_file}")
         else:
             # 파일이 없으면 stdout/stderr를 파일로 남기고 그 경로 반환할 수도 있음.
             # 여기서는 실패 로그 메시지 출력만 함.
-            print(f"[!] 리포트 파일이 생성되지 않았습니다: {report_path}")
+            print(f"[!] 리포트 파일이 생성되지 않았습니다: {output_file}")
             if proc.stdout:
                 print("[wapiti stdout]\n", proc.stdout.strip())
             if proc.stderr:
                 print("[wapiti stderr]\n", proc.stderr.strip())
-
         _update_scan_status(
             "wapiti",
             f"Wapiti 진행: {index}/{total_targets}",
@@ -216,3 +198,6 @@ def run_scan(
         )
 
     return saved_files
+  
+if __name__ == "__main__":
+    run_scan("urls.txt")
