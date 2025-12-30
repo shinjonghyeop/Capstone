@@ -7,30 +7,34 @@ from datetime import datetime
 from pathlib import Path
 import re
 
-def run_scan(headers: str = "", cookies: str = "") -> None:
+RESULTS_DIR = "nuclei_results"
+
+def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "") -> None:
     """
     Nuclei 스캔을 병렬로 실행하고 결과를 저장합니다.
     urls.txt 파일에서 URL을 읽어 각 URL에 대해 xss, sql, cve 태그를 사용하여 스캔합니다.
     
     Args:
+        url_file: 스캔 대상 URL 파일 경로
         headers: 헤더 문자열 (예: "User-Agent:curl/7.0; Accept:*/*")
         cookies: 쿠키 문자열 (예: "sess=abc; uid=1")
     """
     print("\n[Nuclei] 스캔 시작...")
-    
-    # URL 파일 경로
-    url_file = './urls.txt'
     
     # 템플릿 경로 (홈 디렉토리 고정)
     templates_path = os.path.expanduser("./scanners/nuclei-templates")
     # templates_path = os.path.expanduser("./nuclei-templates")
     
     # 결과 디렉토리 존재할 경우 삭제 후 재생성
-    results_dir = "nuclei_results"
-    
-    if os.path.exists(results_dir):
-        shutil.rmtree(results_dir)
-    os.makedirs(results_dir)
+    # if os.path.exists(RESULTS_DIR):
+    #     shutil.rmtree(RESULTS_DIR)
+    # os.makedirs(RESULTS_DIR)
+
+    # 결과 확인을 위해 디렉토리 삭제 동작 주석처리
+    if os.path.exists(RESULTS_DIR):
+        pass
+    else:
+        os.makedirs(RESULTS_DIR)
     
     # URL 파일 읽기
     try:
@@ -39,8 +43,11 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
     except FileNotFoundError:
         print(f"[Nuclei] URL 파일을 찾을 수 없습니다: {url_file}")
         return
+    if not urls:
+        print(f"[Nuclei] URL 파일에서 유효한 URL을 찾을 수 없습니다: {url_file}")
+        return
         
-      # rce, lfi, file, file-upload, ssrf 등 태그 추가 예정
+    # rce, lfi, file, file-upload, ssrf 등 태그 추가 예정
     tags_to_scan = ["xss", "sqli", "cve"]
     # 각 URL에 대해 동기로 Nuclei 스캔 실행
     for url in urls:
@@ -49,7 +56,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
             # 출력 파일명 생성 (URL과 태그 포함)
             sanitized_url = re.sub(r'https?://', '', url).replace('/', '_').replace(':', '_')
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = os.path.join(results_dir, f"nuclei_scan_{sanitized_url}_{tag}_{timestamp}.json")
+            output_file = os.path.join(RESULTS_DIR, f"nuclei_scan_{sanitized_url}_{tag}_{timestamp}.json")
             
             # 기본 명령어 구성
             command = [
@@ -77,7 +84,7 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
             
             # 쿠키 처리
             if cookies:
-                command.extend(["-H", f"Cookie: {cookies}"])
+                command.extend(["-H", f"Cookies: {cookies}"])
             
             print(f"[Nuclei] 명령어 실행: {' '.join(command)}")
             
@@ -113,23 +120,6 @@ def run_scan(headers: str = "", cookies: str = "") -> None:
                 return
             except Exception as e:
                 print(f"[Nuclei] 스캔 중 예상치 못한 오류: {e}")
-                
-    # print(f"[Nuclei] {url} 의 태그 스캔들 종료 대기…")
-    # # 모든 프로세스가 완료될 때까지 대기
-    # for proc, output_file in url_processes:
-    #     try:
-    #         stdout, stderr = proc.communicate(timeout=900) # 15분 타임아웃
-            
-    #         if proc.returncode == 0:
-    #             print(f"[Nuclei] 스캔 완료: {output_file}")
-    #             if os.path.exists(output_file) and os.path.getsize(output_file) > 2:
-    #                 print(f"[Nuclei] 발견사항 있음: {output_file}")
-    #             else:
-    #                 print(f"[Nuclei] 취약점 없음: {output_file}")
-    #         else:
-    #             print(f"[Nuclei] 오류 발생 (코드: {proc.returncode}): {output_file}")
-    #             if stderr:
-    #                 print(f"[Nuclei] 오류 메시지: {stderr[:500]}")
 
     print("\n[Nuclei] 모든 스캔이 종료되었습니다.")
 

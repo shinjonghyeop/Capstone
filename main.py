@@ -16,7 +16,7 @@ from scanners.wapiti_scanner import run_scan as wapiti_scan
 from scanners.nuclei_scanner import run_scan as nuclei_scan
 from crawlers.discover_urls import run_discovery_stage, RESULTS_FILE
 from utils.nuclei_filter import filter_nuclei_results
-from utils.wapiti_filter import filter_dir
+from utils.wapiti_filter import filter_wapiti_results
 from utils.merge_scan_results import merge_filtered_results
 
 # 상수 정의
@@ -93,7 +93,7 @@ def parse_arguments() -> argparse.Namespace:
 
     return parser.parse_args()
 
-async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: str) -> None:
+async def run_vulnerability_scanners_sync(headers: str, cookies: str) -> None:
     """
     Wapiti와 Nuclei 스캐너를 순차적으로 실행합니다.
 
@@ -102,15 +102,15 @@ async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: 
         headers: HTTP 헤더 문자열
         cookies: 쿠키 문자열
     """
-    print(f"\n[+] 취약점 스캐너 순차 실행 시작: {url_file}")
+    print(f"\n[+] 취약점 스캐너 순차 실행 시작: {RESULTS_FILE}")
 
     # 1. Wapiti 스캔 실행
     print("\n[+] Wapiti 스캔 시작...")
     try:
         wapiti_scan(
-            [url_file],
+            RESULTS_FILE,
             cookies=cookies,
-            headers=[headers] if headers else None
+            headers=headers if headers else None
         )
         print("[+] Wapiti 스캔 완료.")
     except Exception as e:
@@ -122,6 +122,7 @@ async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: 
         # nuclei_scan은 동기 함수이므로 asyncio.to_thread로 감싸기
         await asyncio.to_thread(
             nuclei_scan,
+            RESULTS_FILE,
             headers=headers,
             cookies=cookies
         )
@@ -134,6 +135,7 @@ async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: 
 
 async def main_async(url: str = None, cookies: str = "", headers: str = ""):
     """메인 실행 함수 (비동기)"""
+    
     # url이 있으면 input() 건너뛰기
     if url:
         print(f"[INFO] 명령줄 모드로 실행")
@@ -148,20 +150,20 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
         print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
         sys.exit(1)
 
-    # 결과 파일 확인
+    # urls.txt 파일 확인
     if not os.path.exists(RESULTS_FILE):
         print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
         sys.exit(1)
 
     # 2단계: 취약점 스캐너 실행 (순차 실행)
-    await run_vulnerability_scanners_sync(RESULTS_FILE, headers, cookies)
+    await run_vulnerability_scanners_sync(headers, cookies)
 
     print("\n[+] 모든 스캔 완료!")
 
     # 3단계: Wapiti 결과 필터링
     print("\n[+] Wapiti 결과 필터링 시작...")
     try:
-        wapiti_processed = filter_dir(input_dir=WAPITI_RESULTS_DIR)
+        wapiti_processed = filter_wapiti_results(input_dir=WAPITI_RESULTS_DIR)
         if wapiti_processed and len(wapiti_processed) > 0:
             print(f"[+] Wapiti 필터링 완료: {len(wapiti_processed)}개 파일 처리됨")
         else:
