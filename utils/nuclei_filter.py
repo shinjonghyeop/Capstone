@@ -141,16 +141,6 @@ def process_nuclei_json(input_file: str, output_file: str, pretty: bool = True) 
 
         print(f"[✓] 완료! 필터링된 결과가 저장되었습니다: {output_file}")
 
-        # 파일 크기 정보
-        input_size = Path(input_file).stat().st_size
-        output_size = Path(output_file).stat().st_size
-        reduction = ((input_size - output_size) / input_size) * 100 if input_size > 0 else 0
-
-        print(f"\n[통계]")
-        print(f"  원본 파일 크기: {input_size:,} bytes")
-        print(f"  필터링 후 크기: {output_size:,} bytes")
-        print(f"  감소율: {reduction:.1f}%")
-
     except FileNotFoundError:
         print(f"[!] 오류: 파일을 찾을 수 없습니다: {input_file}")
         raise

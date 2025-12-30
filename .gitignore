@@ -10,7 +10,6 @@
 wapiti_results/*
 nuclei_results/*
 filtered/*
-merged_results/*
 scanners/nuclei_results/*
 urls.txt
 # 바이트코드 및 캐시
