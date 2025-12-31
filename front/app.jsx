@@ -830,7 +830,7 @@ function AiReportView({ markdown, onBack }) {
   );
 }
 
-function ReportView({ data, noResults, onReset }) {
+function ReportView({ data, noResults, resultFile, onReset }) {
   const { findings = [], tools = [], target, startedAt, finishedAt } = data || {};
 
   // Filter states
@@ -847,6 +847,12 @@ function ReportView({ data, noResults, onReset }) {
   const [existingReport, setExistingReport] = useState(null); // 기존 보고서 정보
   const [checkingReport, setCheckingReport] = useState(true); // 보고서 확인 중
 
+  const reportTimestamp = useMemo(() => {
+    if (!resultFile) return null;
+    const match = resultFile.match(/_(\d{8}_\d{6})\.json$/);
+    return match ? match[1] : null;
+  }, [resultFile]);
+
   // 컴포넌트 마운트 시 기존 보고서 확인
   React.useEffect(() => {
     async function checkExistingReport() {
@@ -854,9 +860,11 @@ function ReportView({ data, noResults, onReset }) {
         setCheckingReport(true);
 
         // target에서 파일명 추출
-        const targetName = target.includes('.json')
-          ? target.split(':').pop().replace('.json', '')
-          : target.replace(':', '_');
+        const targetName = target
+          ? (target.includes('.json')
+            ? target.split(':').pop().replace('.json', '')
+            : target.replace(':', '_'))
+          : null;
 
         // 보고서 목록 조회
         const res = await fetch(`${API_BASE_URL}/api/reports`);
@@ -865,7 +873,11 @@ function ReportView({ data, noResults, onReset }) {
         const { reports } = await res.json();
 
         // 현재 target과 일치하는 보고서 찾기
-        const matchingReport = reports.find(r => r.target === targetName);
+        const matchingReport = reportTimestamp && targetName
+          ? reports.find(r =>
+            r.filename === `${targetName}_report_${reportTimestamp}.md`
+          )
+          : reports.find(r => targetName && r.target === targetName);
 
         if (matchingReport) {
           setExistingReport(matchingReport);
@@ -1007,9 +1019,12 @@ function ReportView({ data, noResults, onReset }) {
 
     try {
       // target에서 파일명 추출
-      const filename = target.includes('.json')
+      const filename = resultFile || (target && target.includes('.json')
         ? target.split(':').pop()
-        : `${target.replace(':', '_')}.json`;
+        : `${target.replace(':', '_')}.json`);
+      if (!filename) {
+        throw new Error('보고서 생성 대상이 없습니다.');
+      }
 
       const res = await fetch(`${API_BASE_URL}/api/generate-report/${filename}`, {
         method: 'POST'
@@ -1385,6 +1400,7 @@ export default function HacklipseApp() {
               startedAt: null,
               finishedAt: null
             });
+            setResultFile(null);
             setPhase("report");
             navigate("/report");
             return;
@@ -1433,6 +1449,9 @@ export default function HacklipseApp() {
       const hasScanMeta = payload && typeof payload === "object" && ("message" in payload || "target" in payload);
       setNoResults(isNoResults);
       setData(payload);
+      if (payload?.resultFile) {
+        setResultFile(payload.resultFile);
+      }
       setPhase("report");
       navigate("/report");
 
@@ -1641,7 +1660,7 @@ export default function HacklipseApp() {
 
           {phase === "report" && (
             <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ReportView data={data} noResults={noResults} onReset={reset} />
+              <ReportView data={data} noResults={noResults} resultFile={resultFile} onReset={reset} />
             </motion.div>
           )}
 

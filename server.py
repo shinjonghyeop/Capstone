@@ -88,11 +88,16 @@ def _select_result_file(
     started_at: float
 ) -> Optional[Dict[str, Any]]:
     expected = _expected_result_filename(target_url)
+    expected_prefix = None
+    if expected and expected.endswith(".json"):
+        expected_prefix = expected[:-5]
     new_files = [f for f in files if f["filename"] not in existing_names]
 
     if expected:
         for f in new_files:
             if f["filename"] == expected:
+                return f
+            if expected_prefix and f["filename"].startswith(f"{expected_prefix}_"):
                 return f
     if new_files:
         return new_files[0]
@@ -104,6 +109,8 @@ def _select_result_file(
     if expected:
         for f in modified_files:
             if f["filename"] == expected:
+                return f
+            if expected_prefix and f["filename"].startswith(f"{expected_prefix}_"):
                 return f
     if modified_files:
         return modified_files[0]
