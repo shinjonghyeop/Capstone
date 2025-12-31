@@ -27,7 +27,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Optional
 from collections import defaultdict
 from datetime import datetime
 
@@ -341,7 +341,7 @@ def convert_to_frontend_format(domain: str, subdomains: Dict) -> Dict:
     }
 
 
-def merge_scan_results(input_dir: str, output_dir: str):
+def merge_scan_results(input_dir: str, output_dir: str, run_timestamp: Optional[str] = None):
     """
     Main function to merge all scan results by domain.
     All subdomains for each domain are merged into a single JSON file.
@@ -390,6 +390,9 @@ def merge_scan_results(input_dir: str, output_dir: str):
     print(f"Found {len(domain_data)} unique domains")
     print()
 
+    if not run_timestamp:
+        run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     # Write one JSON file per domain
     print("Step 3: Creating merged JSON files...")
     merged_files = []
@@ -412,7 +415,7 @@ def merge_scan_results(input_dir: str, output_dir: str):
         # Convert to frontend format and write to output file
         frontend_data = convert_to_frontend_format(domain, subdomains)
 
-        output_filename = f"{domain}.json"
+        output_filename = f"{domain}_{run_timestamp}.json"
         output_path = os.path.join(output_dir, output_filename)
 
         with open(output_path, 'w', encoding='utf-8') as f:
@@ -438,7 +441,11 @@ def merge_scan_results(input_dir: str, output_dir: str):
     return merged_files
 
 
-def merge_filtered_results(input_dir: str = "./filtered", output_dir: str = "./merged_results") -> int:
+def merge_filtered_results(
+    input_dir: str = "./filtered",
+    output_dir: str = "./merged_results",
+    run_timestamp: Optional[str] = None
+) -> int:
     """
     Wrapper function for easy import and use as a module.
 
@@ -456,7 +463,7 @@ def merge_filtered_results(input_dir: str = "./filtered", output_dir: str = "./m
             return 0
 
         # Run merge
-        merged_files = merge_scan_results(input_dir, output_dir)
+        merged_files = merge_scan_results(input_dir, output_dir, run_timestamp=run_timestamp)
         return len(merged_files)
 
     except Exception as e:

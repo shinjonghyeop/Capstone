@@ -191,6 +191,8 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
 
     print("\n[+] 모든 스캔 완료!")
 
+    run_timestamp = time.strftime("%Y%m%d_%H%M%S")
+
     # 3단계: Wapiti 결과 필터링
     update_status("scanning", "filter_wapiti", "Wapiti 결과 필터링")
     print("\n[+] Wapiti 결과 필터링 시작...")
@@ -235,7 +237,8 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
         try:
             merged_count = merge_filtered_results(
                 input_dir=FILTERED_RESULTS_DIR,
-                output_dir=MERGED_RESULTS_DIR
+                output_dir=MERGED_RESULTS_DIR,
+                run_timestamp=run_timestamp
             )
             if merged_count > 0:
                 print(f"[+] 스캔 결과 병합 완료: {merged_count}개 도메인 파일 생성됨")
