@@ -158,7 +158,7 @@ def run_scan(
         output_file = _unique_path(RESULTS_DIR, filename, ".json")
 
         # Wapiti 명령 조립
-        cmd = ["wapiti", "-u", url, "-f", "json", "-o", output_file]
+        cmd = ["wapiti", "-u", url, "--scope", "domain", "-f", "json", "-o", output_file] # 
 
         if cookies:
             cmd += ["-C", cookies]
