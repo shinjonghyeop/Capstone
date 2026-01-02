@@ -7,8 +7,10 @@ Google Gemini API를 활용하여 취약점 스캔 결과를 분석하고
 
 import json
 import os
+import re
+import shutil
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import time
 from utils.local_model import generate_with_local_model
 
@@ -280,6 +282,14 @@ def group_findings(findings: List[Dict]) -> List[Dict]:
 def _escape_table_cell(value: object) -> str:
     text = _normalize_text(value)
     return text.replace("|", "\\|").replace("\n", " ")
+
+
+def _extract_timestamp_from_filename(path: str) -> Optional[str]:
+    name = os.path.basename(path)
+    match = re.search(r'_(\d{8}_\d{6})\.json$', name)
+    if match:
+        return match.group(1)
+    return None
 
 
 def build_summary_table(findings: List[Dict]) -> str:
@@ -610,7 +620,7 @@ def call_local_model(prompt: str, model_name: str) -> str:
     return text
 
 
-def save_report(content: str, target: str, output_dir: str) -> str:
+def save_report(content: str, target: str, output_dir: str, timestamp: Optional[str] = None) -> str:
     """
     보고서를 파일로 저장
 
@@ -628,7 +638,8 @@ def save_report(content: str, target: str, output_dir: str) -> str:
     # 파일명 생성: {target}_report_{timestamp}.md
     # target에서 특수문자 제거 (파일명으로 사용 불가능한 문자)
     safe_target = target.replace(':', '_').replace('/', '_').replace('\\', '_')
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    if not timestamp:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"{safe_target}_report_{timestamp}.md"
 
     filepath = os.path.join(output_dir, filename)
@@ -639,6 +650,30 @@ def save_report(content: str, target: str, output_dir: str) -> str:
 
     print(f"[+] 보고서 저장: {filepath}")
     return filepath
+
+
+def save_training_pair(
+    input_json_path: str,
+    markdown: str,
+    target: str,
+    timestamp: str,
+    train_root: str = "train"
+) -> Tuple[str, str]:
+    input_dir = os.path.join(train_root, "input")
+    output_dir = os.path.join(train_root, "output")
+    os.makedirs(input_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+
+    safe_target = target.replace(':', '_').replace('/', '_').replace('\\', '_')
+    pair_id = f"{safe_target}_{timestamp}"
+    input_dest = os.path.join(input_dir, f"{pair_id}_input.json")
+    output_dest = os.path.join(output_dir, f"{pair_id}_output.md")
+
+    shutil.copyfile(input_json_path, input_dest)
+    with open(output_dest, "w", encoding="utf-8") as f:
+        f.write(markdown)
+
+    return input_dest, output_dest
 
 
 def generate_report(json_file_path: str, output_dir: str = "reports") -> str:
@@ -703,7 +738,21 @@ def generate_report(json_file_path: str, output_dir: str = "reports") -> str:
         # 6. 파일 저장
         print("\n[6/6] 보고서 저장 중...")
         target = data.get('target', 'unknown')
-        report_path = save_report(markdown, target, output_dir)
+        timestamp = _extract_timestamp_from_filename(json_file_path)
+        if not timestamp:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        report_path = save_report(markdown, target, output_dir, timestamp=timestamp)
+        try:
+            train_input_path, train_output_path = save_training_pair(
+                json_file_path,
+                markdown,
+                target,
+                timestamp
+            )
+            print(f"[+] 훈련 데이터 저장: {train_input_path}")
+            print(f"[+] 훈련 데이터 저장: {train_output_path}")
+        except Exception as e:
+            print(f"[!] 훈련 데이터 저장 실패: {e}")
 
         print(f"\n{'='*60}")
         print(f"[+] 보고서 생성 완료!")

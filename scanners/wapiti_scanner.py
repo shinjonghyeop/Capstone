@@ -133,9 +133,9 @@ def run_scan(
     os.makedirs(RESULTS_DIR)
 
     saved_files: List[str] = []
-    total_targets = len(targets)
+    total_targets = len(urls)
 
-    for index, url in enumerate(targets, start=1):
+    for index, url in enumerate(urls, start=1):
         _update_scan_status(
             "wapiti",
             f"Wapiti 진행: {index}/{total_targets}",
@@ -145,11 +145,8 @@ def run_scan(
                 "percent": int(((index - 1) / total_targets) * 100) if total_targets else 0
             }
         )
-        try:
-            parsed = urlparse(url)
-            host = parsed.netloc or parsed.path or "target"
-        except Exception:
-            host = "target"
+        parsed = urlparse(url)
+        host = parsed.netloc or parsed.path or "target"
 
         safe_host = _sanitize_host_for_filename(host)
         # 파일명: <basename>_<safe_host>.json

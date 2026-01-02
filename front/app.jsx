@@ -830,7 +830,7 @@ function AiReportView({ markdown, onBack }) {
   );
 }
 
-function ReportView({ data, onReset }) {
+function ReportView({ data, noResults, resultFile, onReset }) {
   const { findings = [], tools = [], target, startedAt, finishedAt } = data || {};
 
   // Filter states
@@ -847,6 +847,12 @@ function ReportView({ data, onReset }) {
   const [existingReport, setExistingReport] = useState(null); // 기존 보고서 정보
   const [checkingReport, setCheckingReport] = useState(true); // 보고서 확인 중
 
+  const reportTimestamp = useMemo(() => {
+    if (!resultFile) return null;
+    const match = resultFile.match(/_(\d{8}_\d{6})\.json$/);
+    return match ? match[1] : null;
+  }, [resultFile]);
+
   // 컴포넌트 마운트 시 기존 보고서 확인
   React.useEffect(() => {
     async function checkExistingReport() {
@@ -854,9 +860,11 @@ function ReportView({ data, onReset }) {
         setCheckingReport(true);
 
         // target에서 파일명 추출
-        const targetName = target.includes('.json')
-          ? target.split(':').pop().replace('.json', '')
-          : target.replace(':', '_');
+        const targetName = target
+          ? (target.includes('.json')
+            ? target.split(':').pop().replace('.json', '')
+            : target.replace(':', '_'))
+          : null;
 
         // 보고서 목록 조회
         const res = await fetch(`${API_BASE_URL}/api/reports`);
@@ -865,7 +873,11 @@ function ReportView({ data, onReset }) {
         const { reports } = await res.json();
 
         // 현재 target과 일치하는 보고서 찾기
-        const matchingReport = reports.find(r => r.target === targetName);
+        const matchingReport = reportTimestamp && targetName
+          ? reports.find(r =>
+            r.filename === `${targetName}_report_${reportTimestamp}.md`
+          )
+          : reports.find(r => targetName && r.target === targetName);
 
         if (matchingReport) {
           setExistingReport(matchingReport);
@@ -1007,9 +1019,12 @@ function ReportView({ data, onReset }) {
 
     try {
       // target에서 파일명 추출
-      const filename = target.includes('.json')
+      const filename = resultFile || (target && target.includes('.json')
         ? target.split(':').pop()
-        : `${target.replace(':', '_')}.json`;
+        : `${target.replace(':', '_')}.json`);
+      if (!filename) {
+        throw new Error('보고서 생성 대상이 없습니다.');
+      }
 
       const res = await fetch(`${API_BASE_URL}/api/generate-report/${filename}`, {
         method: 'POST'
@@ -1146,6 +1161,12 @@ function ReportView({ data, onReset }) {
         </div>
       )}
 
+      {noResults && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
+          스캔 완료: 탐지된 취약점이 없습니다.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
         <Stat icon={Bug} label="총 이슈" value={counts.total} />
         <Stat icon={ShieldAlert} label="Critical" value={counts.critical} tone="bg-red-100" />
@@ -1239,7 +1260,7 @@ function ReportView({ data, onReset }) {
           </div>
         ))}
 
-        {filteredFindings.length === 0 && (
+        {filteredFindings.length === 0 && !noResults && (
           <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-600">
             No findings match your filters.
           </div>
@@ -1253,6 +1274,7 @@ export default function HacklipseApp() {
   const [phase, setPhase] = useState("form");
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [noResults, setNoResults] = useState(false);
   const [resultFile, setResultFile] = useState(null);
   const [scanTarget, setScanTarget] = useState(null);
   const [scanStepIndex, setScanStepIndex] = useState(0);
@@ -1301,6 +1323,7 @@ export default function HacklipseApp() {
             if (!res.ok) throw new Error("Failed to load result file");
             const resultData = await res.json();
             setData(resultData);
+            setNoResults(false);
             setResultFile(filename);
             setScanTarget(resultData?.target || null);
             setPhase("report");
@@ -1368,6 +1391,20 @@ export default function HacklipseApp() {
             navigate(`/report/${encodeURIComponent(data.resultFile)}`);
             return;
           }
+          if (data.phase === "done" && !data.resultFile) {
+            setNoResults(true);
+            setData({
+              target: data.target,
+              findings: [],
+              tools: [],
+              startedAt: null,
+              finishedAt: null
+            });
+            setResultFile(null);
+            setPhase("report");
+            navigate("/report");
+            return;
+          }
           if (data.step) {
             const stepMap = {
               queued: 0,
@@ -1400,17 +1437,25 @@ export default function HacklipseApp() {
 
   async function handleSubmit(url, extras) {
     setError(null);
+    setNoResults(false);
     setPhase("scanning");
     setResultFile(null);
     setScanTarget(url);
     navigate("/scan");
     try {
       const payload = await fetchScanResults(url, extras);
+      const hasFindingsArray = Array.isArray(payload?.findings);
+      const isNoResults = hasFindingsArray && payload.findings.length === 0 && !payload?.resultFile;
+      const hasScanMeta = payload && typeof payload === "object" && ("message" in payload || "target" in payload);
+      setNoResults(isNoResults);
       setData(payload);
+      if (payload?.resultFile) {
+        setResultFile(payload.resultFile);
+      }
       setPhase("report");
       navigate("/report");
 
-      if (!payload || !Array.isArray(payload.findings)) {
+      if (!payload || (!hasFindingsArray && !hasScanMeta)) {
         try {
           const res = await fetch(`${API_BASE_URL}/api/results`);
           if (res.ok) {
@@ -1421,6 +1466,7 @@ export default function HacklipseApp() {
               if (latestRes.ok) {
                 const latestData = await latestRes.json();
                 setData(latestData);
+                setNoResults(false);
               }
             }
           }
@@ -1432,6 +1478,7 @@ export default function HacklipseApp() {
       setError("스캔 결과를 불러오는 데 실패했습니다.");
       setPhase("form");
       setResultFile(null);
+      setNoResults(false);
       setScanTarget(null);
       navigate("/");
     }
@@ -1442,17 +1489,20 @@ export default function HacklipseApp() {
     setData(null);
     setError(null);
     setResultFile(null);
+    setNoResults(false);
     setScanTarget(null);
     navigate("/");
   }
 
   function showResultsList() {
     setPhase("results-list");
+    setNoResults(false);
     navigate("/results");
   }
 
   function handleSelectResult(resultData, filename) {
     setData(resultData);
+    setNoResults(false);
     setPhase("report");
     setScanTarget(resultData?.target || null);
     if (filename) {
@@ -1508,6 +1558,7 @@ export default function HacklipseApp() {
                           const parsed = JSON.parse(raw);
                           const normalized = normalizeMixedPayload(parsed, "manual://paste");
                           setData(normalized);
+                          setNoResults(false);
                           setPhase("report");
                           setResultFile(null);
                           setScanTarget(normalized?.target || "manual://paste");
@@ -1524,6 +1575,7 @@ export default function HacklipseApp() {
                       onClick={() => {
                         const normalized = normalizeMixedPayload(demoPayload, demoPayload.target);
                         setData(normalized);
+                        setNoResults(false);
                         setPhase("report");
                         setResultFile(null);
                         setScanTarget(normalized?.target || demoPayload.target);
@@ -1608,7 +1660,7 @@ export default function HacklipseApp() {
 
           {phase === "report" && (
             <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ReportView data={data} onReset={reset} />
+              <ReportView data={data} noResults={noResults} resultFile={resultFile} onReset={reset} />
             </motion.div>
           )}
 
