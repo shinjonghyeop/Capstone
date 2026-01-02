@@ -256,7 +256,7 @@ def crawl_website(
 
     # 설정
     MAX_PAGES = 100
-    TIMEOUT = 10
+    TIMEOUT = 30
 
     # 상태 관리
     visited = set()  # 방문한 URL

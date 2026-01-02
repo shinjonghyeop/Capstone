@@ -7,6 +7,6 @@ export default defineConfig({
     port: 5555,
     host: '0.0.0.0',
     open: true,
-    allowedHosts: ['localhost']
+    allowedHosts: ['localhost', 'yc22469.iptime.org']
   }
 })

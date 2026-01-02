@@ -128,6 +128,7 @@ all_modules = {
     "sql",
     "ssl",
     "ssrf",
+    "ssti",
     "takeover",
     "timesql",
     "unsecure_password",
@@ -153,6 +154,7 @@ common_modules = {
     "sql",
     "ssl",
     "ssrf",
+    "ssti",
     "unsecure_password",
     "upload",
     "xss"

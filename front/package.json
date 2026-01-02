@@ -9,11 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "20": "^3.1.9",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-markdown": "^9.1.0",
+    "react-router-dom": "^6.27.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.4",

@@ -10,17 +10,18 @@ import asyncio
 import os
 import sys
 import argparse
-from typing import Optional, Tuple, List
+import shutil
+import time
+from typing import Optional, Tuple
 from scanners.wapiti_scanner import run_scan as wapiti_scan
-from scanners.ffuf_scanner import run_ffuf, OUTPUT_DIR
 from scanners.nuclei_scanner import run_scan as nuclei_scan
-from utils.web_crawler import crawl_website
+from crawlers.discover_urls import run_discovery_stage, RESULTS_FILE
 from utils.nuclei_filter import filter_nuclei_results
-from utils.wapiti_filter import filter_dir
+from utils.wapiti_filter import filter_wapiti_results
 from utils.merge_scan_results import merge_filtered_results
 
+
 # 상수 정의
-RESULTS_FILE = "urls.txt"
 WAPITI_RESULTS_DIR = "wapiti_results"
 NUCLEI_RESULTS_DIR = "nuclei_results"
 FILTERED_RESULTS_DIR = "filtered"
@@ -39,13 +40,34 @@ BANNER = r"""
                                  |_|                     
 """
 
+STATUS_FILE = os.getenv("SCAN_STATUS_FILE")
+CURRENT_TARGET = None
+
+
+def update_status(phase: str, step: str, message: str) -> None:
+    if not STATUS_FILE:
+        return
+    payload = {
+        "phase": phase,
+        "step": step,
+        "message": message,
+        "updatedAt": int(time.time())
+    }
+    if CURRENT_TARGET:
+        payload["target"] = CURRENT_TARGET
+    try:
+        with open(STATUS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(payload, f, ensure_ascii=False)
+    except Exception:
+        pass
+
 def validate_url(url: str) -> bool:
     """URL 형식이 올바른지 검증"""
     if not url:
         return False
     return url.startswith(("http://", "https://"))
 
-
+# 테스트용 배포 시 해당 함수 삭제 
 def get_user_input() -> Optional[Tuple[str, str, str]]:
     """
     사용자로부터 스캔 대상 정보를 입력받습니다.
@@ -94,95 +116,7 @@ def parse_arguments() -> argparse.Namespace:
 
     return parser.parse_args()
 
-def merge_and_deduplicate(ffuf_urls: List[str], crawler_urls: List[str]) -> List[str]:
-    """
-    FFUF와 크롤러 결과를 병합하고 중복 제거
-
-    Args:
-        ffuf_urls: FFUF에서 발견한 URL 리스트
-        crawler_urls: 크롤러에서 발견한 URL 리스트
-
-    Returns:
-        중복 제거된 URL 리스트 (정렬됨)
-    """
-    # Set으로 중복 제거
-    unique_urls = set()
-
-    # FFUF 결과 추가
-    if ffuf_urls:
-        for url in ffuf_urls:
-            unique_urls.add(url.strip())
-
-    # 크롤러 결과 추가
-    if crawler_urls:
-        for url in crawler_urls:
-            unique_urls.add(url.strip())
-
-    # 정렬된 리스트로 반환
-    return sorted(list(unique_urls))
-
-
-async def run_discovery_stage(url: str, cookies: str) -> bool:
-    """
-    1단계: FFUF와 웹 크롤러를 병렬로 실행하여 URL 발견
-
-    Args:
-        url: 스캔 대상 URL
-        cookies: 인증용 쿠키 문자열
-
-    Returns:
-        성공 여부
-    """
-    print(f"\n[+] 1단계: Discovery 시작... ({url})")
-    print("[+] FFUF와 웹 크롤러를 병렬 실행합니다...")
-
-    try:
-        # FFUF와 크롤러를 병렬로 실행
-        ffuf_urls, crawler_urls = await asyncio.gather(
-            asyncio.to_thread(run_ffuf, url, OUTPUT_DIR, cookies),
-            asyncio.to_thread(crawl_website, url, cookies, ""),
-            return_exceptions=True
-        )
-
-        # 에러 체크
-        if isinstance(ffuf_urls, Exception):
-            print(f"[!] FFUF 실행 중 오류: {ffuf_urls}")
-            ffuf_urls = []
-
-        if isinstance(crawler_urls, Exception):
-            print(f"[!] 크롤러 실행 중 오류: {crawler_urls}")
-            crawler_urls = []
-
-        # 결과 병합 및 중복 제거
-        all_urls = merge_and_deduplicate(ffuf_urls, crawler_urls)
-
-        # 통계 출력
-        print(f"\n[+] Discovery 완료:")
-        print(f"    FFUF: {len(ffuf_urls)}개 URL")
-        print(f"    크롤러: {len(crawler_urls)}개 URL")
-        print(f"    중복 제거 후: {len(all_urls)}개 URL")
-
-        # urls.txt 저장
-        if all_urls:
-            with open(RESULTS_FILE, 'w') as f:
-                f.write('\n'.join(all_urls))
-            print(f"[+] {RESULTS_FILE} 저장 완료")
-            return True
-        else:
-            print("[!] 발견된 URL이 없습니다.")
-            return False
-
-    except FileNotFoundError:
-        print("[!] ffuf 명령어를 찾을 수 없습니다. ffuf가 설치되어 있는지 확인하세요.")
-        return False
-    except Exception as e:
-        print(f"[!] Discovery 단계 실행 중 오류 발생: {e}")
-        return False
-
-
-
-
-async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: str) -> None:
+async def run_vulnerability_scanners_sync(headers: str, cookies: str) -> None:
     """
     Wapiti와 Nuclei 스캐너를 순차적으로 실행합니다.
 
@@ -191,26 +125,29 @@ async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: 
         headers: HTTP 헤더 문자열
         cookies: 쿠키 문자열
     """
-    print(f"\n[+] 취약점 스캐너 순차 실행 시작: {url_file}")
+    print(f"\n[+] 취약점 스캐너 순차 실행 시작: {RESULTS_FILE}")
 
     # 1. Wapiti 스캔 실행
+    update_status("scanning", "wapiti", "Wapiti 스캔 시작")
     print("\n[+] Wapiti 스캔 시작...")
     try:
         wapiti_scan(
-            [url_file],
+            RESULTS_FILE,
             cookies=cookies,
-            headers=[headers] if headers else None
+            headers=headers if headers else None
         )
         print("[+] Wapiti 스캔 완료.")
     except Exception as e:
         print(f"[!] Wapiti 실행 중 오류: {e}")
 
     # 2. Nuclei 스캔 실행
+    update_status("scanning", "nuclei", "Nuclei 스캔 시작")
     print("\n[+] Nuclei 스캔 시작...")
     try:
         # nuclei_scan은 동기 함수이므로 asyncio.to_thread로 감싸기
         await asyncio.to_thread(
             nuclei_scan,
+            RESULTS_FILE,
             headers=headers,
             cookies=cookies
         )
@@ -223,6 +160,7 @@ async def run_vulnerability_scanners_sync(url_file: str, headers: str, cookies: 
 
 async def main_async(url: str = None, cookies: str = "", headers: str = ""):
     """메인 실행 함수 (비동기)"""
+    
     # url이 있으면 input() 건너뛰기
     if url:
         print(f"[INFO] 명령줄 모드로 실행")
@@ -232,60 +170,103 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
             return
         url, cookies, headers = user_input
 
-    # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
-    if not await run_discovery_stage(url, cookies):
-        print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
-        sys.exit(1)
+    global CURRENT_TARGET
+    CURRENT_TARGET = url
+    update_status("scanning", "discovery", "Discovery 단계 시작")
 
-    # 결과 파일 확인
+    # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
+    # if not await run_discovery_stage(url, cookies, headers):
+    #     print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
+    #     update_status("error", "discovery", "Discovery 단계 실패")
+    #     sys.exit(1)
+
+    # urls.txt 파일 확인
     if not os.path.exists(RESULTS_FILE):
         print(f"[!] {RESULTS_FILE} 파일이 존재하지 않습니다.")
+        update_status("error", "discovery", "Discovery 결과 파일 없음")
         sys.exit(1)
 
     # 2단계: 취약점 스캐너 실행 (순차 실행)
-    await run_vulnerability_scanners_sync(RESULTS_FILE, headers, cookies)
+    await run_vulnerability_scanners_sync(headers, cookies)
 
     print("\n[+] 모든 스캔 완료!")
 
+    run_timestamp = time.strftime("%Y%m%d_%H%M%S")
+
     # 3단계: Wapiti 결과 필터링
+    update_status("scanning", "filter_wapiti", "Wapiti 결과 필터링")
     print("\n[+] Wapiti 결과 필터링 시작...")
-    try:
-        wapiti_processed = filter_dir(input_dir=WAPITI_RESULTS_DIR)
-        if wapiti_processed and len(wapiti_processed) > 0:
-            print(f"[+] Wapiti 필터링 완료: {len(wapiti_processed)}개 파일 처리됨")
-        else:
-            print("[!] 필터링할 Wapiti 결과가 없습니다.")
-    except Exception as e:
-        print(f"[!] Wapiti 필터링 중 오류 발생: {e}")
+    if os.path.isdir(WAPITI_RESULTS_DIR):
+        try:
+            wapiti_processed = filter_wapiti_results(
+                input_dir=WAPITI_RESULTS_DIR,
+                output_dir=FILTERED_RESULTS_DIR
+            )
+            if wapiti_processed and len(wapiti_processed) > 0:
+                print(f"[+] Wapiti 필터링 완료: {len(wapiti_processed)}개 파일 처리됨")
+            else:
+                print("[!] 필터링할 Wapiti 결과가 없습니다.")
+        except Exception as e:
+            print(f"[!] Wapiti 필터링 중 오류 발생: {e}")
+    else:
+        print(f"[!] Wapiti 결과 디렉토리가 없습니다: {WAPITI_RESULTS_DIR}")
 
     # 4단계: Nuclei 결과 필터링
+    update_status("scanning", "filter_nuclei", "Nuclei 결과 필터링")
     print("\n[+] Nuclei 결과 필터링 시작...")
-    try:
-        nuclei_processed = filter_nuclei_results(
-            input_dir=NUCLEI_RESULTS_DIR,
-            output_dir=FILTERED_RESULTS_DIR,
-            pretty=True
-        )
-        if nuclei_processed > 0:
-            print(f"[+] Nuclei 필터링 완료: {nuclei_processed}개 파일 처리됨")
-        else:
-            print("[!] 필터링할 Nuclei 결과가 없습니다.")
-    except Exception as e:
-        print(f"[!] Nuclei 필터링 중 오류 발생: {e}")
+    if os.path.isdir(NUCLEI_RESULTS_DIR):
+        try:
+            nuclei_processed = filter_nuclei_results(
+                input_dir=NUCLEI_RESULTS_DIR,
+                output_dir=FILTERED_RESULTS_DIR,
+                pretty=True
+            )
+            if nuclei_processed > 0:
+                print(f"[+] Nuclei 필터링 완료: {nuclei_processed}개 파일 처리됨")
+            else:
+                print("[!] 필터링할 Nuclei 결과가 없습니다.")
+        except Exception as e:
+            print(f"[!] Nuclei 필터링 중 오류 발생: {e}")
+    else:
+        print(f"[!] Nuclei 결과 디렉토리가 없습니다: {NUCLEI_RESULTS_DIR}")
 
     # 5단계: 스캔 결과 병합 (Domain-level)
+    update_status("scanning", "merge", "스캔 결과 병합")
     print("\n[+] 5단계: 스캔 결과 병합 시작...")
-    try:
-        merged_count = merge_filtered_results(
-            input_dir=FILTERED_RESULTS_DIR,
-            output_dir=MERGED_RESULTS_DIR
-        )
-        if merged_count > 0:
-            print(f"[+] 스캔 결과 병합 완료: {merged_count}개 도메인 파일 생성됨")
-        else:
-            print("[!] 병합할 결과가 없습니다.")
-    except Exception as e:
-        print(f"[!] 결과 병합 중 오류 발생: {e}")
+    if os.path.isdir(FILTERED_RESULTS_DIR):
+        try:
+            merged_count = merge_filtered_results(
+                input_dir=FILTERED_RESULTS_DIR,
+                output_dir=MERGED_RESULTS_DIR,
+                run_timestamp=run_timestamp
+            )
+            if merged_count > 0:
+                print(f"[+] 스캔 결과 병합 완료: {merged_count}개 도메인 파일 생성됨")
+            else:
+                print("[!] 병합할 결과가 없습니다.")
+        except Exception as e:
+            print(f"[!] 결과 병합 중 오류 발생: {e}")
+    else:
+        print(f"[!] 병합할 결과가 없습니다: {FILTERED_RESULTS_DIR}")
+
+    # 임시 결과 정리 (merged_results는 유지)
+    update_status("scanning", "cleanup", "임시 결과 정리")
+    for path in [FILTERED_RESULTS_DIR, WAPITI_RESULTS_DIR, NUCLEI_RESULTS_DIR]:
+        if os.path.exists(path):
+            try:
+                shutil.rmtree(path)
+                print(f"[+] 정리 완료: {path}")
+            except Exception as e:
+                print(f"[!] 정리 실패: {path} - {e}")
+
+    if os.path.exists(RESULTS_FILE):
+        try:
+            os.remove(RESULTS_FILE)
+            print(f"[+] 정리 완료: {RESULTS_FILE}")
+        except Exception as e:
+            print(f"[!] 정리 실패: {RESULTS_FILE} - {e}")
+
+    update_status("done", "complete", "스캔 완료")
 
 
 def main() -> None:

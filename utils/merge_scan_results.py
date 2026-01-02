@@ -27,7 +27,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Optional
 from collections import defaultdict
 from datetime import datetime
 
@@ -69,15 +69,31 @@ def extract_subdomain_from_filename(filename: str) -> str:
 def extract_domain_from_filename(filename: str) -> str:
     """
     파일명에서 도메인(host:port) 추출
+    IP 주소와 일반 도메인을 모두 지원
 
     예시:
         nuclei_scan_localhost_9991_www_XSS.json -> localhost_9991
         nuclei_scan_example.com_8080_... -> example.com_8080
-        wapiti_example_com_8080_... -> example.com_8080
+        nuclei_scan_10.64.141.227_cve_... -> 10.64.141.227
+        wapiti_10_64_141_227_88daf172.json -> 10.64.141.227
     """
     name, scanner_type = _strip_prefix_and_extension(filename)
 
-    # 도메인_포트 패턴 추출 (포트 번호 앞까지)
+    # IP 주소 패턴 감지 (IPv4)
+    # 패턴: 10_64_141_227 또는 10.64.141.227
+    ip_pattern = r'^(\d{1,3}[._]\d{1,3}[._]\d{1,3}[._]\d{1,3})(?:_|$)'
+    ip_match = re.match(ip_pattern, name)
+
+    if ip_match:
+        # IP 주소를 점 표기법으로 정규화
+        ip_part = ip_match.group(1).replace('_', '.')
+
+        # IP 주소 유효성 검증
+        octets = ip_part.split('.')
+        if all(0 <= int(octet) <= 255 for octet in octets):
+            return ip_part
+
+    # 기존 도메인 로직 (호스트명인 경우)
     match = re.match(r'^(.+?)_(\d+)_', name + '_')
     if match:
         domain_part = match.group(1)
@@ -325,7 +341,7 @@ def convert_to_frontend_format(domain: str, subdomains: Dict) -> Dict:
     }
 
 
-def merge_scan_results(input_dir: str, output_dir: str):
+def merge_scan_results(input_dir: str, output_dir: str, run_timestamp: Optional[str] = None):
     """
     Main function to merge all scan results by domain.
     All subdomains for each domain are merged into a single JSON file.
@@ -374,6 +390,9 @@ def merge_scan_results(input_dir: str, output_dir: str):
     print(f"Found {len(domain_data)} unique domains")
     print()
 
+    if not run_timestamp:
+        run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     # Write one JSON file per domain
     print("Step 3: Creating merged JSON files...")
     merged_files = []
@@ -396,7 +415,7 @@ def merge_scan_results(input_dir: str, output_dir: str):
         # Convert to frontend format and write to output file
         frontend_data = convert_to_frontend_format(domain, subdomains)
 
-        output_filename = f"{domain}.json"
+        output_filename = f"{domain}_{run_timestamp}.json"
         output_path = os.path.join(output_dir, output_filename)
 
         with open(output_path, 'w', encoding='utf-8') as f:
@@ -422,7 +441,11 @@ def merge_scan_results(input_dir: str, output_dir: str):
     return merged_files
 
 
-def merge_filtered_results(input_dir: str = "./filtered", output_dir: str = "./merged_results") -> int:
+def merge_filtered_results(
+    input_dir: str = "./filtered",
+    output_dir: str = "./merged_results",
+    run_timestamp: Optional[str] = None
+) -> int:
     """
     Wrapper function for easy import and use as a module.
 
@@ -440,7 +463,7 @@ def merge_filtered_results(input_dir: str = "./filtered", output_dir: str = "./m
             return 0
 
         # Run merge
-        merged_files = merge_scan_results(input_dir, output_dir)
+        merged_files = merge_scan_results(input_dir, output_dir, run_timestamp=run_timestamp)
         return len(merged_files)
 
     except Exception as e:

@@ -1,0 +1,289 @@
+{
+  "target": "10.67.167.75",
+  "startedAt": "2025-12-29T16:08:59.656146",
+  "finishedAt": "2025-12-29T16:08:59.656154",
+  "tools": [
+    "nuclei",
+    "wapiti"
+  ],
+  "findings": [
+    {
+      "id": "nuclei-cve-0",
+      "tool": "nuclei",
+      "category": "CVE",
+      "severity": "critical",
+      "title": "Apache ActiveMQ Fileserver - Arbitrary File Write",
+      "description": "Apache ActiveMQ 5.x before 5.14.0 allows remote attackers to upload and execute arbitrary files via an HTTP PUT followed by an HTTP MOVE request via the Fileserver web application.",
+      "impact": "An attacker can write arbitrary files on the server, potentially leading to remote code execution.\n",
+      "endpoint": "http://10.67.167.75:8161/fileserver/37VcjAdfl4YDajAzoofyBM9nIcW.txt",
+      "fullUrl": "http://10.67.167.75:8161/fileserver/37VcjAdfl4YDajAzoofyBM9nIcW.txt",
+      "method": "GET",
+      "cve": "cve-2016-3088",
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /fileserver/37VcjAdfl4YDajAzoofyBM9nIcW.txt HTTP/1.1\r\nHost: 10.67.167.75:8161\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.3 Safari/605.1.15\r\nConnection: close\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 8\r\nAccept-Ranges: bytes\r\nContent-Type: text/plain\r\nLast-Modified: Mon, 29 Dec 2025 07:03:33 GMT\r\nServer: Jetty(7.6.9.v20130131)\r\n\r\n31978229",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Host: 10.67.167.75:8161' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.3 Safari/605.1.15' 'http://10.67.167.75:8161/fileserver/37VcjAdfl4YDajAzoofyBM9nIcW.txt'",
+      "ip": "10.67.167.75"
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-1",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://10.67.167.75:8161/admin/",
+      "endpoint": "/admin/",
+      "fullUrl": "/admin/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/admin/\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-2",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/admin/",
+      "fullUrl": "/admin/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/admin/\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-3",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/admin/",
+      "fullUrl": "/admin/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/admin/\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-4",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/admin/",
+      "fullUrl": "/admin/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/admin/\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-5",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://10.67.167.75:8161/",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-6",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-7",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-8",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-9",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://10.67.167.75:8161/text/css",
+      "endpoint": "/text/css",
+      "fullUrl": "/text/css",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/text/css\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-10",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/text/css",
+      "fullUrl": "/text/css",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/text/css\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-11",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/text/css",
+      "fullUrl": "/text/css",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/text/css\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-12",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/text/css",
+      "fullUrl": "/text/css",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.67.167.75:8161/text/css\""
+    }
+  ]
+}

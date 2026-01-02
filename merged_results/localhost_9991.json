@@ -1,0 +1,970 @@
+{
+  "target": "localhost:9991",
+  "startedAt": "2025-12-30T22:46:45.486277",
+  "finishedAt": "2025-12-30T22:46:45.486285",
+  "tools": [
+    "wapiti",
+    "nuclei"
+  ],
+  "findings": [
+    {
+      "id": "nuclei-cve-0",
+      "tool": "nuclei",
+      "category": "CVE",
+      "severity": "critical",
+      "title": "Spring Security BCrypt Truncation & ACL Bypass Detection",
+      "description": "Registers a user, logs in, and attempts to access the /admin/search endpoint \nusing a truncated password (CVE-2025-22228) and X-Forwarded-For header.\n",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level2.php/admin/search",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level2.php/admin/search",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "POST /www/XSS/XSS_level2.php/admin/search HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (X11; U; Linux x86_64; rv:100.0esr) Gecko/20012409 Firefox/100.0esr\r\nConnection: close\r\nContent-Length: 107\r\nContent-Type: application/json\r\nX-Forwarded-For: 127.0.0.1\r\nAccept-Encoding: gzip\r\n\r\n{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 624\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:41:55 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 2</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'POST' -d '{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}' -H 'Content-Type: application/json' -H 'Host: localhost:9991' -H 'User-Agent: Mozilla/5.0 (X11; U; Linux x86_64; rv:100.0esr) Gecko/20012409 Firefox/100.0esr' -H 'X-Forwarded-For: 127.0.0.1' 'http://localhost:9991/www/XSS/XSS_level2.php/admin/search'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-xss-1",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "high",
+      "title": "Comprehensive XSS Detection (All Vectors)",
+      "description": "Comprehensive XSS template combining multiple bypass techniques, polyglots, WAF bypasses, and advanced payloads",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level2.php",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level2.php?q=<script>alert({{1}})</script>",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level2.php?q=<script>alert({{1}})</script> HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (ZZ; Linux i686; rv:125.0) Gecko/20100101 Firefox/125.0\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 624\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:41:00 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 2</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (ZZ; Linux i686; rv:125.0) Gecko/20100101 Firefox/125.0' 'http://localhost:9991/www/XSS/XSS_level2.php?q=<script>alert({{1}})</script>'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-xss-2",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Fuzzing Parameters - Cross-Site Scripting",
+      "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level2.php/",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level2.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level2.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Kubuntu; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 676\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:41:01 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 2</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is '>\"<svg/onload=confirm('xss-username')>\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Kubuntu; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0' 'http://localhost:9991/www/XSS/XSS_level2.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-3",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level2.php",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-4",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-5",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-6",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-7",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level2.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level2.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-8",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "username",
+      "evidence": "username",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level2.php?username=%3CScRiPt%3Ealert%28%27wl466xp844%27%29%3C%2FsCrIpT%3E&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "nuclei-xss-9",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "high",
+      "title": "Comprehensive XSS Detection (All Vectors)",
+      "description": "Comprehensive XSS template combining multiple bypass techniques, polyglots, WAF bypasses, and advanced payloads",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level1.php",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level1.php?q=<script>alert({{1}})</script>",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level1.php?q=<script>alert({{1}})</script> HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 622\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:39:32 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15' 'http://localhost:9991/www/XSS/XSS_level1.php?q=<script>alert({{1}})</script>'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-xss-10",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Fuzzing Parameters - Cross-Site Scripting",
+      "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level1.php/",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level1.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level1.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.1 Safari/605.1.15\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 674\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:39:33 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is '>\"<svg/onload=confirm('xss-username')></body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.1 Safari/605.1.15' 'http://localhost:9991/www/XSS/XSS_level1.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-xss-11",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Django Debug Page - Cross-Site Scripting",
+      "description": "Django 1.10.x before 1.10.8 and 1.11.x before 1.11.5 has HTML autoescaping disabled in a portion of the template for the technical 500 debug page. We detected that right circumstances (DEBUG=True) are present to allow a cross-site scripting attack.\n",
+      "impact": "Successful exploitation of this vulnerability could allow an attacker to execute arbitrary JavaScript code in the context of the victim's browser, leading to potential session hijacking, defacement, or theft of sensitive information.\n",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level1.php/create_user/",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E",
+      "method": "GET",
+      "cve": "cve-2017-12794",
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15\r\nConnection: close\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 674\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:39:36 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is <script>alert(document.domain)</script></body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15' 'http://localhost:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-cve-12",
+      "tool": "nuclei",
+      "category": "CVE",
+      "severity": "critical",
+      "title": "Spring Security BCrypt Truncation & ACL Bypass Detection",
+      "description": "Registers a user, logs in, and attempts to access the /admin/search endpoint \nusing a truncated password (CVE-2025-22228) and X-Forwarded-For header.\n",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level1.php/admin/search",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level1.php/admin/search",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "POST /www/XSS/XSS_level1.php/admin/search HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Fedora; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36\r\nConnection: close\r\nContent-Length: 107\r\nContent-Type: application/json\r\nX-Forwarded-For: 127.0.0.1\r\nAccept-Encoding: gzip\r\n\r\n{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 622\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:40:27 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'POST' -d '{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}' -H 'Content-Type: application/json' -H 'Host: localhost:9991' -H 'User-Agent: Mozilla/5.0 (Fedora; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36' -H 'X-Forwarded-For: 127.0.0.1' 'http://localhost:9991/www/XSS/XSS_level1.php/admin/search'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-cve-13",
+      "tool": "nuclei",
+      "category": "CVE",
+      "severity": "medium",
+      "title": "Django Debug Page - Cross-Site Scripting",
+      "description": "Django 1.10.x before 1.10.8 and 1.11.x before 1.11.5 has HTML autoescaping disabled in a portion of the template for the technical 500 debug page. We detected that right circumstances (DEBUG=True) are present to allow a cross-site scripting attack.\n",
+      "impact": "Successful exploitation of this vulnerability could allow an attacker to execute arbitrary JavaScript code in the context of the victim's browser, leading to potential session hijacking, defacement, or theft of sensitive information.\n",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level1.php/create_user/",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E",
+      "method": "GET",
+      "cve": "cve-2017-12794",
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17\r\nConnection: close\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 674\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:40:45 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is <script>alert(document.domain)</script></body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/536.26.17 (KHTML, like Gecko) Version/6.0.2 Safari/536.26.17' 'http://localhost:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-14",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level1.php",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-15",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-16",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-17",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-18",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level1.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level1.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-19",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "username",
+      "evidence": "username",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level1.php?username=%3CScRiPt%3Ealert%28%27wd134b29th%27%29%3C%2FsCrIpT%3E&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "nuclei-xss-20",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "high",
+      "title": "Comprehensive XSS Detection (All Vectors)",
+      "description": "Comprehensive XSS template combining multiple bypass techniques, polyglots, WAF bypasses, and advanced payloads",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level3.php",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level3.php?q=<script>alert({{1}})</script>",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level3.php?q=<script>alert({{1}})</script> HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 619\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:42:27 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n\t<title>XSS 3</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36' 'http://localhost:9991/www/XSS/XSS_level3.php?q=<script>alert({{1}})</script>'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-xss-21",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Fuzzing Parameters - Cross-Site Scripting",
+      "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level3.php/",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level3.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level3.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Fedora; Linux i686; rv:123.0) Gecko/20100101 Firefox/123.0\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 671\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:42:28 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n\t<title>XSS 3</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is '>\"<svg/onload=confirm('xss-username')>\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Fedora; Linux i686; rv:123.0) Gecko/20100101 Firefox/123.0' 'http://localhost:9991/www/XSS/XSS_level3.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-cve-22",
+      "tool": "nuclei",
+      "category": "CVE",
+      "severity": "critical",
+      "title": "Spring Security BCrypt Truncation & ACL Bypass Detection",
+      "description": "Registers a user, logs in, and attempts to access the /admin/search endpoint \nusing a truncated password (CVE-2025-22228) and X-Forwarded-For header.\n",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level3.php/admin/search",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level3.php/admin/search",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "POST /www/XSS/XSS_level3.php/admin/search HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (ZZ; Linux i686; rv:123.0) Gecko/20100101 Firefox/123.0\r\nConnection: close\r\nContent-Length: 107\r\nContent-Type: application/json\r\nX-Forwarded-For: 127.0.0.1\r\nAccept-Encoding: gzip\r\n\r\n{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 619\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:43:22 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n\t<title>XSS 3</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'POST' -d '{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}' -H 'Content-Type: application/json' -H 'Host: localhost:9991' -H 'User-Agent: Mozilla/5.0 (ZZ; Linux i686; rv:123.0) Gecko/20100101 Firefox/123.0' -H 'X-Forwarded-For: 127.0.0.1' 'http://localhost:9991/www/XSS/XSS_level3.php/admin/search'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-23",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level3.php",
+      "endpoint": "/www/XSS/XSS_level3.php",
+      "fullUrl": "/www/XSS/XSS_level3.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level3.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-24",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/XSS/XSS_level3.php",
+      "fullUrl": "/www/XSS/XSS_level3.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level3.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-25",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/XSS/XSS_level3.php",
+      "fullUrl": "/www/XSS/XSS_level3.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level3.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-26",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/XSS/XSS_level3.php",
+      "fullUrl": "/www/XSS/XSS_level3.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level3.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-27",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level3.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+      "endpoint": "/www/XSS/XSS_level3.php",
+      "fullUrl": "/www/XSS/XSS_level3.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level3.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level3.php\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-28",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+      "endpoint": "/www/XSS/XSS_level3.php",
+      "fullUrl": "/www/XSS/XSS_level3.php",
+      "method": "",
+      "parameter": "username",
+      "evidence": "username",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level3.php?username=%3CSvG%2FoNloAd%3Dalert%28%2Fwjzutd3jl4%2F%29%3E&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level3.php\""
+    },
+    {
+      "id": "nuclei-cve-29",
+      "tool": "nuclei",
+      "category": "CVE",
+      "severity": "critical",
+      "title": "Spring Security BCrypt Truncation & ACL Bypass Detection",
+      "description": "Registers a user, logs in, and attempts to access the /admin/search endpoint \nusing a truncated password (CVE-2025-22228) and X-Forwarded-For header.\n",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level4.php/admin/search",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level4.php/admin/search",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "POST /www/XSS/XSS_level4.php/admin/search HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36\r\nConnection: close\r\nContent-Length: 107\r\nContent-Type: application/json\r\nX-Forwarded-For: 127.0.0.1\r\nAccept-Encoding: gzip\r\n\r\n{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 559\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:44:49 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n\t<title>XSS 4</title>\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'POST' -d '{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}' -H 'Content-Type: application/json' -H 'Host: localhost:9991' -H 'User-Agent: Mozilla/5.0 (Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36' -H 'X-Forwarded-For: 127.0.0.1' 'http://localhost:9991/www/XSS/XSS_level4.php/admin/search'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-xss-30",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "high",
+      "title": "Comprehensive XSS Detection (All Vectors)",
+      "description": "Comprehensive XSS template combining multiple bypass techniques, polyglots, WAF bypasses, and advanced payloads",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level4.php",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level4.php?input=<script>alert({{1}})</script>",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level4.php?input=<script>alert({{1}})</script> HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Mac OS X 13_2) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0 Safari/537.36\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 559\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:43:55 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n\t<title>XSS 4</title>\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Mac OS X 13_2) AppleWebKit/537.36 (KHTML, like Gecko) Edge/120.0 Safari/537.36' 'http://localhost:9991/www/XSS/XSS_level4.php?input=<script>alert({{1}})</script>'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-xss-31",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Fuzzing Parameters - Cross-Site Scripting",
+      "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level4.php/",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level4.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level4.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh, Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 598\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:43:56 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n\t<title>XSS 4</title>\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\n'>\"<svg/onload=confirm('xss-username')>\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh, Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15' 'http://localhost:9991/www/XSS/XSS_level4.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-32",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level4.php",
+      "endpoint": "/www/XSS/XSS_level4.php",
+      "fullUrl": "/www/XSS/XSS_level4.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level4.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-33",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/XSS/XSS_level4.php",
+      "fullUrl": "/www/XSS/XSS_level4.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level4.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-34",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/XSS/XSS_level4.php",
+      "fullUrl": "/www/XSS/XSS_level4.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level4.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-35",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/XSS/XSS_level4.php",
+      "fullUrl": "/www/XSS/XSS_level4.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level4.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-36",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level4.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+      "endpoint": "/www/XSS/XSS_level4.php",
+      "fullUrl": "/www/XSS/XSS_level4.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level4.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level4.php\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-37",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+      "endpoint": "/www/XSS/XSS_level4.php",
+      "fullUrl": "/www/XSS/XSS_level4.php",
+      "method": "",
+      "parameter": "username",
+      "evidence": "username",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level4.php?username=%3CSvG%2FoNloAd%3Dalert%28%2Fwzcim2fjp5%2F%29%3E&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level4.php\""
+    },
+    {
+      "id": "nuclei-cve-38",
+      "tool": "nuclei",
+      "category": "CVE",
+      "severity": "critical",
+      "title": "Spring Security BCrypt Truncation & ACL Bypass Detection",
+      "description": "Registers a user, logs in, and attempts to access the /admin/search endpoint \nusing a truncated password (CVE-2025-22228) and X-Forwarded-For header.\n",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level5.php/admin/search",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level5.php/admin/search",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "POST /www/XSS/XSS_level5.php/admin/search HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36\r\nConnection: close\r\nContent-Length: 107\r\nContent-Type: application/json\r\nX-Forwarded-For: 127.0.0.1\r\nAccept-Encoding: gzip\r\n\r\n{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 664\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:46:17 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n    <title>XSS 5</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n    \n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"/www/XSS/XSS_level5.php/admin/search\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n    </div>\n\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'POST' -d '{\"apiKey\": \"test\", \"password\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB\"}' -H 'Content-Type: application/json' -H 'Host: localhost:9991' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36' -H 'X-Forwarded-For: 127.0.0.1' 'http://localhost:9991/www/XSS/XSS_level5.php/admin/search'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-xss-39",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "high",
+      "title": "Comprehensive XSS Detection (All Vectors)",
+      "description": "Comprehensive XSS template combining multiple bypass techniques, polyglots, WAF bypasses, and advanced payloads",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level5.php",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level5.php?search=<script>alert({{1}})</script>",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level5.php?search=<script>alert({{1}})</script> HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.11 Mobile/15E148 Safari/604.1\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 651\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:45:22 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n    <title>XSS 5</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n    \n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"/www/XSS/XSS_level5.php\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n    </div>\n\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.11 Mobile/15E148 Safari/604.1' 'http://localhost:9991/www/XSS/XSS_level5.php?search=<script>alert({{1}})</script>'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "nuclei-xss-40",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "low",
+      "title": "Basic XSS Prober - Cross-Site Scripting",
+      "description": "A cross-site scripting vulnerability was discovered via generic testing. Manual testing is needed to verify exploitation.",
+      "impact": "N/A",
+      "endpoint": "http://localhost:9991/www/XSS/XSS_level5.php/%61%27%22%3e%3c%69%6e%6a%65%63%74%61%62%6c%65%3e",
+      "fullUrl": "http://localhost:9991/www/XSS/XSS_level5.php/%61%27%22%3e%3c%69%6e%6a%65%63%74%61%62%6c%65%3e",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level5.php/%61%27%22%3e%3c%69%6e%6a%65%63%74%61%62%6c%65%3e HTTP/1.1\r\nHost: localhost:9991\r\nUser-Agent: Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36\r\nConnection: close\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 668\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 13:45:28 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n    <title>XSS 5</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n    \n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n<form method=\"GET\" action=\"/www/XSS/XSS_level5.php/a'\"><injectable>\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n    </div>\n\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36' 'http://localhost:9991/www/XSS/XSS_level5.php/%61%27%22%3e%3c%69%6e%6a%65%63%74%61%62%6c%65%3e'",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-41",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://localhost:9991/www/XSS/XSS_level5.php",
+      "endpoint": "/www/XSS/XSS_level5.php",
+      "fullUrl": "/www/XSS/XSS_level5.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level5.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-42",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/XSS/XSS_level5.php",
+      "fullUrl": "/www/XSS/XSS_level5.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level5.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-43",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/XSS/XSS_level5.php",
+      "fullUrl": "/www/XSS/XSS_level5.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level5.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-44",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/XSS/XSS_level5.php",
+      "fullUrl": "/www/XSS/XSS_level5.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level5.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-45",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://localhost:9991/www/XSS/XSS_level5.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+      "endpoint": "/www/XSS/XSS_level5.php",
+      "fullUrl": "/www/XSS/XSS_level5.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://localhost:9991/www/XSS/XSS_level5.php?username=alice&submit=Submit\" -e \"http://localhost:9991/www/XSS/XSS_level5.php\""
+    }
+  ]
+}
