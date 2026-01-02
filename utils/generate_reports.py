@@ -12,6 +12,7 @@ import shutil
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 import time
+from utils.local_model import generate_with_local_model
 
 try:
     import google.generativeai as genai
@@ -23,12 +24,15 @@ except ImportError as e:
 
 
 # 설정
-MODEL_NAME = "gemini-3-pro-preview"  # gemini-2.5-flash: 빠르고 효율적
 TEMPERATURE = 0.7
 MAX_RETRIES = 3
 RETRY_DELAY = 5
 MIN_EVIDENCE_LENGTH = 6
 SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"]
+DEFAULT_PROVIDER = "Gemini"
+ENV_PROVIDER = "AI_PROVIDER"
+ENV_GEMINI_MODEL = "GEMINI_MODEL"
+ENV_LOCAL_MODEL = "LOCAL_MODEL_NAME"
 
 
 def get_api_key() -> str:
@@ -52,6 +56,28 @@ def get_api_key() -> str:
         )
 
     return api_key
+
+
+def get_provider() -> str:
+    """환경변수에서 AI_PROVIDER 로드"""
+    load_dotenv()
+    provider = os.getenv(ENV_PROVIDER, DEFAULT_PROVIDER).strip().lower()
+    if provider not in ("Gemini", "Hacklipse"):
+        raise ValueError(f"AI_PROVIDER 값이 올바르지 않습니다: {provider}")
+    return provider
+
+
+def get_gemini_model_name() -> str:
+    load_dotenv()
+    return os.getenv(ENV_GEMINI_MODEL, MODEL_NAME).strip() or MODEL_NAME
+
+
+def get_local_model_name() -> str:
+    load_dotenv()
+    model_name = os.getenv(ENV_LOCAL_MODEL, "").strip()
+    if not model_name:
+        raise ValueError("LOCAL_MODEL_NAME이 설정되지 않았습니다.")
+    return model_name
 
 
 def load_scan_results(json_path: str) -> Dict:
@@ -539,7 +565,7 @@ def call_gemini_api(prompt: str, api_key: str) -> str:
         Exception: API 호출 실패 시
     """
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(MODEL_NAME)
+    model = genai.GenerativeModel(get_gemini_model_name())
 
     def _generate_with_retries(prompt_text: str) -> str:
         for attempt in range(MAX_RETRIES):
@@ -578,6 +604,18 @@ def call_gemini_api(prompt: str, api_key: str) -> str:
 
         raise Exception("최대 재시도 횟수 초과")
     text = _generate_with_retries(prompt)
+    print(f"[+] 보고서 생성 완료 ({len(text)} 문자)")
+    return text
+
+
+def call_local_model(prompt: str, model_name: str) -> str:
+    """로컬 모델 호출"""
+    text = generate_with_local_model(
+        prompt=prompt,
+        model_name=model_name,
+        temperature=TEMPERATURE,
+        max_new_tokens=16384
+    )
     print(f"[+] 보고서 생성 완료 ({len(text)} 문자)")
     return text
 
@@ -658,10 +696,10 @@ def generate_report(json_file_path: str, output_dir: str = "reports") -> str:
     print(f"{'='*60}\n")
 
     try:
-        # 1. API 키 로드
-        print("[1/6] API 키 로드 중...")
-        api_key = get_api_key()
-        print("[+] API 키 확인 완료")
+        # 1. 제공자 선택
+        print("[1/6] AI 제공자 확인 중...")
+        provider = get_provider()
+        print(f"[+] AI 제공자: {provider}")
 
         # 2. JSON 파일 로드
         print(f"\n[2/6] 스캔 결과 로드 중... ({json_file_path})")
@@ -686,9 +724,16 @@ def generate_report(json_file_path: str, output_dir: str = "reports") -> str:
         prompt = create_prompt(data, analysis)
         print(f"[+] 프롬프트 생성 완료 ({len(prompt)} 문자)")
 
-        # 5. Gemini API 호출
+        # 5. AI 보고서 생성
         print("\n[5/6] AI 보고서 생성 중...")
-        markdown = call_gemini_api(prompt, api_key)
+        if provider == "Gemini":
+            print("[*] Gemini API 사용")
+            api_key = get_api_key()
+            markdown = call_gemini_api(prompt, api_key)
+        else:
+            print("[*] 로컬 모델 사용")
+            model_name = get_local_model_name()
+            markdown = call_local_model(prompt, model_name)
 
         # 6. 파일 저장
         print("\n[6/6] 보고서 저장 중...")
