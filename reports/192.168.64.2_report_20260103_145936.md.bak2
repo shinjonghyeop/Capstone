@@ -27,36 +27,34 @@
 - **대응**:  
   - 파일 시스템에서 직접 경로 접근을 차단하는 보안 조치 적용  
 - **조치**:  
-  1. CentOS 버전을 최신으로 업데이트  
-  2. 웹 패널 및 관련 스크립트 파일의 권한 제한
+  1. CentOS 버전을 CVE-2018-18323에 대응하는 최신 패치로 업데이트
 
 # `MEDIUM`
 
 ## Fuzzing Parameters - Cross-Site Scripting  
 - **End-Point**: http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/, http://192.168.64.2:9991/www/XSS/XSS_level2.php/ 외 2개  
 - **영향**:  
-- **설명**: Cross-site scripting 공격이 반사 파라미터를 통해 서버 응답에 스크립트가 포함되어 발생함을 확인.  
+- **설명**: Cross-site scripting 공격이 반사 파라미터 검증을 통해 발견되었으며, 사용자 세션 데이터 및 민감 정보가 포함된 스크립트가 포함될 수 있음.  
 - **근거**:  
-  재현: curl 명령어로 공격 가능성을 재현한 로그 증거 제공.  
+  재현: curl 명령어로 공격 가능성을 확인한 로그 증거 제공  
 - **대응**:  
 - **조치**:  
   - 입력값 검증 및 이스케이프 처리 강화  
-  - HTTP 헤더 및 쿠키 파라미터 필터링 적용
+  - HTTP 헤더 및 쿠키 파라미터 보안 설정
 
 ## Django Debug Page - Cross-Site Scripting  
-- **End-Point**: http://192.168.64.2:9991/www/XSS/XSS_level1.php/create_user/  
+- **엔드포인트**: http://192.168.64.2:9991/www/XSS/XSS_level1.php/create_user/  
 - **영향**:  
   - Successful exploitation 가능 → 브라우저 내에서 임의 JavaScript 실행  
   - 세션 하이재킹, 페이지 변조, 정보 유출 등 심각한 보안 위협  
 - **설명**: Django 1.10.x ~ 1.11.x에서 DEBUG 플래그 하에 HTML autoescaping이 비활성화된 템플릿을 통해 발생하는 취약점  
 - **근거**:  
-  - 재현 가능한 테스트 사례 제공 (curl 기반 공격)  
-  - CVE cve-2017-12794에서 확인된 기술적 결함  
+  - 재현 가능한 테스트 사례 제공 (curl 기반 공격 성공 확인)  
 - **대응**:  
-  - Django Debug Page 사용 중지  
-  - DEBUG 플래그 비활성화 (권장)  
+  - Django 버전을 1.11.6 이상으로 업데이트  
+  - DEBUG 플래그 비활성화 (production 환경에서만)  
 - **조치**:  
-  - Django 버전을 1.11.6 이상으로 업데이트
+  - 해당 엔드포인트에 HTML autoescaping 활성화
 
 
 

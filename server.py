@@ -504,12 +504,22 @@ def generate_ai_report(filename: str):
         if not os.path.exists(merged_path):
             return jsonify({"error": "Merged result not found"}), 404
 
+        payload = request.get_json(silent=True) or {}
+        provider = None
+        if isinstance(payload, dict):
+            provider = payload.get("provider")
+        if provider is not None:
+            provider = str(provider).strip().lower()
+            if provider not in ("gemini", "hacklipse"):
+                return jsonify({"error": "Invalid provider"}), 400
+
         # 보고서 생성
         from utils.generate_reports import generate_report
 
         report_path = generate_report(
             json_file_path=merged_path,
-            output_dir='reports'
+            output_dir='reports',
+            provider_override=provider
         )
 
         # 생성된 마크다운 읽기

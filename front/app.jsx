@@ -846,6 +846,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
   const [aiReportError, setAiReportError] = useState(null);
   const [existingReport, setExistingReport] = useState(null); // 기존 보고서 정보
   const [checkingReport, setCheckingReport] = useState(true); // 보고서 확인 중
+  const [showAiProviderModal, setShowAiProviderModal] = useState(false);
 
   const reportTimestamp = useMemo(() => {
     if (!resultFile) return null;
@@ -1013,11 +1014,15 @@ function ReportView({ data, noResults, resultFile, onReset }) {
   }
 
   // AI 보고서 생성 함수
-  async function generateAiReport() {
+  async function generateAiReport(provider) {
     setAiReportLoading(true);
     setAiReportError(null);
 
     try {
+      if (!provider) {
+        throw new Error('보고서 생성 방식을 선택해주세요.');
+      }
+
       // target에서 파일명 추출
       const filename = resultFile || (target && target.includes('.json')
         ? target.split(':').pop()
@@ -1027,7 +1032,11 @@ function ReportView({ data, noResults, resultFile, onReset }) {
       }
 
       const res = await fetch(`${API_BASE_URL}/api/generate-report/${filename}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ provider })
       });
 
       if (!res.ok) {
@@ -1113,7 +1122,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
           ) : (
             // 보고서가 없으면 "생성" 버튼
             <button
-              onClick={generateAiReport}
+              onClick={() => setShowAiProviderModal(true)}
               disabled={aiReportLoading}
               className={classNames(
                 "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
@@ -1156,6 +1165,63 @@ function ReportView({ data, noResults, resultFile, onReset }) {
             <div>
               <div className="font-medium">AI 보고서 생성 실패</div>
               <div className="text-sm mt-1">{aiReportError}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAiProviderModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          onClick={() => setShowAiProviderModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-lg font-semibold">AI 보고서 생성 방식</div>
+            <p className="mt-1 text-sm text-slate-600">
+              원하는 생성 방식을 선택하세요.
+            </p>
+            <div className="mt-4 grid gap-3">
+              <button
+                onClick={() => {
+                  setShowAiProviderModal(false);
+                  generateAiReport('gemini');
+                }}
+                disabled={aiReportLoading}
+                className={classNames(
+                  "rounded-lg px-4 py-2 text-sm font-medium",
+                  aiReportLoading
+                    ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                    : "bg-slate-900 text-white hover:bg-slate-800"
+                )}
+              >
+                Gemini API (전체 보고서)
+              </button>
+              <button
+                onClick={() => {
+                  setShowAiProviderModal(false);
+                  generateAiReport('hacklipse');
+                }}
+                disabled={aiReportLoading}
+                className={classNames(
+                  "rounded-lg px-4 py-2 text-sm font-medium",
+                  aiReportLoading
+                    ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                    : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                )}
+              >
+                로컬 모델 (취약점별)
+              </button>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowAiProviderModal(false)}
+                className="text-sm text-slate-600 hover:text-slate-900"
+              >
+                취소
+              </button>
             </div>
           </div>
         </div>
