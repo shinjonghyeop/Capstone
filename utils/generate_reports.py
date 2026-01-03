@@ -8,10 +8,10 @@ Google Gemini API를 활용하여 취약점 스캔 결과를 분석하고
 import json
 import os
 import re
-import shutil
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 import time
+from pathlib import Path
 from utils.local_model import generate_with_local_model
 
 try:
@@ -24,15 +24,45 @@ except ImportError as e:
 
 
 # 설정
+MODEL_NAME = "gemini-3-pro-preview"
+LOCAL_MODEL_NAME = "LGAI-EXAONE/EXAONE-4.0-1.2B"
 TEMPERATURE = 0.7
 MAX_RETRIES = 3
 RETRY_DELAY = 5
 MIN_EVIDENCE_LENGTH = 6
 SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"]
+DOTENV_PATH = Path(__file__).resolve().parents[1] / ".env"
+FINDING_INSTRUCTION = (
+    "다음 입력으로 Markdown 취약점 블록을 생성하라.\n"
+    "규칙: Markdown만, 헤딩은 ##만, 이모지/표 금지, 한 줄 불릿.\n"
+    "코드/요청/응답/페이로드/curl/로그 등 코드성 텍스트는 반드시 코드블럭으로 감쌀 것.\n"
+    "출력은 한국어로 작성.\n"
+    "모든 항목(End-Point/영향/설명/근거/대응/조치)을 반드시 출력.\n"
+    "근거는 증거/재현에서만 요약, 부족 시 '-' 사용.\n"
+)
+REPORT_INSTRUCTION = (
+    "다음 입력만 사용해 보안 진단 보고서를 작성하라.\n"
+    "규칙:\n"
+    "- Markdown만 사용, HTML/이모지 금지.\n"
+    "- 헤딩은 #, ##만 사용.\n"
+    "- 출력은 한국어로 작성 (기술 용어는 영문 병기 허용).\n"
+    "- 코드/요청/응답/페이로드/curl/로그 등 코드성 텍스트는 반드시 코드블럭으로 감쌀 것.\n"
+    "- 일반 설명은 한 줄 불릿으로 간결히 작성.\n"
+    "- 주요 취약점은 입력된 항목만 작성, 추측 금지.\n"
+    "- 심각도별 헤딩은 해당 항목이 있을 때만 작성.\n"
+    "- 심각도 헤딩은 # `CRITICAL` 형식(백틱 포함)으로 작성.\n"
+    "- Low 심각도는 주요 취약점에서 제외.\n"
+    "- 근거가 없으면 '-'만 출력하고 코드블럭은 생략.\n"
+    "- 대응/조치는 빈칸 금지, 반드시 1줄 이상 작성.\n"
+    "- 불릿은 한 줄로 간결히 작성.\n"
+)
 DEFAULT_PROVIDER = "Gemini"
 ENV_PROVIDER = "AI_PROVIDER"
 ENV_GEMINI_MODEL = "GEMINI_MODEL"
-ENV_LOCAL_MODEL = "LOCAL_MODEL_NAME"
+
+
+def _load_env() -> None:
+    load_dotenv(dotenv_path=DOTENV_PATH)
 
 
 def get_api_key() -> str:
@@ -45,7 +75,7 @@ def get_api_key() -> str:
     Raises:
         ValueError: API 키가 설정되지 않았거나 유효하지 않은 경우
     """
-    load_dotenv()
+    _load_env()
     api_key = os.getenv('GEMINI_API_KEY')
 
     if not api_key:
@@ -58,25 +88,31 @@ def get_api_key() -> str:
     return api_key
 
 
-def get_provider() -> str:
-    """환경변수에서 AI_PROVIDER 로드"""
-    load_dotenv()
-    provider = os.getenv(ENV_PROVIDER, DEFAULT_PROVIDER).strip().lower()
-    if provider not in ("Gemini", "Hacklipse"):
+def get_provider(provider_override: Optional[str] = None) -> str:
+    """환경변수 또는 전달값에서 AI_PROVIDER 로드"""
+    if provider_override is None:
+        _load_env()
+        provider = os.getenv(ENV_PROVIDER, DEFAULT_PROVIDER)
+    else:
+        provider = provider_override
+
+    provider = provider.strip().lower()
+    if not provider:
+        raise ValueError("AI_PROVIDER 값이 비어있습니다.")
+    if provider not in ("gemini", "hacklipse"):
         raise ValueError(f"AI_PROVIDER 값이 올바르지 않습니다: {provider}")
     return provider
 
 
 def get_gemini_model_name() -> str:
-    load_dotenv()
+    _load_env()
     return os.getenv(ENV_GEMINI_MODEL, MODEL_NAME).strip() or MODEL_NAME
 
 
 def get_local_model_name() -> str:
-    load_dotenv()
-    model_name = os.getenv(ENV_LOCAL_MODEL, "").strip()
+    model_name = LOCAL_MODEL_NAME.strip()
     if not model_name:
-        raise ValueError("LOCAL_MODEL_NAME이 설정되지 않았습니다.")
+        raise ValueError("LOCAL_MODEL_NAME 상수가 설정되지 않았습니다.")
     return model_name
 
 
@@ -353,55 +389,9 @@ def build_endpoint_table(endpoint_counts: Dict[str, int], max_items: int = 10) -
     return "\n".join(lines)
 
 
-def create_prompt(data: Dict, analysis: Dict) -> str:
-    """
-    Gemini API용 프롬프트 생성
-
-    Args:
-        data: 스캔 결과 데이터
-        analysis: 분석 결과
-
-    Returns:
-        str: 프롬프트 문자열
-    """
-    target = data.get('target', 'Unknown')
-    started_at = data.get('startedAt', 'Unknown')
-    finished_at = data.get('finishedAt', 'Unknown')
-    tools = ', '.join(data.get('tools', []))
-
-    all_findings = data.get('findings', [])
-    report_findings = [
-        finding for finding in all_findings
-        if _normalize_text(finding.get("severity", "info")).lower() != "low"
-    ]
-    report_analysis = analyze_findings(report_findings)
-    full_analysis = analyze_findings(all_findings)
-
-    total_count = report_analysis['total_count']
-    by_severity = report_analysis['by_severity']
-
-    # 주요 카테고리 (상위 5개)
-    top_categories = sorted(
-        report_analysis['by_category'].items(),
-        key=lambda x: x[1],
-        reverse=True
-    )[:5]
-    top_categories_str = ', '.join([f"{cat} ({count}개)" for cat, count in top_categories])
-
-    risk_score = report_analysis['risk_score']
-    sorted_findings = sort_findings(report_findings)
-    summary_table = build_summary_table(sorted_findings)
-    grouped_findings = group_findings(sorted_findings)
-    severity_items = []
-    for level, label in [("critical", "Critical"), ("high", "High"), ("medium", "Medium"), ("info", "Info")]:
-        count = by_severity.get(level, 0)
-        if count > 0:
-            severity_items.append(f"{label}: {count}")
-    severity_summary = ", ".join(severity_items) if severity_items else "없음"
-    full_total_count = full_analysis['total_count']
-    full_by_severity = full_analysis['by_severity']
-    category_table = build_category_table(full_analysis['by_category'])
-    endpoint_table = build_endpoint_table(full_analysis['by_endpoint'])
+def build_severity_table(analysis: Dict) -> str:
+    total_count = analysis.get("total_count", 0)
+    by_severity = analysis.get("by_severity", {})
     severity_rows = []
     for level, label in [
         ("critical", "Critical"),
@@ -410,142 +400,118 @@ def create_prompt(data: Dict, analysis: Dict) -> str:
         ("low", "Low"),
         ("info", "Info")
     ]:
-        count = full_by_severity.get(level, 0)
+        count = by_severity.get(level, 0)
         if count == 0:
             continue
-        percent = round(count / max(full_total_count, 1) * 100, 1)
+        percent = round(count / max(total_count, 1) * 100, 1)
         severity_rows.append(f"| {label} | {count} | {percent}% |")
-    if not severity_rows and full_total_count == 0:
+    if not severity_rows and total_count == 0:
         severity_rows.append("| Info | 0 | 0.0% |")
-    severity_table = "\n".join(severity_rows)
+    return "\n".join(severity_rows)
 
-    # 대용량 파일 처리: findings가 100개 이상이면 요약
-    if len(grouped_findings) > 100:
-        # Critical/High만 상세히
-        critical_high = [
-            f for f in grouped_findings
-            if _normalize_text(f.get("severity", "")).lower() in ["critical", "high"]
+
+def build_stats_block(analysis: Dict) -> str:
+    category_table = build_category_table(analysis.get("by_category", {}))
+    endpoint_table = build_endpoint_table(analysis.get("by_endpoint", {}))
+    severity_table = build_severity_table(analysis)
+    return "\n".join(
+        [
+            "| 심각도 | 개수 | 비율 |",
+            "|---|---|---|",
+            severity_table,
+            "",
+            category_table,
+            "",
+            endpoint_table
         ]
+    ).rstrip()
 
-        # Medium/Info는 카테고리별로 샘플만
-        other_findings = [
-            f for f in grouped_findings
-            if _normalize_text(f.get("severity", "")).lower() not in ["critical", "high"]
-        ]
 
-        findings_detail = "Critical 및 High 위험 취약점 (전체)\n\n"
-        for i, finding in enumerate(critical_high[:30], 1):  # 최대 30개
-            findings_detail += f"{i}) [{finding.get('severity', 'unknown')}] {finding.get('title', 'Unknown')}\n"
-            findings_detail += f"- 카테고리: {finding.get('category', 'N/A')}\n"
-            findings_detail += f"- 엔드포인트: {_format_endpoints(finding.get('endpoints', []))}\n"
-            findings_detail += f"- CVE: {finding.get('cve', 'N/A')}\n"
-            findings_detail += f"- 설명: {finding.get('description', 'N/A')[:200]}...\n"
-            findings_detail += f"- 영향: {finding.get('impact', 'N/A')[:200]}...\n"
-            if finding.get('evidence'):
-                findings_detail += f"- 증거: {str(finding.get('evidence', ''))[:200]}...\n"
-            if finding.get('curlCommand'):
-                findings_detail += f"- 재현: `{finding.get('curlCommand', '')[:200]}...`\n"
-            findings_detail += "\n"
+def build_finding_input_block(finding: Dict) -> str:
+    title = _normalize_text(finding.get("title", "Unknown"))
+    severity = _normalize_text(finding.get("severity", "info")).upper()
+    category = _normalize_text(finding.get("category", "N/A"))
+    endpoints = _format_endpoints(finding.get("endpoints", []))
+    cve = _normalize_text(finding.get("cve")) or "N/A"
+    description = _normalize_text(finding.get("description", ""))
+    impact = _normalize_text(finding.get("impact", ""))
+    evidence = _normalize_text(finding.get("evidence", ""))
+    curl_command = _normalize_text(finding.get("curlCommand", ""))
+    recommendation = _normalize_text(finding.get("recommendation", ""))
 
-        findings_detail += f"\nMedium/Info 취약점 (카테고리별 요약, 총 {len(other_findings)}개)\n\n"
+    return (
+        "입력:\n"
+        f"제목: {title}\n"
+        f"심각도: {severity}\n"
+        f"카테고리: {category}\n"
+        f"엔드포인트: {endpoints}\n"
+        f"CVE: {cve}\n"
+        f"설명: {description}\n"
+        f"영향: {impact}\n"
+        f"증거: {evidence}\n"
+        f"재현: {curl_command}\n"
+        f"대응/조치 힌트: {recommendation}\n"
+    )
 
-        # 카테고리별로 그룹화
-        by_cat_samples = {}
-        for finding in other_findings:
-            cat = finding.get('category', 'Unknown')
-            if cat not in by_cat_samples:
-                by_cat_samples[cat] = []
-            if len(by_cat_samples[cat]) < 3:  # 카테고리당 최대 3개 샘플
-                by_cat_samples[cat].append(finding)
 
-        for cat, samples in by_cat_samples.items():
-            count = report_analysis['by_category'].get(cat, 0)
-            findings_detail += f"{cat} ({count}개)\n"
-            for sample in samples:
-                findings_detail += f"- {sample.get('title', 'Unknown')} ({sample.get('severity', 'unknown')})\n"
-            findings_detail += "\n"
-    else:
-        # 모든 findings 포함
-        findings_detail = ""
-        for i, finding in enumerate(grouped_findings, 1):
-            findings_detail += f"{i}) [{finding.get('severity', 'unknown')}] {finding.get('title', 'Unknown')}\n"
-            findings_detail += f"- 카테고리: {finding.get('category', 'N/A')}\n"
-            findings_detail += f"- 엔드포인트: {_format_endpoints(finding.get('endpoints', []))}\n"
-            findings_detail += f"- CVE: {finding.get('cve', 'N/A')}\n"
-            findings_detail += f"- 설명: {finding.get('description', 'N/A')[:300]}...\n"
-            findings_detail += f"- 영향: {finding.get('impact', 'N/A')[:300]}...\n"
-            if finding.get('evidence'):
-                findings_detail += f"- 증거: {str(finding.get('evidence', ''))[:200]}...\n"
-            if finding.get('curlCommand'):
-                findings_detail += f"- 재현: `{finding.get('curlCommand', '')[:200]}...`\n"
-            findings_detail += "\n"
+def create_finding_prompt(finding: Dict) -> str:
+    """
+    취약점 1개 단위 프롬프트 생성
+    """
+    title = _normalize_text(finding.get("title", "Unknown"))
+    endpoints = _format_endpoints(finding.get("endpoints", []))
+    input_block = build_finding_input_block(finding)
 
-    prompt = f"""당신은 보안 전문가입니다. 아래 웹 취약점 스캔 결과를 분석하여 보고서를 작성해주세요.
+    prompt = (
+        f"{FINDING_INSTRUCTION}\n"
+        f"{input_block}\n"
+        "출력 형식:\n"
+        f"## {title}\n"
+        f"- **End-Point**: {endpoints}\n"
+        "- **영향**: \n"
+        "- **설명**: \n"
+        "- **근거**: \n"
+        "- **대응**: \n"
+        "- **조치**: \n"
+    )
 
-# 스캔 정보
-- 대상: {target}
-- 스캔 시작: {started_at}
-- 스캔 완료: {finished_at}
-- 사용 도구: {tools}
+    return prompt
 
-# 통계 요약
-- 총 취약점: {total_count}개
-- 심각도 분포: {severity_summary}
-- 주요 카테고리: {top_categories_str}
-- 위험 점수: {risk_score}/100
 
-# 상세 취약점 입력
-{findings_detail}
+def create_report_prompt(target: str, findings: List[Dict]) -> str:
+    """
+    Gemini API용 주요 취약점 프롬프트 생성
+    """
+    input_blocks = [build_finding_input_block(finding) for finding in findings]
+    findings_input = "\n\n".join(input_blocks) if input_blocks else "없음"
 
----
+    output_body = (
+        "취약점 없음\n"
+        if not input_blocks else
+        "# `SEVERITY`\n"
+        "## 취약점 제목\n"
+        "- **End-Point**: \n"
+        "- **영향**: \n"
+        "- **설명**: \n"
+        "- **근거**: \n"
+        "```\n"
+        "<증거/재현/curl/요청/응답>\n"
+        "```\n"
+        "- **대응**: (필수)\n"
+        "- **조치**: (필수)\n"
+    )
 
-작성 규칙:
-- 출력은 Markdown만. HTML 금지.
-- 헤딩은 #, ##만 사용. ### 금지.
-- 이모지 금지.
-- 긴 문단 금지, 모든 설명은 한 줄 불릿.
-- 섹션당 최대 6개 불릿, 한 줄 90자 이하.
-- 표 섹션은 유지하고 표 형식으로 작성.
-- 입력에 없는 내용은 작성하지 말 것.
-- 근거가 불충분하다고 판단되는 항목은 보고서에 포함하지 말 것.
-- 근거는 입력된 "증거/재현" 내용에서만 요약해서 작성.
-- 결과 요약 표는 아래 제공된 표를 그대로 출력하고 순서를 바꾸지 말 것.
-- 심각도 그룹은 해당 항목이 있을 때만 출력할 것.
-- 동일 취약점은 하나로 묶고 End-Point에 여러 엔드포인트를 쉼표로 나열할 것.
-- 심각도 제목은 반드시 인라인 코드로 감쌀 것 (예: # `CRITICAL`).
-- Low 취약점은 보고서에서 제외할 것.
-- 통계 표는 아래 제공된 표를 그대로 출력하고 순서를 바꾸지 말 것.
-
-형식(절대 변경 금지):
-
-# 보안 진단 보고서
-
-## 결과 요약
-{summary_table}
-
-## 주요 취약점
-심각도별로 그룹화하여 작성 (해당 심각도에 항목이 있을 때만 표시).
-형식 예시:
-# `CRITICAL`
-## [취약점명]
-- **End-Point**: endpoint1, endpoint2 외 N개
-- **영향**: 2줄 이하
-- **설명**: 2줄 이하
-- **근거**: 2줄 이하
-- **대응**: 2줄 이하
-- **조치**: 3줄 이하
-(다른 심각도도 동일 형식으로 반복)
-
-## 통계
-| 심각도 | 개수 | 비율 |
-|---|---|---|
-{severity_table}
-
-{category_table}
-
-{endpoint_table}
-
-"""
+    prompt = (
+        f"{REPORT_INSTRUCTION}\n"
+        f"- 대상: {target}\n\n"
+        "# 상세 취약점 입력\n"
+        f"{findings_input}\n"
+        "---\n"
+        "출력 형식(중요):\n"
+        "- 이 섹션만 출력한다. 보고서 전체나 표를 출력하지 않는다.\n"
+        "- 출력은 '## 주요 취약점' 헤딩 없이 시작한다.\n"
+        f"{output_body}\n"
+    )
 
     return prompt
 
@@ -620,6 +586,57 @@ def call_local_model(prompt: str, model_name: str) -> str:
     return text
 
 
+def build_local_finding_blocks(findings: List[Dict], model_name: str) -> List[str]:
+    finding_blocks = []
+    current_severity = None
+    for index, finding in enumerate(findings, start=1):
+        severity = _normalize_text(finding.get("severity", "info")).lower() or "info"
+        if severity != current_severity:
+            finding_blocks.append(f"# `{severity.upper()}`")
+            current_severity = severity
+
+        prompt = create_finding_prompt(finding)
+        print(f"[+] 취약점 {index}/{len(findings)} 생성 중...")
+        block = call_local_model(prompt, model_name).strip()
+        finding_blocks.append(block)
+
+    return finding_blocks
+
+
+def generate_gemini_report(target: str, findings: List[Dict]) -> str:
+    api_key = get_api_key()
+    prompt = create_report_prompt(target=target, findings=findings)
+    print(f"[+] 프롬프트 생성 완료 ({len(prompt)} 문자)")
+    return call_gemini_api(prompt, api_key).strip()
+
+
+def generate_local_report(
+    summary_table: str,
+    stats_block: str,
+    findings: List[Dict]
+) -> str:
+    model_name = get_local_model_name()
+    finding_blocks = build_local_finding_blocks(findings, model_name)
+
+    if not finding_blocks:
+        finding_blocks.append("취약점 없음")
+
+    return "\n\n".join(
+        [
+            "# 보안 진단 보고서",
+            "",
+            "## 결과 요약",
+            summary_table,
+            "",
+            "## 주요 취약점",
+            "\n\n".join(finding_blocks),
+            "",
+            "## 통계",
+            stats_block
+        ]
+    )
+
+
 def save_report(content: str, target: str, output_dir: str, timestamp: Optional[str] = None) -> str:
     """
     보고서를 파일로 저장
@@ -652,37 +669,18 @@ def save_report(content: str, target: str, output_dir: str, timestamp: Optional[
     return filepath
 
 
-def save_training_pair(
-    input_json_path: str,
-    markdown: str,
-    target: str,
-    timestamp: str,
-    train_root: str = "train"
-) -> Tuple[str, str]:
-    input_dir = os.path.join(train_root, "input")
-    output_dir = os.path.join(train_root, "output")
-    os.makedirs(input_dir, exist_ok=True)
-    os.makedirs(output_dir, exist_ok=True)
-
-    safe_target = target.replace(':', '_').replace('/', '_').replace('\\', '_')
-    pair_id = f"{safe_target}_{timestamp}"
-    input_dest = os.path.join(input_dir, f"{pair_id}_input.json")
-    output_dest = os.path.join(output_dir, f"{pair_id}_output.md")
-
-    shutil.copyfile(input_json_path, input_dest)
-    with open(output_dest, "w", encoding="utf-8") as f:
-        f.write(markdown)
-
-    return input_dest, output_dest
-
-
-def generate_report(json_file_path: str, output_dir: str = "reports") -> str:
+def generate_report(
+    json_file_path: str,
+    output_dir: str = "reports",
+    provider_override: Optional[str] = None
+) -> str:
     """
     JSON 파일로부터 AI 보고서 생성 (메인 함수)
 
     Args:
         json_file_path: 스캔 결과 JSON 파일 경로
         output_dir: 보고서 저장 디렉토리 (기본: "reports")
+        provider_override: "gemini" 또는 "hacklipse" 강제 지정 (없으면 환경변수 사용)
 
     Returns:
         str: 생성된 보고서 파일 경로
@@ -698,7 +696,7 @@ def generate_report(json_file_path: str, output_dir: str = "reports") -> str:
     try:
         # 1. 제공자 선택
         print("[1/6] AI 제공자 확인 중...")
-        provider = get_provider()
+        provider = get_provider(provider_override)
         print(f"[+] AI 제공자: {provider}")
 
         # 2. JSON 파일 로드
@@ -719,40 +717,56 @@ def generate_report(json_file_path: str, output_dir: str = "reports") -> str:
         print(f"    - Critical: {analysis['by_severity']['critical']}, High: {analysis['by_severity']['high']}")
         print(f"    - 위험 점수: {analysis['risk_score']}/100")
 
-        # 4. 프롬프트 생성
-        print("\n[4/6] 프롬프트 생성 중...")
-        prompt = create_prompt(data, analysis)
-        print(f"[+] 프롬프트 생성 완료 ({len(prompt)} 문자)")
+        # 4. 요약/통계 표 생성
+        print("\n[4/6] 요약/통계 표 생성 중...")
+        all_findings = data.get("findings", [])
+        report_findings = [
+            finding for finding in all_findings
+            if _normalize_text(finding.get("severity", "info")).lower() != "low"
+        ]
+        sorted_findings = sort_findings(report_findings)
+        grouped_findings = group_findings(sorted_findings)
 
-        # 5. AI 보고서 생성
-        print("\n[5/6] AI 보고서 생성 중...")
-        if provider == "Gemini":
+        summary_table = build_summary_table(sorted_findings)
+        full_analysis = analyze_findings(all_findings)
+        stats_block = build_stats_block(full_analysis)
+        print("[+] 표 생성 완료")
+
+        # 5. 보고서 생성
+        print("\n[5/6] 보고서 생성 중...")
+        target = data.get('target', 'unknown')
+        if provider == "gemini":
             print("[*] Gemini API 사용")
-            api_key = get_api_key()
-            markdown = call_gemini_api(prompt, api_key)
+            findings_block = generate_gemini_report(target=target, findings=grouped_findings)
+
+            markdown = "\n\n".join(
+                [
+                    "# 보안 진단 보고서",
+                    "",
+                    "## 결과 요약",
+                    summary_table,
+                    "",
+                    "## 주요 취약점",
+                    findings_block or "취약점 없음",
+                    "",
+                    "## 통계",
+                    stats_block
+                ]
+            )
         else:
             print("[*] 로컬 모델 사용")
-            model_name = get_local_model_name()
-            markdown = call_local_model(prompt, model_name)
+            markdown = generate_local_report(
+                summary_table=summary_table,
+                stats_block=stats_block,
+                findings=grouped_findings
+            )
 
         # 6. 파일 저장
         print("\n[6/6] 보고서 저장 중...")
-        target = data.get('target', 'unknown')
         timestamp = _extract_timestamp_from_filename(json_file_path)
         if not timestamp:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         report_path = save_report(markdown, target, output_dir, timestamp=timestamp)
-        try:
-            train_input_path, train_output_path = save_training_pair(
-                json_file_path,
-                markdown,
-                target,
-                timestamp
-            )
-            print(f"[+] 훈련 데이터 저장: {train_input_path}")
-            print(f"[+] 훈련 데이터 저장: {train_output_path}")
-        except Exception as e:
-            print(f"[!] 훈련 데이터 저장 실패: {e}")
 
         print(f"\n{'='*60}")
         print(f"[+] 보고서 생성 완료!")

@@ -10,14 +10,26 @@ MAX_CONTEXT_FALLBACK = 4096
 SAFETY_TOKENS = 256
 COMPACT_MAX_NEW_TOKENS = 512
 
+_MODEL_CACHE: Tuple[Optional[str], Optional[AutoTokenizer], Optional[AutoModelForCausalLM]] = (
+    None,
+    None,
+    None,
+)
+
 
 def _load_model(model_name: str) -> Tuple[AutoTokenizer, AutoModelForCausalLM]:
+    global _MODEL_CACHE
+    cached_name, cached_tokenizer, cached_model = _MODEL_CACHE
+    if cached_name == model_name and cached_tokenizer and cached_model:
+        return cached_tokenizer, cached_model
+
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         dtype="bfloat16",
         device_map="auto"
     )
+    _MODEL_CACHE = (model_name, tokenizer, model)
     return tokenizer, model
 
 
@@ -73,8 +85,8 @@ def _generate_text(
         do_sample=False,
         temperature=temperature
     )
-
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+    generated_tokens = outputs[0][input_ids.shape[-1]:]
+    return tokenizer.decode(generated_tokens, skip_special_tokens=True)
 
 
 def _compact_chunk(

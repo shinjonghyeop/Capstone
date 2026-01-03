@@ -57,6 +57,7 @@ cover/
 
 # 가상환경
 .env
+utils/.env
 .venv
 env/
 venv/
