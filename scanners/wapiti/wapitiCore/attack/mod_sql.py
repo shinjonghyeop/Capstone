@@ -325,6 +325,8 @@ def find_pattern_in_response(data):
 class ModuleSql(Attack):
     """
     Detect SQL (also XPath) injection vulnerabilities using error-based or boolean-based (blind) techniques.
+
+    Also tests URL path-based SQL injection (e.g., /1' OR '1'='1)
     """
     time_to_sleep = 6
     name = "sql"
@@ -335,6 +337,68 @@ class ModuleSql(Attack):
         super().__init__(crawler, persister, attack_options, crawler_configuration)
         self.mutator = self.get_mutator()
         self.time_to_sleep = ceil(attack_options.get("timeout", self.time_to_sleep)) + 1
+        self.tested_paths = set()  # Track tested base URLs for path injection
+
+    async def _test_path_injection(self, request: Request) -> bool:
+        """Test SQL injection in URL path (e.g., /1' OR '1'='1)"""
+        from urllib.parse import urlparse
+
+        parsed = urlparse(request.url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Skip if already tested this base URL
+        if base_url in self.tested_paths:
+            return False
+        self.tested_paths.add(base_url)
+
+        # Key payloads for path-based SQL injection detection
+        path_payloads = [
+            ("'", None, "SQL injection via single quote in URL path"),
+            ("\"", None, "SQL injection via double quote in URL path"),
+            ("1'", None, "SQL injection via numeric with quote in URL path"),
+            ("1\"", None, "SQL injection via numeric with double quote in URL path"),
+            ("' OR '1'='1", None, "SQL injection OR condition in URL path"),
+            ("' OR 1=1--", None, "SQL injection with comment in URL path"),
+            ("1' AND '1'='1", None, "SQL injection AND condition in URL path"),
+            ("1 AND 1=1", None, "SQL injection numeric in URL path"),
+            ("') OR ('1'='1", None, "SQL injection with parenthesis in URL path"),
+            ("1' UNION SELECT NULL--", None, "SQL injection UNION in URL path"),
+        ]
+
+        for payload, _, description in path_payloads:
+            # Test payload in path: /payload
+            test_url = f"{base_url}/{payload}"
+            test_request = Request(test_url, method="GET")
+
+            log_verbose(f"[¨] Testing path SQL injection: {test_url}")
+
+            try:
+                test_response = await self.crawler.async_send(test_request)
+            except (ReadTimeout, RequestError):
+                self.network_errors += 1
+                continue
+
+            # Check for SQL error patterns
+            vuln_info = find_pattern_in_response(test_response.content)
+            if vuln_info:
+                vuln_message = f"{vuln_info} in URL path: {test_url}"
+
+                await self.add_critical(
+                    finding_class=SqlInjectionFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter="URL path",
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] {description}")
+                log_red(f"[!] {vuln_info}")
+                log_red(f"[!] URL: {test_url}")
+                log_red("---")
+                return True  # Found vulnerability, stop testing this URL
+
+        return False
 
     async def is_false_positive(self, request):
         try:
@@ -347,6 +411,9 @@ class ModuleSql(Attack):
         return False
 
     async def attack(self, request: Request, response: Optional[Response] = None):
+        # First, test URL path-based SQL injection
+        await self._test_path_injection(request)
+
         vulnerable_parameters = await self.error_based_attack(request)
         await self.boolean_based_attack(request, vulnerable_parameters)
 

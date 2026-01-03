@@ -43,12 +43,15 @@ class ModuleSsti(Attack):
     - Java: Freemarker, Velocity, Pebble, Thymeleaf, SpEL
     - PHP: Twig, Smarty, Blade, Latte
     - JavaScript: Handlebars, EJS, Pug, Lodash, Nunjucks
+
+    Also tests URL path-based SSTI (e.g., /{{config}})
     """
     name = "ssti"
 
     def __init__(self, crawler, persister, attack_options, crawler_configuration):
         super().__init__(crawler, persister, attack_options, crawler_configuration)
         self.mutator = self.get_mutator()
+        self.tested_paths = set()  # Track tested base URLs for path injection
 
     def get_payloads(self, _: Optional[Request] = None, __: Optional[Parameter] = None) -> Iterator[PayloadInfo]:
         """Load the SSTI payloads from the specified file"""
@@ -100,6 +103,16 @@ class ModuleSsti(Attack):
             "Handlebars.Exception": "Handlebars template error",
             # EJS errors
             "EJS Error": "EJS template error",
+            # Go html/template errors
+            "template: ": "Go template error",
+            "unclosed action": "Go template error (unclosed action)",
+            "unexpected EOF": "Go template error (unexpected EOF)",
+            "can't evaluate field": "Go template error (field access)",
+            "has no field or method": "Go template error (method access)",
+            "nil pointer evaluating": "Go template error (nil pointer)",
+            "Template parse error": "Go template parse error",
+            "Template execution error": "Go template execution error",
+            "execute: template": "Go template execution error",
             # General errors
             "TemplateError": "Template error detected",
             "template error": "Template error detected",
@@ -110,11 +123,122 @@ class ModuleSsti(Attack):
                 return vuln_info
         return ""
 
+    async def _test_path_injection(self, request: Request) -> bool:
+        """Test SSTI in URL path (e.g., /{{config}})"""
+        from urllib.parse import urlparse, urlunparse
+
+        parsed = urlparse(request.url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Skip if already tested this base URL
+        if base_url in self.tested_paths:
+            return False
+        self.tested_paths.add(base_url)
+
+        # Key payloads for path-based SSTI detection
+        path_payloads = [
+            ("{{7*7}}", "49", "Jinja2/Twig SSTI in URL path"),
+            ("${7*7}", "49", "Freemarker/SpEL SSTI in URL path"),
+            ("#{7*7}", "49", "Thymeleaf/Pug SSTI in URL path"),
+            ("{{config}}", "Config", "Jinja2 config access in URL path"),
+            ("{{config.items()}}", "SECRET", "Jinja2 config disclosure in URL path"),
+            ("{{7*'7'}}", "7777777", "Jinja2 string multiplication in URL path"),
+            ("${{7*7}}", "49", "SpEL SSTI in URL path"),
+            # Go html/template payloads - only reliable ones
+            ("{{.}}", "0x", "Go SSTI context disclosure in URL path"),
+            ("{{.}}", "echo.context", "Go SSTI (Echo) context disclosure in URL path"),
+            ("{{.}}", "Context", "Go SSTI context disclosure in URL path"),
+            ("{{printf \"%v\" .}}", "0x", "Go SSTI printf disclosure in URL path"),
+            ("{{printf \"%T\" .}}", "echo.", "Go SSTI (Echo) type disclosure in URL path"),
+            ("{{printf \"%T\" .}}", "Context", "Go SSTI type disclosure in URL path"),
+            ("{{html \"GOSSTI\"}}", "GOSSTI", "Go SSTI html function in URL path"),
+            ("{{len \"test\"}}", "4", "Go SSTI len function in URL path"),
+        ]
+
+        for payload, expected, description in path_payloads:
+            # Test payload in path: /payload
+            test_url = f"{base_url}/{payload}"
+            test_request = Request(test_url, method="GET")
+
+            log_verbose(f"[¨] Testing path SSTI: {test_url}")
+
+            try:
+                test_response = await self.crawler.async_send(test_request)
+            except (ReadTimeout, RequestError):
+                self.network_errors += 1
+                continue
+
+            # Skip if response is a 404 or other error page
+            # These pages can contain false positive matches in version numbers, etc.
+            if test_response.status in (404, 400, 403, 500, 502, 503):
+                continue
+
+            response_lower = test_response.content.lower()
+
+            # Check if expected output is in response
+            if expected.lower() in response_lower:
+                # Anti-false-positive: Make sure payload syntax is NOT reflected
+                # If payload is just echoed back, it's not SSTI
+                payload_lower = payload.lower()
+
+                # Skip detection if the payload itself appears in the response (reflection)
+                # Unless it's a very specific/unique expected value
+                if payload_lower in response_lower:
+                    # Payload was reflected, not evaluated - likely false positive
+                    # Exception: If expected value is very specific (like "49", "4", etc.)
+                    # and doesn't appear in the payload itself
+                    if expected.lower() not in payload_lower and len(expected) <= 3 and expected.isdigit():
+                        # This is a numeric result from math operation - likely real SSTI
+                        pass
+                    else:
+                        # Payload was just reflected, skip this one
+                        continue
+
+                vuln_message = f"{description}: {test_url}"
+
+                await self.add_critical(
+                    finding_class=SSTIFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter="URL path",
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] {description}")
+                log_red(f"[!] URL: {test_url}")
+                log_red("---")
+                return True  # Found vulnerability, stop testing this URL
+
+            # Also check for error-based detection
+            error_info = self._find_ssti_error_in_response(test_response.content)
+            if error_info:
+                vuln_message = f"{error_info} in URL path: {test_url}"
+
+                await self.add_critical(
+                    finding_class=SSTIFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter="URL path",
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] {error_info} in URL path")
+                log_red(f"[!] URL: {test_url}")
+                log_red("---")
+                return True
+
+        return False
+
     async def attack(self, request: Request, response: Optional[Response] = None):
         page = request.path
         saw_internal_error = False
         current_parameter = None
         vulnerable_parameter = False
+
+        # First, test URL path-based SSTI
+        await self._test_path_injection(request)
 
         for mutated_request, parameter, payload_info in self.mutator.mutate(request, self.get_payloads):
 
