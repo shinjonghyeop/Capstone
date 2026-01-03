@@ -1,0 +1,5 @@
+{
+  "id": "localhost_9991_20260102_111715_002",
+  "instruction": "다음 입력으로 Markdown 취약점 블록을 생성하라.\n규칙: Markdown만, 헤딩은 ##만, 이모지/표 금지, 한 줄 불릿.\n출력은 한국어로 작성.\n모든 항목(End-Point/영향/설명/근거/대응/조치)을 반드시 출력.\n근거는 증거/재현에서만 요약, 부족 시 '-' 사용.\n",
+  "input": "입력:\n제목: Comprehensive XSS Detection (All Vectors)\n심각도: HIGH\n카테고리: XSS\n엔드포인트: http://localhost:9991/www/XSS/XSS_level2.php, http://localhost:9991/www/XSS/XSS_level1.php 외 3개\nCVE: N/A\n설명: Comprehensive XSS template combining multiple bypass techniques, polyglots, WAF bypasses, and advanced payloads\n영향: N/A\n증거: \n재현: curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (ZZ; Linux i686; rv:125.0) Gecko/20100101 Firefox/125.0' 'http://localhost:9991/www/XSS/XSS_level2.php?q=<script>alert({{1}})</script>'\n대응/조치 힌트:"
+}

