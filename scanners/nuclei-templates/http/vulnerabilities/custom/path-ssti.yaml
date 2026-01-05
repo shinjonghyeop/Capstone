@@ -118,29 +118,27 @@ http:
           - 'status_code >= 200 && status_code < 500'
         condition: and
 
-      - type: dsl
+      - type: word
         name: ssti-class-exposure
-        dsl:
-          - 'contains(body, "<class")'
-          - 'contains(body, "str")'
-          - 'status_code >= 200 && status_code < 500'
-        condition: or
+        part: body
+        words:
+          - "<class '"
 
-      - type: dsl
+      - type: word
         name: ssti-dict-class
-        dsl:
-          - 'contains(body, "<class")'
-          - 'contains(body, "dict")'
-          - 'status_code >= 200 && status_code < 500'
-        condition: and
+        part: body
+        words:
+          - "<class 'dict'>"
 
-      - type: dsl
+      - type: word
         name: ssti-flask-objects
-        dsl:
-          - 'contains(body, "<flask")'
-          - 'contains(body, "<Request")'
-          - 'contains(body, "<LocalProxy")'
-          - 'status_code >= 200 && status_code < 500'
+        part: body
+        words:
+          - "<Flask"
+          - "<Request"
+          - "<LocalProxy"
+          - "<Config"
+          - "<Markup"
         condition: or
 
       - type: dsl
@@ -159,14 +157,16 @@ http:
           - 'status_code >= 200 && status_code < 500'
         condition: and
 
-      - type: dsl
+      - type: word
         name: ssti-404-page-reflection
-        dsl:
-          - 'contains(body, "404")'
-          - 'contains(body, "Not Found")'
-          - 'regex("<class|dict_items|<flask|SECRET_KEY", body)'
-          - 'status_code == 404'
-        condition: and
+        part: body
+        words:
+          - "<class '"
+          - "dict_items"
+          - "<Flask"
+          - "<Config"
+          - "SECRET_KEY"
+        condition: or
 
       - type: word
         name: ssti-config-values
