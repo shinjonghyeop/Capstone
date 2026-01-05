@@ -1,0 +1,88 @@
+# 보안 진단 보고서
+
+
+
+## 결과 요약
+
+| 취약점 | 심각도 | 주요 엔드포인트 | 영향 | CVE |
+|---|---|---|---|---|
+| Centos Web Panel 0.9.8.480 - Local File Inclusion | High | http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/admin/index.php, http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php/admin/index.php | Successful exploitation of this vulnerability allows an attacker to read sensiti... | cve-2018-18323 |
+| Fuzzing Parameters - Cross-Site Scripting | Medium | http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/, http://192.168.64.2:9991/www/XSS/XSS_level2.php/ 외 2개 | N/A | N/A |
+| Django Debug Page - Cross-Site Scripting | Medium | http://192.168.64.2:9991/www/XSS/XSS_level1.php/create_user/ | Successful exploitation of this vulnerability could allow an attacker to execute... | cve-2017-12794 |
+
+
+
+## 주요 취약점
+
+# `HIGH`
+
+## Centos Web Panel 0.9.8.480 - Local File Inclusion
+- **End-Point**: http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/admin/index.php, http://192.168.64.2:9991/www/FileInclusion/pages/lvl1.php/admin/index.php
+- **영향**: 취약점 악용 시 공격자가 서버의 민감한 파일을 읽을 수 있음.
+- **설명**: Centos Web Panel 0.9.8.480 버전에서 로컬 파일 포함(Local File Inclusion) 취약점이 확인됨.
+- **근거**:
+```bash
+curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36' 'http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/admin/index.php?module=file_editor&file=/../../../../../../../../../../../etc/passwd'
+```
+- **대응**: 사용자 입력 값에 대해 파일 경로를 조작할 수 있는 문자열(예: `../`)을 필터링해야 함.
+- **조치**: Centos Web Panel을 최신 버전으로 업데이트하고, 파일 포함 로직에서 화이트리스트 방식을 적용해야 함.
+
+# `MEDIUM`
+
+## Fuzzing Parameters - Cross-Site Scripting
+- **End-Point**: http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/, http://192.168.64.2:9991/www/XSS/XSS_level2.php/ 외 2개
+- **영향**: N/A
+- **설명**: GET 요청을 통한 반사된 파라미터 값 확인 중 크로스 사이트 스크립팅(XSS) 취약점이 발견됨.
+- **근거**:
+```bash
+curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:1.9.7.20) Gecko/ Firefox/3.6.15' 'http://192.168.64.2:9991/www/FileInclusion/pages/lvl2.php/?order_id=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-order_id%27%29%3E&cookie=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-cookie%27%29%3E&debug=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-debug%27%29%3E&m=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-m%27%29%3E&dir=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-dir%27%29%3E&new_role=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-new_role%27%29%3E&trashed=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-trashed%27%29%3E&log=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-log%27%29%3E&excerpt=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-excerpt%27%29%3E&settings-updated=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-settings-updated%27%29%3E&plugins=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-plugins%27%29%3E&modify=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-modify%27%29%3E&pwd=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-pwd%27%29%3E&file=%27%3E%22%3Csvg%2Fonload=confirm%28%27xss-file%27%29%3E'
+```
+- **대응**: 모든 사용자 입력 데이터에 대해 특수문자 검증 및 필터링을 수행해야 함.
+- **조치**: 데이터를 브라우저에 출력할 때 HTML Entity Encoding을 적용하여 스크립트 실행을 방지해야 함.
+
+## Django Debug Page - Cross-Site Scripting
+- **End-Point**: http://192.168.64.2:9991/www/XSS/XSS_level1.php/create_user/
+- **영향**: 피해자의 브라우저에서 임의의 자바스크립트를 실행하여 세션 하이재킹, 변조, 중요 정보 탈취가 가능함.
+- **설명**: Django 1.10.x 및 1.11.x 버전의 디버그 페이지 템플릿 일부에서 HTML 자동 이스케이프가 비활성화되어 XSS가 발생함.
+- **근거**:
+```bash
+curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0' 'http://192.168.64.2:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E'
+```
+- **대응**: 운영 환경에서는 반드시 디버그 모드(DEBUG=True)를 비활성화해야 함.
+- **조치**: 취약점이 해결된 최신 버전의 Django 프레임워크로 업데이트해야 함.
+
+
+
+## 통계
+
+| 심각도 | 개수 | 비율 |
+|---|---|---|
+| High | 2 | 2.7% |
+| Medium | 5 | 6.8% |
+| Low | 67 | 90.5% |
+
+| 카테고리 | 개수 |
+|---|---|
+| Unencrypted Channels | 20 |
+| Clickjacking Protection | 10 |
+| Content Security Policy Configuration | 10 |
+| MIME Type Confusion | 10 |
+| XSS | 7 |
+| Reflected Cross Site Scripting | 6 |
+| Command execution | 4 |
+| Path Traversal | 3 |
+| Cleartext Submission of Password | 2 |
+| Information Disclosure - Full Path | 1 |
+
+| 엔드포인트 | 개수 |
+|---|---|
+| /www/CommandExecution/CommandExec-1.php | 8 |
+| /www/FileInclusion/pages/lvl1.php | 8 |
+| /www/FileInclusion/pages/lvl2.php | 8 |
+| /www/FileUpload/fileupload1.php | 8 |
+| /www/CommandExecution/CommandExec-2.php | 6 |
+| /www/SQL/sql1.php | 6 |
+| /www/SQL/sql2.php | 6 |
+| /www/XSS/XSS_level1.php | 6 |
+| /www/XSS/XSS_level2.php | 6 |
+| /www/FileUpload/fileupload2.php | 5 |
