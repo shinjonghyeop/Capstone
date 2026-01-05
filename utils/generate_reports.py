@@ -440,7 +440,6 @@ def build_finding_input_block(finding: Dict) -> str:
     recommendation = _normalize_text(finding.get("recommendation", ""))
 
     return (
-        "입력:\n"
         f"제목: {title}\n"
         f"심각도: {severity}\n"
         f"카테고리: {category}\n"
