@@ -1,0 +1,11 @@
+입력:
+제목: Reflected Cross Site Scripting
+심각도: MEDIUM
+카테고리: Reflected Cross Site Scripting
+엔드포인트: /www/XSS/XSS_level2.php, /www/XSS/XSS_level1.php 외 2개
+CVE: N/A
+설명: Reflected Cross Site Scripting vulnerability found via injection in the parameter username
+영향: 
+증거: username
+재현: curl "http://localhost:9991/www/XSS/XSS_level2.php?username=%3CScRiPt%3Ealert%28%27wl466xp844%27%29%3C%2FsCrIpT%3E&submit=Submit" -e "http://localhost:9991/www/XSS/XSS_level2.php"
+대응/조치 힌트:

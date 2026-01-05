@@ -1,0 +1,11 @@
+입력:
+제목: Unencrypted Channels
+심각도: MEDIUM
+카테고리: Unencrypted Channels
+엔드포인트: /news.php, /dashboard.php 외 1개
+CVE: N/A
+설명: Sensitive data (cookie in the response) was sent over an unencrypted HTTP connection to http://10.66.164.167/news.php. The server redirected, but not to an HTTPS URL, leaving the initial data and the redirection exposed.
+영향: 
+증거: 
+재현: curl "http://10.66.164.167/news.php"
+대응/조치 힌트:

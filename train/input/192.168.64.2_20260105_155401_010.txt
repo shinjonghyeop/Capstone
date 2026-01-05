@@ -1,0 +1,11 @@
+입력:
+제목: Information Disclosure - Full Path
+심각도: MEDIUM
+카테고리: Information Disclosure - Full Path
+엔드포인트: /www/FileUpload/fileupload1.php
+CVE: N/A
+설명: Response contains potential system path: /opt/lampp/temp/phpdKTJ3b
+영향: 
+증거: 
+재현: curl "http://192.168.64.2:9991/www/FileUpload/fileupload1.php" -e "http://192.168.64.2:9991/www/FileUpload/fileupload1.php" -F "submit=Submit" -F "file=@your_local_file;filename=pix.gif"
+대응/조치 힌트:

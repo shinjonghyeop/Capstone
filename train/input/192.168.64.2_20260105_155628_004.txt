@@ -1,0 +1,11 @@
+입력:
+제목: Content Security Policy Configuration
+심각도: MEDIUM
+카테고리: Content Security Policy Configuration
+엔드포인트: /www/SQL/sql1.php, /www/FileUpload/fileupload1.php 외 12개
+CVE: N/A
+설명: CSP is not set for URL: http://192.168.64.2:9991/www/SQL/sql1.php
+영향: 
+증거: 
+재현: curl "http://192.168.64.2:9991/www/SQL/sql1.php"
+대응/조치 힌트:

@@ -1,0 +1,11 @@
+입력:
+제목: Content Security Policy Configuration
+심각도: MEDIUM
+카테고리: Content Security Policy Configuration
+엔드포인트: /cgi-bin/test.cgi, /text/css 외 3개
+CVE: N/A
+설명: CSP is not set for URL: http://10.67.139.88/cgi-bin/test.cgi
+영향: 
+증거: 
+재현: curl "http://10.67.139.88/cgi-bin/test.cgi"
+대응/조치 힌트:
