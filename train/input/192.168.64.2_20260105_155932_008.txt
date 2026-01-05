@@ -1,0 +1,11 @@
+입력:
+제목: Secure Flag cookie
+심각도: MEDIUM
+카테고리: Secure Flag cookie
+엔드포인트: /login
+CVE: N/A
+설명: Secure flag is not set on the cookie: 'session' set at 'http://192.168.64.2:5000/login'
+영향: 
+증거: 
+재현: curl "http://192.168.64.2:5000/login" -e "http://192.168.64.2:5000/" -d "username=alice&password=Letm3in_"
+대응/조치 힌트:

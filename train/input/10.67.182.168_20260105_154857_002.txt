@@ -1,0 +1,11 @@
+입력:
+제목: Content Security Policy Configuration
+심각도: MEDIUM
+카테고리: Content Security Policy Configuration
+엔드포인트: /admin/, /text/css 외 1개
+CVE: N/A
+설명: CSP is not set
+영향: 
+증거: 
+재현: curl "http://10.67.182.168:8161/admin/"
+대응/조치 힌트:

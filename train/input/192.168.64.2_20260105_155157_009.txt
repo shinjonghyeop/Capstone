@@ -1,0 +1,11 @@
+입력:
+제목: Path Traversal
+심각도: MEDIUM
+카테고리: Path Traversal
+엔드포인트: /www/FileUpload/fileupload1.php, /www/FileInclusion/pages/lvl1.php 외 1개
+CVE: N/A
+설명: Possible move_uploaded_file() vulnerability via injection in the parameter file (Constraints: prefix)
+영향: 
+증거: file
+재현: curl "http://192.168.64.2:9991/www/FileUpload/fileupload1.php" -e "http://192.168.64.2:9991/www/FileUpload/fileupload1.php" -F "submit=Submit" -F "file=@your_local_file;filename=fileupload1.php"
+대응/조치 힌트:

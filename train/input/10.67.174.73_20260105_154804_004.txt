@@ -1,0 +1,11 @@
+입력:
+제목: MIME Type Confusion
+심각도: MEDIUM
+카테고리: MIME Type Confusion
+엔드포인트: /dashboard.php, /register.php 외 5개
+CVE: N/A
+설명: X-Content-Type-Options is not set
+영향: 
+증거: 
+재현: curl "http://10.67.174.73/dashboard.php"
+대응/조치 힌트:

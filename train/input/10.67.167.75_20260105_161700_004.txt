@@ -1,0 +1,11 @@
+입력:
+제목: MIME Type Confusion
+심각도: MEDIUM
+카테고리: MIME Type Confusion
+엔드포인트: /admin/, / 외 1개
+CVE: N/A
+설명: X-Content-Type-Options is not set
+영향: 
+증거: 
+재현: curl "http://10.67.167.75:8161/admin/"
+대응/조치 힌트:

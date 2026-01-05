@@ -1,0 +1,11 @@
+입력:
+제목: Clickjacking Protection
+심각도: MEDIUM
+카테고리: Clickjacking Protection
+엔드포인트: //ping, /
+CVE: N/A
+설명: X-Frame-Options is not set
+영향: 
+증거: 
+재현: curl "http://host8.dreamhack.games:17640//ping"
+대응/조치 힌트:

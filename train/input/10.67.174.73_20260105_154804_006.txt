@@ -1,0 +1,11 @@
+입력:
+제목: Secure Flag cookie
+심각도: MEDIUM
+카테고리: Secure Flag cookie
+엔드포인트: /dashboard.php, /register.php 외 3개
+CVE: N/A
+설명: Secure flag is not set in the cookie : PHPSESSID
+영향: 
+증거: 
+재현: curl "http://10.67.174.73/dashboard.php"
+대응/조치 힌트:
