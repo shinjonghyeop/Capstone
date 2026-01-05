@@ -449,7 +449,6 @@ def build_finding_input_block(finding: Dict) -> str:
         f"영향: {impact}\n"
         f"증거: {evidence}\n"
         f"재현: {curl_command}\n"
-        f"대응/조치 힌트: {recommendation}\n"
     )
 
 
