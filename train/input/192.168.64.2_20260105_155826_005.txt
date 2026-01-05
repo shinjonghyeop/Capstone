@@ -1,0 +1,11 @@
+입력:
+제목: Unencrypted Channels
+심각도: MEDIUM
+카테고리: Unencrypted Channels
+엔드포인트: /, /login
+CVE: N/A
+설명: No HTTPS redirection for this host. All HTTP requests are served in clear text.
+영향: 
+증거: 
+재현: curl "http://192.168.64.2:5000/"
+대응/조치 힌트:

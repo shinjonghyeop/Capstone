@@ -1,0 +1,11 @@
+입력:
+제목: Clickjacking Protection
+심각도: MEDIUM
+카테고리: Clickjacking Protection
+엔드포인트: /, /text/css 외 1개
+CVE: N/A
+설명: X-Frame-Options is not set
+영향: 
+증거: 
+재현: curl "http://host3.dreamhack.games:21995/"
+대응/조치 힌트:

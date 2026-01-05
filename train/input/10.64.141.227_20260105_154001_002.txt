@@ -1,0 +1,11 @@
+입력:
+제목: Cleartext Submission of Password
+심각도: MEDIUM
+카테고리: Cleartext Submission of Password
+엔드포인트: /index.php
+CVE: N/A
+설명: Password field password sent in clear text from URL http://10.64.141.227/index.php
+영향: 
+증거: password
+재현: curl "http://10.64.141.227/index.php"
+대응/조치 힌트:
