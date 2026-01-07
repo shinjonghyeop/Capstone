@@ -62,8 +62,62 @@ class ModuleSsti(Attack):
         yield from parser
 
     @staticmethod
+    def _is_generic_error_page(data: str) -> bool:
+        """Check if this is a generic HTTP error page, not a template-specific error"""
+        # Generic HTTP error page patterns
+        generic_error_patterns = [
+            ("500 Internal Server Error", "The server encountered an internal error"),
+            ("500 Internal Server Error", "internal error"),
+            ("Internal Server Error", "Either the server is overloaded or there is an error in the application"),
+            ("503 Service Unavailable", "service unavailable"),
+            ("502 Bad Gateway", "bad gateway"),
+            ("400 Bad Request", "bad request"),
+        ]
+
+        data_lower = data.lower()
+        for pattern1, pattern2 in generic_error_patterns:
+            if pattern1.lower() in data_lower and pattern2.lower() in data_lower:
+                return True
+        return False
+
+    @staticmethod
+    def _is_sql_error(data: str) -> bool:
+        """Check if the error is from SQL database, not template engine"""
+        sql_error_patterns = [
+            "SQL syntax",
+            "mysql",
+            "MySQLSyntaxErrorException",
+            "sqlite3.OperationalError",
+            "sqlite3.ProgrammingError",
+            "SQLITE_ERROR",
+            "PostgreSQL",
+            "pg_",
+            "ORA-",
+            "Oracle error",
+            "SQL Server",
+            "mssql",
+            "sqlsrv",
+            "SQLSTATE",
+            "syntax error at or near",
+            "unrecognized token",
+            "near \"",
+            "com.mysql.jdbc",
+            "org.postgresql",
+            "Npgsql",
+        ]
+        data_lower = data.lower()
+        for pattern in sql_error_patterns:
+            if pattern.lower() in data_lower:
+                return True
+        return False
+
+    @staticmethod
     def _find_ssti_error_in_response(data: str) -> str:
         """Check for template engine error messages that indicate SSTI vulnerability"""
+        # First check if this is a SQL error or generic HTTP error - if so, don't report as SSTI
+        if ModuleSsti._is_sql_error(data) or ModuleSsti._is_generic_error_page(data):
+            return ""
+
         error_patterns = {
             # Jinja2/Python errors
             "jinja2.exceptions": "Jinja2 template error",
@@ -284,11 +338,24 @@ class ModuleSsti(Attack):
             if payload_info.rules and any(
                 rule.strip() in response.content for rule in payload_info.rules if rule.strip()
             ):
-                # Get first line of messages as description
-                messages = payload_info.messages if payload_info.messages else ""
-                vuln_info = messages.split('\n')[0].strip() if messages else "Server-Side Template Injection"
-                # We reached maximum exploitation for this parameter, don't send more payloads
-                vulnerable_parameter = True
+                # Make sure this is not a SQL error or generic HTTP error (false positive)
+                if not self._is_sql_error(response.content) and not self._is_generic_error_page(response.content):
+                    # Additional check for Go template payloads with overly generic rules
+                    # If the rule is just "/" or "?", make sure it's not just matching HTML tags
+                    matched_rules = [rule.strip() for rule in payload_info.rules if rule.strip() and rule.strip() in response.content]
+                    if matched_rules and all(rule in ('/', '?', '=') for rule in matched_rules):
+                        # These are too generic - could be matching HTML tags like </script>
+                        # Check if response looks like normal HTML/JavaScript error page
+                        if ('<script>' in response.content.lower() or '</script>' in response.content.lower() or
+                            '<html>' in response.content.lower() or 'alert(' in response.content.lower()):
+                            # Skip this - likely just matching HTML tags
+                            continue
+
+                    # Get first line of messages as description
+                    messages = payload_info.messages if payload_info.messages else ""
+                    vuln_info = messages.split('\n')[0].strip() if messages else "Server-Side Template Injection"
+                    # We reached maximum exploitation for this parameter, don't send more payloads
+                    vulnerable_parameter = True
             else:
                 # Check for error-based SSTI detection
                 error_info = self._find_ssti_error_in_response(response.content)
