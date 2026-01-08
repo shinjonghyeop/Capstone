@@ -1,0 +1,62 @@
+id: shareprofile-image-injection
+
+info:
+  name: ShareProfile Arbitrary Image Injection
+  author: jebeen
+  severity: medium
+  description: |
+    Detects if the application allows arbitrary image URLs in the profile.
+    This enables 'Referer Leak' attacks by forcing the admin/bot to load an image from an attacker-controlled server.
+  tags: injection, logic-error, ctf
+
+variables:
+  username: "user_{{rand_text_alpha(6)}}"
+  password: "Pw_{{rand_text_alpha(8)}}"
+  # XSS 페이로드 대신, 식별 가능한 가짜 도메인 주소 사용
+  image_url: "http://test-{{rand_text_alpha(5)}}.com/hack.png"
+
+http:
+  - raw:
+      # 1. 회원가입
+      - |
+        POST /api/register HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"username": "{{username}}", "password": "{{password}}"}
+
+      # 2. 로그인 (토큰 추출)
+      - |
+        POST /api/login HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"username": "{{username}}", "password": "{{password}}"}
+
+      # 3. 프로필 업데이트 (이미지 주소 주입)
+      - |
+        POST /api/update_profile HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"token": "{{token}}", "image": "{{image_url}}", "description": "injection_test"}
+
+      # 4. 검증 (HTML에 내가 넣은 주소가 src로 들어가 있는지 확인)
+      - |
+        GET /?token={{token}} HTTP/1.1
+        Host: {{Hostname}}
+
+    extractors:
+      - type: json
+        part: body
+        name: token
+        json:
+          - '.token'
+        internal: true
+
+    matchers:
+      - type: word
+        part: body
+        words:
+          # 소스코드에 내가 넣은 이미지 주소가 그대로 박혀있는지 확인
+          - 'src="{{image_url}}"'
