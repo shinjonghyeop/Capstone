@@ -143,6 +143,7 @@ all_modules = {
 common_modules = {
     "cookieflags",
     "csp",
+    "crlf",
     "exec",
     "file",
     "http_headers",
