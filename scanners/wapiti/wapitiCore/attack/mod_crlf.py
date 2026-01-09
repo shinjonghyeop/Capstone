@@ -27,6 +27,7 @@ class ModuleCrlf(Attack):
     def __init__(self, crawler, persister, attack_options, crawler_configuration):
         super().__init__(crawler, persister, attack_options, crawler_configuration)
         self.mutator = self.get_mutator()
+        self._reported_header_vuln = set()
 
     def get_payloads(self, _: Optional[Request] = None, __: Optional[Parameter] = None) -> Iterator[PayloadInfo]:
         """Load the payloads from the specified file."""
@@ -119,10 +120,17 @@ class ModuleCrlf(Attack):
     async def _test_header_injection(self, request: Request):
         """
         Inject CRLF payloads into HTTP headers (reuses crlfPayloads.txt).
-
-        Note: Many HTTP clients (including httpx) reject raw CR/LF in header values.
+        Stops testing remaining headers once a vulnerability is found for this endpoint.
         """
         import urllib.parse
+
+        # 엔드포인트별 취약점 발견 여부 추적
+        report_key = f"{request.method}:{request.path}"
+        
+        # 이미 이 엔드포인트에서 헤더 취약점을 발견했다면 스킵
+        if report_key in self._reported_header_vuln:
+            log_verbose(f"[!] Skipping header injection for {report_key} (already found)")
+            return
 
         test_headers = [
             "X-Forwarded-For",
@@ -133,7 +141,13 @@ class ModuleCrlf(Attack):
             "X-Custom-Header",
         ]
 
+        # 취약점 발견 시 True로 설정되어 루프 종료
+        vulnerability_found = False
+
         for payload_info in self.get_payloads(request, None):
+            if vulnerability_found:
+                break
+
             payload = payload_info.payload
 
             try:
@@ -142,9 +156,15 @@ class ModuleCrlf(Attack):
             except (UnicodeDecodeError, UnicodeEncodeError):
                 continue
 
+            # 각 헤더 테스트
             for header_name in test_headers:
+                if vulnerability_found:
+                    break
+
                 base_headers = dict(request.headers) if request.headers is not None else {}
                 injected_headers = {**base_headers, header_name: decoded_payload}
+
+                log_verbose(f"[¨] Testing header {header_name}: {payload[:50]}")
 
                 try:
                     response = await self.crawler.async_send(request, headers=injected_headers)
@@ -152,6 +172,7 @@ class ModuleCrlf(Attack):
                     continue
 
                 if self._check_crlf_injection(response):
+                    # 취약점 발견!
                     vuln_request = Request(
                         request.url,
                         method=request.method,
@@ -174,9 +195,21 @@ class ModuleCrlf(Attack):
 
                     log_red("---")
                     log_red(f"CRLF Injection in HTTP Header: {header_name}")
+                    log_red(f"Payload: {payload}")
                     log_red(Messages.MSG_EVIL_REQUEST)
                     log_red(vuln_request.http_repr())
                     log_red("---")
+
+                    # 이 엔드포인트에서 취약점을 찾았으므로 종료
+                    vulnerability_found = True
+                    self._reported_header_vuln.add(report_key)
+                    
+                    log_verbose(f"[+] Found CRLF in header {header_name}, skipping remaining headers for {report_key}")
+                    break  # 헤더 루프 탈출
+
+            # 취약점을 찾았으면 페이로드 루프도 탈출
+            if vulnerability_found:
+                break
 
     async def _test_path_injection(self, request: Request):
         """
