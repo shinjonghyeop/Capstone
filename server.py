@@ -17,7 +17,7 @@ CORS(app)
 
 # Constants
 MERGED_RESULTS_DIR = 'merged_results'
-SCAN_TIMEOUT = 3600 * 3  # 3 hours
+SCAN_TIMEOUT = None 
 SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info']
 SCAN_STATUS_DIR = 'scan_status'
 SCAN_STATE = {
