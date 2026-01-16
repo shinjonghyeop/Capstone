@@ -119,7 +119,7 @@ def extract_tag_from_nuclei_filename(filename: str) -> str:
         nuclei_scan_localhost_9991_www_XSS_XSS_level1.php_cve_20251102_185057.json
         -> cve
     """
-    match = re.search(r'_(cve|sql|xss)_\d{8}_\d{6}\.json$', filename)
+    match = re.search(r'_(cve|sqli|xss)_\d{8}_\d{6}\.json$', filename)
     if match:
         return match.group(1)
     return 'unknown'
