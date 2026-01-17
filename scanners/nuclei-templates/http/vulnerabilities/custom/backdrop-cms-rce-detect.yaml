@@ -1,0 +1,210 @@
+id: backdrop-cms-rce-detect
+
+info:
+  name: BackDrop CMS 1.27.1 - Authenticated RCE (Detection)
+  author: custom
+  severity: high
+  description: |
+    Detects BackDrop CMS version 1.27.1 vulnerable to authenticated remote code execution.
+    The vulnerability allows users with installer privileges to upload malicious modules
+    (.tgz files) that can lead to arbitrary code execution.
+    This template only detects the vulnerability without exploiting it.
+  tags: cms,backdrop,authenticated,rce,edb,edb-52021,custom
+  reference:
+    - https://www.exploit-db.com/exploits/52021
+    - https://github.com/rvizx/backdrop-rce
+    - https://backdropcms.org/security/advisories
+  classification:
+    cvss-metrics: CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H
+    cvss-score: 7.2
+    cwe-id: CWE-434
+
+http:
+  # Vector 1: Version Detection
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+      - "{{BaseURL}}/"
+      - "{{BaseURL}}/core/misc/backdrop.js"
+      - "{{BaseURL}}/core/misc/ajax.js"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        name: backdrop-detect
+        words:
+          - "Backdrop"
+          - "backdrop"
+        condition: or
+
+      - type: regex
+        name: version-1271
+        regex:
+          - "Backdrop [0-9.]+|backdrop[\"\\s]*:[\"\\s]*[\"']1\\.27\\.1"
+          - "version[\"\\s]*:[\"\\s]*[\"']1\\.27\\.1"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+    extractors:
+      - type: regex
+        name: backdrop-version
+        group: 1
+        regex:
+          - "Backdrop ([0-9.]+)"
+          - "backdrop[\"\\s]*:[\"\\s]*[\"']([0-9.]+)"
+          - "version[\"\\s]*:[\"\\s]*[\"']([0-9.]+)"
+
+  # Vector 2: Installer Module Check (Authenticated Required)
+  - method: GET
+    path:
+      - "{{BaseURL}}/admin/modules/install"
+      - "{{BaseURL}}/admin/modules"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        name: installer-access
+        words:
+          - "Install new modules"
+          - "Upload a module"
+          - "Install from a URL"
+        condition: or
+
+      - type: word
+        name: backdrop-cms
+        words:
+          - "Backdrop"
+          - "backdrop"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+    extractors:
+      - type: regex
+        name: install-endpoint
+        regex:
+          - "action=\"([^\"]*install[^\"]*)\""
+          - "href=\"([^\"]*install[^\"]*)\""
+
+  # Vector 3: Manual Project Installer Endpoint
+  - method: GET
+    path:
+      - "{{BaseURL}}/admin/modules/install/upload"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        name: upload-form
+        words:
+          - "Upload archive"
+          - "file to upload"
+          - ".zip or .tar.gz"
+        condition: or
+
+      - type: word
+        name: form-token
+        words:
+          - "form_token"
+          - "form_build_id"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+  # Vector 4: AJAX Batch Endpoint Check (Vulnerable Endpoint)
+  - method: GET
+    path:
+      - "{{BaseURL}}/batch"
+      - "{{BaseURL}}/authorize.php"
+
+    matchers:
+      - type: dsl
+        name: vulnerable-endpoints
+        dsl:
+          - 'status_code == 200 || status_code == 403'
+          - 'contains(body, "batch") || contains(body, "authorize")'
+        condition: and
+
+  # Vector 5: Core Version File Check
+  - method: GET
+    path:
+      - "{{BaseURL}}/core/modules/system/system.info"
+      - "{{BaseURL}}/core/includes/bootstrap.inc"
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        name: version-file-check
+        regex:
+          - "version\\s*=\\s*1\\.27\\.1"
+          - "BACKDROP_VERSION.*1\\.27\\.1"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+    extractors:
+      - type: regex
+        name: core-version
+        group: 1
+        regex:
+          - "version\\s*=\\s*([0-9.]+)"
+          - "BACKDROP_VERSION.*[\"']([0-9.]+)[\"']"
+
+  # Vector 6: Admin Dashboard Check (Permission Verification)
+  - method: GET
+    path:
+      - "{{BaseURL}}/admin"
+      - "{{BaseURL}}/admin/config"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        name: admin-dashboard
+        words:
+          - "Administration"
+          - "Dashboard"
+          - "admin-tabs"
+        condition: or
+
+      - type: word
+        name: modules-link
+        words:
+          - "modules"
+          - "Extend"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+  # Vector 7: Specific Version String in JS Files
+  - method: GET
+    path:
+      - "{{BaseURL}}/core/misc/backdrop.js"
+      - "{{BaseURL}}/core/misc/jquery.js"
+      - "{{BaseURL}}/core/misc/drupal.js"
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        name: js-version-string
+        regex:
+          - "Backdrop\\.version\\s*=\\s*[\"']1\\.27\\.1[\"']"
+          - "@version\\s+1\\.27\\.1"
+        condition: or
+
+      - type: status
+        status:
+          - 200
+
+# Note: This template requires valid session cookies to fully detect
+# the vulnerability. Use with --header "Cookie: SESS123abc=xyz" or
+# via main.py --cookies "SESS123abc=xyz"
