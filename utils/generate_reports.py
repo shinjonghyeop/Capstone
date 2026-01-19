@@ -462,7 +462,7 @@ def create_finding_prompt(finding: Dict) -> str:
 
     prompt = (
         f"{FINDING_INSTRUCTION}\n"
-        f"{input_block}\n"
+        
         "출력 형식:\n"
         f"## {title}\n"
         f"- **End-Point**: {endpoints}\n"
@@ -471,6 +471,9 @@ def create_finding_prompt(finding: Dict) -> str:
         "- **근거**: \n"
         "- **대응**: \n"
         "- **조치**: \n"
+
+        "Input: \n"
+        f"{input_block}\n"
     )
 
     return prompt
