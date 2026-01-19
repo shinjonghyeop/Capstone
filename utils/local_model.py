@@ -1,7 +1,7 @@
 """
 로컬 모델 호출 모듈
 """
-
+import torch
 from typing import List, Optional, Tuple
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -29,6 +29,7 @@ def _load_model(model_name: str) -> Tuple[AutoTokenizer, AutoModelForCausalLM]:
         dtype="bfloat16",
         device_map="auto"
     )
+    model.eval()
     _MODEL_CACHE = (model_name, tokenizer, model)
     return tokenizer, model
 
@@ -79,12 +80,13 @@ def _generate_text(
         return_tensors="pt"
     )
 
-    outputs = model.generate(
-        input_ids.to(model.device),
-        max_new_tokens=max_new_tokens,
-        do_sample=False,
-        temperature=temperature
-    )
+    with torch.no_grad():
+        outputs = model.generate(
+            input_ids.to(model.device),
+            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            temperature=temperature
+        )
     generated_tokens = outputs[0][input_ids.shape[-1]:]
     return tokenizer.decode(generated_tokens, skip_special_tokens=True)
 

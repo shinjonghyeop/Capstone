@@ -25,7 +25,7 @@ except ImportError as e:
 
 # 설정
 MODEL_NAME = "gemini-3-pro-preview"
-LOCAL_MODEL_NAME = "LGAI-EXAONE/EXAONE-4.0-1.2B"
+LOCAL_MODEL_NAME = "INUHacklipse/Hacklipse-EXAONE-4.0-1.2B-Vulnreport"
 TEMPERATURE = 0.7
 MAX_RETRIES = 3
 RETRY_DELAY = 5
@@ -472,7 +472,7 @@ def create_finding_prompt(finding: Dict) -> str:
         "- **대응**: \n"
         "- **조치**: \n"
 
-        "Input: \n"
+        "\n입력: \n"
         f"{input_block}\n"
     )
 
