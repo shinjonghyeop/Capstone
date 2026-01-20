@@ -47,21 +47,13 @@ http:
     attack: clusterbomb
     stop-at-first-match: true
 
-    matchers-condition: or
     matchers:
-      - type: word
-        name: ejs-ssti-error-reflection
-        part: body
-        words:
-          - "EJSSSTI{{rand1}}"
-
-      - type: word
-        name: ejs-rce-error
-        part: body
-        words:
-          - "outputFunctionName"
-          - "is not a valid JS identifier"
-        condition: and
+      - type: dsl
+        name: ejs-ssti-confirmed
+        dsl:
+          - 'contains(body, "EJSSSTI{{rand1}}")'
+          - '!contains(body, "Dolibarr")'
+          - 'status_code == 200 || status_code == 500'
 
   # Vector 2: escapeFunction SSTI
   - method: GET
@@ -92,20 +84,14 @@ http:
     attack: clusterbomb
     stop-at-first-match: true
 
-    matchers-condition: or
     matchers:
-      - type: word
-        name: ejs-escape-function-error
-        part: body
-        words:
-          - "escapeFunction"
-
       - type: dsl
-        name: ejs-math-evaluation
+        name: ejs-escape-confirmed
         dsl:
           - 'contains(body, to_string(rand1 * rand2))'
+          - '!regex("[0-9]+px|font-size|width|height|margin|padding|<[^>]*[0-9]+[^>]*>", body)'
+          - '!contains(body, "404")'
           - 'status_code == 200'
-        condition: and
 
   # Vector 3: Direct template injection in render
   - method: GET
@@ -136,12 +122,13 @@ http:
 
     matchers:
       - type: dsl
-        name: ejs-direct-ssti
+        name: ejs-direct-confirmed
         dsl:
           - 'contains(body, to_string(rand1 * rand2))'
           - '!contains(body, "<%=")'
+          - '!regex("[0-9]+px|font-size|width|height|margin|padding|<[^>]*[0-9]+[^>]*>", body)'
+          - '!contains(body, "404")'
           - 'status_code == 200'
-        condition: and
 
   # Vector 4: POST-based SSTI
   - method: POST
@@ -163,19 +150,13 @@ http:
     body: "data=test&settings[view%20options][outputFunctionName]=x;throw%20new%20Error('EJSSSTI{{rand1}}');s"
     stop-at-first-match: true
 
-    matchers-condition: or
     matchers:
-      - type: word
-        name: ejs-post-ssti-error
-        part: body
-        words:
-          - "EJSSSTI{{rand1}}"
-
-      - type: word
-        name: ejs-post-outputfunction-error
-        part: body
-        words:
-          - "outputFunctionName"
+      - type: dsl
+        name: ejs-post-confirmed
+        dsl:
+          - 'contains(body, "EJSSSTI{{rand1}}")'
+          - '!contains(body, "Dolibarr")'
+          - 'status_code == 200 || status_code == 500'
 
   # Vector 5: JSON body SSTI
   - method: POST
@@ -189,21 +170,13 @@ http:
     body: '{"data":"test","settings":{"view options":{"outputFunctionName":"x;throw new Error(\"EJSSSTI{{rand1}}\");s"}}}'
     stop-at-first-match: true
 
-    matchers-condition: or
     matchers:
-      - type: word
-        name: ejs-json-ssti-error
-        part: body
-        words:
-          - "EJSSSTI{{rand1}}"
-
-      - type: word
-        name: ejs-json-outputfunction-error
-        part: body
-        words:
-          - "outputFunctionName"
-          - "SyntaxError"
-        condition: or
+      - type: dsl
+        name: ejs-json-confirmed
+        dsl:
+          - 'contains(body, "EJSSSTI{{rand1}}")'
+          - '!contains(body, "Dolibarr")'
+          - 'status_code == 200 || status_code == 500'
 
   # Vector 6: EJS version detection via error
   - method: GET
@@ -212,14 +185,11 @@ http:
     stop-at-first-match: true
 
     matchers:
-      - type: word
-        name: ejs-version-leak
-        part: body
-        words:
-          - "ejs"
-          - "EJS"
-          - "Embedded JavaScript"
-        condition: or
+      - type: regex
+        name: ejs-version-string
+        regex:
+          - "(?i)ejs[\\s/]+v?[0-9]+\\.[0-9]+\\.[0-9]+"
+          - "Embedded JavaScript.*[0-9]+\\.[0-9]+\\.[0-9]+"
 
     extractors:
       - type: regex
