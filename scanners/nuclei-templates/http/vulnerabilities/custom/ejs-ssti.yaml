@@ -1,4 +1,4 @@
-id: ejs-ssti
+id: CVE-2022-29078
 
 info:
   name: EJS (Embedded JavaScript) Server-Side Template Injection
@@ -12,6 +12,8 @@ info:
     - https://eslam.io/posts/ejs-server-side-template-injection-rce/
     - https://github.com/mde/ejs/issues/735
     - https://nvd.nist.gov/vuln/detail/CVE-2022-29078
+  classfication:
+    cve-id: CVE-2022-29078
 
 variables:
   rand1: "{{rand_int(1000, 9999)}}"
@@ -53,7 +55,7 @@ http:
         dsl:
           - 'contains(body, "EJSSSTI{{rand1}}")'
           - '!contains(body, "Dolibarr")'
-          - 'status_code == 200 || status_code == 500'
+          - "status_code == 200 || status_code == 500"
 
   # Vector 2: escapeFunction SSTI
   - method: GET
@@ -88,10 +90,10 @@ http:
       - type: dsl
         name: ejs-escape-confirmed
         dsl:
-          - 'contains(body, to_string(rand1 * rand2))'
+          - "contains(body, to_string(rand1 * rand2))"
           - '!regex("[0-9]+px|font-size|width|height|margin|padding|<[^>]*[0-9]+[^>]*>", body)'
           - '!contains(body, "404")'
-          - 'status_code == 200'
+          - "status_code == 200"
 
   # Vector 3: Direct template injection in render
   - method: GET
@@ -124,11 +126,11 @@ http:
       - type: dsl
         name: ejs-direct-confirmed
         dsl:
-          - 'contains(body, to_string(rand1 * rand2))'
+          - "contains(body, to_string(rand1 * rand2))"
           - '!contains(body, "<%=")'
           - '!regex("[0-9]+px|font-size|width|height|margin|padding|<[^>]*[0-9]+[^>]*>", body)'
           - '!contains(body, "404")'
-          - 'status_code == 200'
+          - "status_code == 200"
 
   # Vector 4: POST-based SSTI
   - method: POST
@@ -156,7 +158,7 @@ http:
         dsl:
           - 'contains(body, "EJSSSTI{{rand1}}")'
           - '!contains(body, "Dolibarr")'
-          - 'status_code == 200 || status_code == 500'
+          - "status_code == 200 || status_code == 500"
 
   # Vector 5: JSON body SSTI
   - method: POST
@@ -176,7 +178,7 @@ http:
         dsl:
           - 'contains(body, "EJSSSTI{{rand1}}")'
           - '!contains(body, "Dolibarr")'
-          - 'status_code == 200 || status_code == 500'
+          - "status_code == 200 || status_code == 500"
 
   # Vector 6: EJS version detection via error
   - method: GET
