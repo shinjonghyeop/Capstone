@@ -40,33 +40,17 @@ http:
 
     stop-at-first-match: true
 
-    matchers-condition: or
+    matchers-condition: and
     matchers:
       - type: dsl
-        name: reflected-xss-bypass
+        name: xss-payload-reflected
         dsl:
-          - 'contains(body, "onerror")'
-          - 'contains(body, "onload")'
-          - 'contains(body, "onclick")'
-          - 'contains(body, "onmouseover")'
+          - '(regex("<img[^>]+onerror\\s*=", body) || regex("<svg[^>]+onload\\s*=", body) || regex("<body[^>]+onload\\s*=", body) || regex("<iframe[^>]+onload\\s*=", body)) && !regex("&lt;|&gt;|&quot;", body)'
           - 'status_code == 200'
           - 'contains(content_type, "text/html")'
-        condition: and
 
       - type: dsl
-        name: dom-xss-vulnerable-pattern
+        name: not-in-safe-context
+        negative: true
         dsl:
-          - 'contains(body, ".innerHTML")'
-          - 'contains(body, "URLSearchParams")'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
-
-      - type: dsl
-        name: script-tag-bypass
-        dsl:
-          - 'contains(body, "<script>")'
-          - 'contains(body, "alert(")'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
+          - 'regex("action=[\"''][^\"'']*oonnerror", body) || regex("href=[\"''][^\"'']*oonnerror", body) || contains(body, "Access refused") || contains(body, "injection protection")'

@@ -115,102 +115,20 @@ http:
     attack: clusterbomb
     stop-at-first-match: true
 
-    matchers-condition: or
+    matchers-condition: and
     matchers:
       - type: dsl
-        name: ssti-math-evaluation
+        name: ssti-positive-indicators
         dsl:
-          - 'contains(body, "49")'
-          - 'contains(body, "7777777")'
+          - '(contains(body, "49") && !regex("<[^>]{0,50}49[^>]{0,50}>", body)) || (contains(body, "7777777") && !regex("<[^>]{0,50}7777777[^>]{0,50}>", body)) || contains(body, "SECRET_KEY") || contains(body, "<class") || contains(body, "__globals__") || regex("uid=[0-9]+.*gid=[0-9]+", body)'
           - 'status_code == 200'
-        condition: and
 
       - type: dsl
-        name: ssti-flask-config
+        name: not-blocked-by-protection
+        negative: true
         dsl:
-          - 'contains(body, "SECRET_KEY")'
-          - 'contains(body, "DEBUG")'
-          - 'status_code == 200'
-        condition: and
+          - 'contains(body, "Access refused") || contains(body, "SQL or Script injection protection") || contains(body, "injection protection") || contains(body, "WAF") || contains(body, "blocked")'
 
-      - type: dsl
-        name: ssti-class-exposure
-        dsl:
-          - 'contains(body, "<class")'
-          - 'contains(body, "object")'
-          - 'status_code == 200'
-        condition: and
-
-      - type: dsl
-        name: ssti-dict-class
-        dsl:
-          - 'contains(body, "<class")'
-          - 'contains(body, "dict")'
-          - 'status_code == 200'
-        condition: and
-
-      - type: dsl
-        name: ssti-flask-objects
-        dsl:
-          - 'contains(body, "<flask")'
-          - 'status_code == 200'
-        condition: or
-
-      - type: dsl
-        name: ssti-request-object
-        dsl:
-          - 'contains(body, "Request")'
-          - 'contains(body, "environ")'
-          - 'status_code == 200'
-        condition: and
-
-      - type: dsl
-        name: ssti-globals-exposure
-        dsl:
-          - 'contains(body, "__globals__")'
-          - 'contains(body, "__builtins__")'
-          - 'status_code == 200'
-        condition: or
-
-      - type: dsl
-        name: ssti-subclasses
-        dsl:
-          - 'contains(body, "subclasses")'
-          - 'contains(body, "__class__")'
-          - 'status_code == 200'
-        condition: and
-
-      - type: dsl
-        name: ssti-command-execution
-        dsl:
-          - 'regex("uid=[0-9]+.*gid=[0-9]+", body)'
-          - 'status_code == 200'
-        condition: and
-
-      - type: dsl
-        name: ssti-django-debug
-        dsl:
-          - 'contains(body, "VariableDoesNotExist")'
-          - 'contains(body, "Context")'
-          - 'status_code == 200'
-        condition: or
-
-      - type: dsl
-        name: ssti-error-disclosure
-        dsl:
-          - 'contains(body, "jinja2")'
-          - 'contains(body, "TemplateSyntaxError")'
-          - 'contains(body, "UndefinedError")'
-          - 'status_code == 500'
-        condition: or
-
-      - type: word
-        name: ssti-config-items
-        part: body
-        words:
-          - "dict_items"
-          - "PERMANENT_SESSION_LIFETIME"
-          - "APPLICATION_ROOT"
 
     extractors:
       - type: regex

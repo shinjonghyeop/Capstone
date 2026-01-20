@@ -163,94 +163,17 @@ http:
 
     stop-at-first-match: true
 
-    matchers-condition: or
+    matchers-condition: and
     matchers:
       - type: dsl
-        name: reflected-script-tag
+        name: xss-positive-indicators
         dsl:
-          - 'contains(body, "<script")'
-          - 'contains(body, "alert(")'
+          - '(regex("<script[^>]*>\\s*alert\\s*\\(", body) && !regex("&lt;script|&lt;/script", body)) || (regex("<img[^>]+onerror\\s*=\\s*[\"'']?alert", body) && !regex("&lt;|&gt;", body)) || (regex("<svg[^>]+onload\\s*=\\s*[\"'']?alert", body) && !regex("&lt;|&gt;", body)) || regex("<iframe[^>]+src\\s*=\\s*[\"'']?javascript:", body)'
           - 'status_code == 200'
           - 'contains(content_type, "text/html")'
-        condition: and
 
       - type: dsl
-        name: reflected-event-handler
+        name: not-blocked-or-encoded
+        negative: true
         dsl:
-          - 'regex("on(load|error|click|mouseover|focus|toggle|start|pointer)", body)'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
-
-      - type: dsl
-        name: reflected-svg-tag
-        dsl:
-          - 'contains(body, "<svg")'
-          - 'contains(body, "onload")'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
-
-      - type: dsl
-        name: reflected-img-tag
-        dsl:
-          - 'contains(body, "<img")'
-          - 'contains(body, "onerror")'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
-
-      - type: dsl
-        name: reflected-iframe
-        dsl:
-          - 'contains(body, "<iframe")'
-          - 'contains(body, "javascript:")'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
-
-      - type: dsl
-        name: javascript-wrapper
-        dsl:
-          - 'contains(body, "javascript:")'
-          - 'contains(body, "alert")'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
-
-      - type: dsl
-        name: polyglot-reflection
-        dsl:
-          - 'contains(body, "oNcliCk")'
-          - 'contains(body, "oNloAd")'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
-
-      - type: dsl
-        name: html5-tags
-        dsl:
-          - 'regex("(details|marquee|video|audio|input|select|textarea)", body)'
-          - 'regex("(autofocus|onfocus|ontoggle|onstart)", body)'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
-
-      - type: dsl
-        name: context-breaking
-        dsl:
-          - 'contains(body, "</script>")'
-          - 'contains(body, "</title>")'
-          - 'contains(body, "</textarea>")'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
-
-      - type: dsl
-        name: encoded-payload
-        dsl:
-          - 'contains(body, "&#")'
-          - 'contains(body, "alert")'
-          - 'status_code == 200'
-          - 'contains(content_type, "text/html")'
-        condition: and
+          - 'contains(body, "Access refused") || contains(body, "SQL or Script injection protection") || contains(body, "injection protection") || contains(body, "WAF") || contains(body, "blocked") || regex("action=[\"''][^\"'']*<[^>]+>", body)'
