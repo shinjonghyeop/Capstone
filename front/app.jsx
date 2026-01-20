@@ -368,11 +368,14 @@ function SeverityBadge({ severity }) {
   );
 }
 
-function FindingCard({ f, showEndpointGroup = false }) {
+function FindingCard({ f, showEndpointGroup = false, target }) {
   const [open, setOpen] = useState(false);
   const [showRequest, setShowRequest] = useState(false);
   const [showResponse, setShowResponse] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // target에서 hostname 추출
+  const hostname = target ? target.split(':')[0] : null;
 
   function copyCurlCommand() {
     if (!f.curlCommand) return;
@@ -463,10 +466,10 @@ function FindingCard({ f, showEndpointGroup = false }) {
                     </a>
                   </div>
                 )}
-                {f.ip && (
+                {hostname && (
                   <div>
-                    <div className="text-xs font-medium text-slate-600 mb-1">IP Address</div>
-                    <code className="text-sm">{f.ip}</code>
+                    <div className="text-xs font-medium text-slate-600 mb-1">Target Host</div>
+                    <code className="text-sm">{hostname}</code>
                   </div>
                 )}
                 {f.cwe && (
@@ -1320,7 +1323,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
             )}
             <div className="space-y-3">
               {endpointFindings.map((f) => (
-                <FindingCard key={f.id} f={f} showEndpointGroup={!groupByEndpoint} />
+                <FindingCard key={f.id} f={f} showEndpointGroup={!groupByEndpoint} target={target} />
               ))}
             </div>
           </div>
