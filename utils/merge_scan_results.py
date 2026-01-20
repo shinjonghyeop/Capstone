@@ -59,7 +59,7 @@ def extract_subdomain_from_filename(filename: str) -> str:
 
     if scanner_type == 'nuclei':
         # tag와 timestamp 제거
-        name = re.sub(r'_(cve|sql|xss)_\d{8}_\d{6}$', '', name)
+        name = re.sub(r'_(cve|sqli|xss|rce|lfi|ssti|ssrf|csrf)_\d{8}_\d{6}$', '', name)
         # 확장자 정규화
         name = re.sub(r'\.(php|html)$', lambda m: f'_{m.group(1)}', name)
 
@@ -119,7 +119,7 @@ def extract_tag_from_nuclei_filename(filename: str) -> str:
         nuclei_scan_localhost_9991_www_XSS_XSS_level1.php_cve_20251102_185057.json
         -> cve
     """
-    match = re.search(r'_(cve|sqli|xss)_\d{8}_\d{6}\.json$', filename)
+    match = re.search(r'_(cve|sqli|xss|rce|lfi|ssti|ssrf|csrf)_\d{8}_\d{6}\.json$', filename)
     if match:
         return match.group(1)
     return 'unknown'
