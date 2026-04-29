@@ -151,11 +151,10 @@ def scan():
             cookies = data.get('cookies', '')
             headers = data.get('headers', '')
             rate_raw = data.get('rate')
-
+        
         if not url:
             return jsonify({"error": "URL이 필요합니다"}), 400
 
-        # rate 검증 (선택값, 1~500 정수)
         rate = None
         if rate_raw not in (None, "", "null"):
             try:

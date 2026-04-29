@@ -47,7 +47,7 @@ async def run_discovery_stage(url: str, cookies: str, headers: str = "", rate: i
         url: 스캔 대상 URL
         cookies: 인증용 쿠키 문자열
         headers: 인증용 헤더 문자열
-        rate: 사용자가 지정한 초당 요청 수(없으면 기본 동작 유지)
+        rate: FFUF 초당 요청 수 제한. None이면 기본값 사용.
 
     Returns:
         성공 여부

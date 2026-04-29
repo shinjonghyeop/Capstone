@@ -89,13 +89,10 @@ def _slug_from_url(parsed) -> str:
 
 def _rate_to_tasks(rate: int) -> int:
     """
-    사용자 입력 rate(req/s, 1~500)를 Wapiti --tasks 값으로 매핑.
-    공공기관 등 운영 서비스 영향을 최소화하기 위해 로그 스케일로 압축하고
-    최대 8(Wapiti 기본 동시성 상한)을 넘기지 않는다.
-    예: 1→1, 10→4, 100→7, 500→8
+    사용자 입력 rate(req/s)를 Wapiti --tasks 값으로 매핑합니다.
+    Wapiti는 직접적인 req/s 제한이 없어 운영 영향이 커지지 않도록 로그 스케일로 압축합니다.
     """
     return max(1, min(8, math.ceil(math.log2(rate + 1))))
-
 
 def _unique_path(results_dir: str, stem: str, ext: str) -> str:
     """
@@ -116,7 +113,7 @@ def run_scan(
     output_basename: str = "wapiti",   # 파일명 기본 (파일명만 — 디렉토리 아님)
     cookies: Optional[str] = None,     # -C "name=value; ..."
     headers: Optional[str] = None,     # "Name1: Value1; Name2: Value2"
-    rate: Optional[int] = None         # 동시 요청 수(--tasks). None이면 wapiti 기본값 유지
+    rate: Optional[int] = None         # 사용자 지정 req/s. Wapiti --tasks로 변환.
 ) -> None:
     """
     url_file: URL 목록 파일 경로
@@ -150,11 +147,12 @@ def run_scan(
     for index, url in enumerate(urls, start=1):
         _update_scan_status(
             "wapiti",
-            f"Wapiti 진행: {index}/{total_targets}",
+            f"Wapiti 엔드포인트 확인 중: {index}/{total_targets}",
             {
-                "current": index - 1,
+                "current": index,
                 "total": total_targets,
-                "percent": int(((index - 1) / total_targets) * 100) if total_targets else 0
+                "percent": int(((index - 1) / total_targets) * 100) if total_targets else 0,
+                "url": url
             }
         )
         parsed = urlparse(url)
@@ -171,7 +169,7 @@ def run_scan(
 
         if rate is not None:
             tasks = _rate_to_tasks(rate)
-            print(f"[Wapiti] rate={rate} → --tasks {tasks} (로그 스케일, 최대 8)")
+            print(f"[Wapiti] rate={rate} → --tasks {tasks}")
             cmd += ["--tasks", str(tasks)]
 
         if cookies:
@@ -203,11 +201,12 @@ def run_scan(
                 print("[wapiti stderr]\n", proc.stderr.strip())
         _update_scan_status(
             "wapiti",
-            f"Wapiti 진행: {index}/{total_targets}",
+            f"Wapiti 엔드포인트 완료: {index}/{total_targets}",
             {
                 "current": index,
                 "total": total_targets,
-                "percent": int((index / total_targets) * 100) if total_targets else 0
+                "percent": int((index / total_targets) * 100) if total_targets else 0,
+                "url": url
             }
         )
 

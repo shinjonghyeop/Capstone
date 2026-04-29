@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
+  Activity,
   ShieldAlert,
   ShieldCheck,
   Upload,
@@ -29,12 +30,17 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname}:3000`;
 const SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"];
 const SEVERITY_COLORS = {
-  critical: "bg-red-600 text-white",
-  high: "bg-orange-500 text-white",
-  medium: "bg-amber-400 text-black",
-  low: "bg-emerald-400 text-black",
-  info: "bg-slate-300 text-black",
+  critical: "severity-badge-critical",
+  high: "severity-badge-high",
+  medium: "severity-badge-medium",
+  low: "severity-badge-low",
+  info: "severity-badge-info",
 };
+
+function getSeverityRank(severity) {
+  const index = SEVERITY_ORDER.indexOf(String(severity || "info").toLowerCase());
+  return index === -1 ? SEVERITY_ORDER.length : index;
+}
 
 function isValidUrl(u) {
   try {
@@ -139,10 +145,12 @@ async function fetchScanResults(url, extras = {}) {
       }
     }
 
-    const getUrl = hasRate
-      ? `${API_BASE_URL}/api/scan?url=${encodeURIComponent(url)}&rate=${encodeURIComponent(rate)}`
-      : `${API_BASE_URL}/api/scan?url=${encodeURIComponent(url)}`;
-    const res = await fetch(getUrl);
+    const scanUrl = new URL(`${API_BASE_URL}/api/scan`);
+    scanUrl.searchParams.set("url", url);
+    if (hasRate) {
+      scanUrl.searchParams.set("rate", String(rate));
+    }
+    const res = await fetch(scanUrl.toString());
     if (!res.ok) throw new Error("non-200");
     const data = await res.json();
     if (!data.findings && (Array.isArray(data) || data.nuclei || data.wapiti)) {
@@ -243,17 +251,17 @@ function normalizeMixedPayload(raw, target) {
 
 function Header({ onHomeClick }) {
   return (
-    <header className="w-full border-b border-slate-200/60 bg-white/70 backdrop-blur sticky top-0 z-20">
-      <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
+    <header className="hl-topbar">
+      <div className="hl-topbar-inner">
         <div className="flex items-center gap-3">
           <button
             onClick={onHomeClick}
-            className="cursor-pointer hover:opacity-80 transition-opacity"
+            className="brand-button"
           >
             <img
               src="/logo.png"
               alt="Hacklipse"
-              className="h-7 w-auto"
+              className="brand-logo"
               draggable={false}
             />
           </button>
@@ -262,9 +270,9 @@ function Header({ onHomeClick }) {
           href="https://owasp.org/"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+          className="owasp-link"
         >
-        <ExternalLink className="h-4 w-4" />
+          <ExternalLink className="h-4 w-4" />
           OWASP
         </a>
       </div>
@@ -272,7 +280,25 @@ function Header({ onHomeClick }) {
   );
 }
 
-function UrlForm({ onSubmit }) {
+function getRateStrength(rate, valid) {
+  if (!valid) {
+    return { score: 0, tone: "invalid", label: "확인 필요", caption: "1~500 req/s" };
+  }
+
+  const value = rate === "" ? 150 : Number(rate);
+  if (value <= 50) {
+    return { score: 1, tone: "low", label: "낮음", caption: "보수적" };
+  }
+  if (value <= 150) {
+    return { score: 2, tone: "normal", label: "보통", caption: "균형" };
+  }
+  if (value <= 300) {
+    return { score: 3, tone: "high", label: "높음", caption: "빠름" };
+  }
+  return { score: 4, tone: "intense", label: "강함", caption: "부하 주의" };
+}
+
+function UrlForm({ onSubmit, onShowResults }) {
   const [url, setUrl] = useState("");
   const [touched, setTouched] = useState(false);
   const [cookie, setCookie] = useState("");
@@ -280,6 +306,12 @@ function UrlForm({ onSubmit }) {
   const [rate, setRate] = useState("");
   const valid = isValidUrl(url);
   const rateValid = rate === "" || (/^\d+$/.test(rate) && Number(rate) >= 1 && Number(rate) <= 500);
+  const rateStrength = getRateStrength(rate, rateValid);
+  const sliderRateValue = rateValid && rate !== "" ? Number(rate) : 150;
+
+  function setPresetRate(value) {
+    setRate(value === "" ? "" : String(value));
+  }
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -289,22 +321,22 @@ function UrlForm({ onSubmit }) {
   }
 
   return (
-    <div className="min-h-[60vh] grid place-items-center">
-      <motion.form
-        onSubmit={handleSubmit}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl rounded-2xl border border-slate-200 shadow-sm bg-white p-6"
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <Globe className="h-5 w-5 text-slate-600" />
-          <h2 className="text-lg font-semibold">대상 URL 입력</h2>
-        </div>
-        <div className="flex gap-3">
+    <motion.form
+      onSubmit={handleSubmit}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="scan-entry"
+    >
+      <aside className="hl-control-panel">
+        <div className="section-label">Vulnerability Scan</div>
+        <h2>취약점 진단 시작</h2>
+
+        <label>
+          대상 URL
           <input
             className={classNames(
-              "flex-1 rounded-xl border px-4 py-3 outline-none",
-              valid ? "border-slate-300 focus:ring-2 ring-slate-300" : "border-rose-300 focus:ring-2 ring-rose-300"
+              "hl-input",
+              touched && !valid ? "invalid" : ""
             )}
             placeholder="https://example.com"
             value={url}
@@ -312,74 +344,484 @@ function UrlForm({ onSubmit }) {
             onBlur={() => setTouched(true)}
             spellCheck={false}
           />
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-3 hover:bg-slate-800"
-          >
-            <SearchIcon className="h-4 w-4" />
-            제출
-          </button>
-        </div>
+        </label>
 
         {touched && !valid && (
-          <p className="mt-3 text-sm text-rose-600">올바른 http(s) URL을 입력하세요.</p>
+          <p className="hl-field-error">올바른 http(s) URL을 입력하세요.</p>
         )}
 
-        <div className="mt-4 grid gap-3">
-          <div>
-            <label className="text-sm font-medium text-slate-700">(선택) Cookies </label>
-            <input
-              className="mt-1 w-full rounded-xl border px-3 py-2 outline-none border-slate-300 focus:ring-2 ring-slate-300"
-              placeholder="session=abc; uid=1"
-              value={cookie}
-              onChange={(e) => setCookie(e.target.value)}
-              spellCheck={false}
-            />
-          </div>
+        <label>
+          Cookies
+          <input
+            className="hl-input"
+            placeholder="session=abc; uid=1"
+            value={cookie}
+            onChange={(e) => setCookie(e.target.value)}
+            spellCheck={false}
+          />
+        </label>
 
-          <div>
-            <label className="text-sm font-medium text-slate-700">(선택) Headers </label>
-            <textarea
-              className="mt-1 w-full h-20 rounded-xl border px-3 py-2 outline-none border-slate-300 focus:ring-2 ring-slate-300 font-mono text-xs"
-              placeholder="User-Agent: curl/7.0; Accept: */*"
-              value={headers}
-              onChange={(e) => setHeaders(e.target.value)}
-              spellCheck={false}
-            />
-          </div>
+        <label>
+          Headers
+          <textarea
+            className="hl-input hl-textarea"
+            placeholder="User-Agent: curl/7.0; Accept: */*"
+            value={headers}
+            onChange={(e) => setHeaders(e.target.value)}
+            spellCheck={false}
+          />
+        </label>
 
-          <div>
-            <label className="text-sm font-medium text-slate-700">(선택) 요청 Rate (req/s, 1~500)</label>
+        <div className="rate-control">
+          <div className="rate-control-head">
+            <span>Request Rate</span>
+            <strong>{rate === "" ? "기본값" : `${rate} req/s`}</strong>
+          </div>
+          <div className="rate-input-row">
+            <Activity className="h-4 w-4" />
             <input
+              className={classNames("hl-input", !rateValid ? "invalid" : "")}
               type="number"
-              min={1}
-              max={500}
-              className={classNames(
-                "mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2",
-                rateValid ? "border-slate-300 ring-slate-300" : "border-rose-300 ring-rose-300"
-              )}
-              placeholder="비워두면 각 도구 기본값 사용"
+              min="1"
+              max="500"
+              inputMode="numeric"
+              placeholder="default"
               value={rate}
               onChange={(e) => setRate(e.target.value)}
             />
-            <p className="mt-1 text-xs text-slate-500">
-              FFUF/Nuclei는 초당 요청 수로 적용. Wapiti는 운영 영향 보호를 위해 로그 스케일로 동시 작업 수(--tasks)를 산출하며 최대 8까지만 사용합니다.
-            </p>
-            {!rateValid && (
-              <p className="mt-1 text-xs text-rose-600">1~500 사이 정수를 입력하세요.</p>
-            )}
+            <span>req/s</span>
+          </div>
+          <input
+            className="rate-slider"
+            type="range"
+            min="1"
+            max="500"
+            step="1"
+            value={sliderRateValue}
+            onInput={(e) => setRate(e.currentTarget.value)}
+            onChange={(e) => setRate(e.target.value)}
+            aria-label="Request rate"
+          />
+          <div className={classNames("rate-strength", `rate-strength-${rateStrength.tone}`)}>
+            <div className="rate-strength-top">
+              <span>{rateStrength.label}</span>
+              <strong>{rateStrength.caption}</strong>
+            </div>
+            <div className="rate-strength-meter" aria-hidden="true">
+              {[1, 2, 3, 4].map((level) => (
+                <span
+                  key={level}
+                  className={level <= rateStrength.score ? "active" : ""}
+                />
+              ))}
+            </div>
+            <div className="rate-strength-labels">
+              <span>낮음</span>
+              <span>강함</span>
+            </div>
+          </div>
+          <div className="rate-presets">
+            <button type="button" onClick={() => setPresetRate("")}>Auto</button>
+            <button type="button" onClick={() => setPresetRate(30)}>30</button>
+            <button type="button" onClick={() => setPresetRate(150)}>150</button>
+            <button type="button" onClick={() => setPresetRate(300)}>300</button>
+          </div>
+          <p className="rate-hint">
+            Nuclei는 rate-limit, Wapiti는 안전한 동시 작업 수로 변환해 적용합니다.
+          </p>
+          {!rateValid && (
+            <p className="hl-field-error">1~500 사이 정수를 입력하세요.</p>
+          )}
+        </div>
+
+        <div className="auth-card">
+          <ShieldAlert className="h-5 w-5" />
+          <div>
+            <strong>인증 컨텍스트</strong>
+            <span>Cookie/Header는 진단 요청 컨텍스트에만 포함됩니다.</span>
           </div>
         </div>
-      </motion.form>
+
+        <button type="submit" className="primary-button full">
+          <SearchIcon className="h-4 w-4" />
+          점검 시작
+        </button>
+
+        <button type="button" onClick={onShowResults} className="ghost-button full">
+          <Upload className="h-4 w-4" />
+          이전 스캔 결과
+        </button>
+      </aside>
+
+      <WorkflowPreview />
+    </motion.form>
+  );
+}
+
+function StatusPill({ state = "idle" }) {
+  const isRunning = state === "running";
+  const isComplete = state === "complete";
+
+  return (
+    <span className={classNames("status-pill", state)}>
+      {isRunning ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : isComplete ? (
+        <Check className="h-3.5 w-3.5" />
+      ) : (
+        <ShieldCheck className="h-3.5 w-3.5" />
+      )}
+      {isRunning ? "스캔 진행 중" : isComplete ? "스캔 완료" : "실행 대기"}
+    </span>
+  );
+}
+
+function WorkflowPreview() {
+  const previewLogs = [
+    {
+      key: "preview-load",
+      time: "READY",
+      label: "urls.txt",
+      endpoint: "http://127.0.0.1:9095/",
+      detail: "urls.txt에 준비된 엔드포인트를 로드합니다.",
+      count: "0/12"
+    },
+    {
+      key: "preview-wapiti",
+      time: "WAIT",
+      label: "Wapiti",
+      endpoint: "http://127.0.0.1:9095/search?q=test",
+      detail: "엔드포인트별 웹 취약점 검사를 대기 중입니다.",
+      count: "--"
+    },
+    {
+      key: "preview-nuclei",
+      time: "WAIT",
+      label: "Nuclei",
+      endpoint: "http://127.0.0.1:9095/debug",
+      detail: "템플릿 기반 검사를 대기 중입니다.",
+      count: "--"
+    },
+  ];
+
+  return (
+    <section className="workflow-panel">
+      <div className="workspace-header">
+        <div>
+          <div className="section-label">Scan Overview</div>
+          <h2>취약점 진단 대시보드</h2>
+        </div>
+        <StatusPill />
+      </div>
+
+      <div className="progress-shell">
+        <div className="progress-meta">
+          <span>Ready</span>
+          <strong>0%</strong>
+        </div>
+        <div className="progress-track">
+          <div className="progress-bar idle" />
+        </div>
+      </div>
+
+      <div className="stage-strip">
+        {["URL Load", "Wapiti", "Nuclei", "Merge"].map((step, index) => (
+          <span className="stage-chip ready" key={step}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            {step}
+          </span>
+        ))}
+      </div>
+
+      <div className="active-stage-card">
+        <div>
+          <span>Scan Stages</span>
+          <h3>진단을 시작하면 준비된 엔드포인트를 기준으로 검사가 진행됩니다.</h3>
+          <p>대상 URL과 인증 컨텍스트를 기준으로 URL 로드, Wapiti, Nuclei, 결과 병합 단계가 순차적으로 실행됩니다.</p>
+        </div>
+        <div className="duration">READY</div>
+      </div>
+
+      <EndpointLogPanel logs={previewLogs} idle />
+    </section>
+  );
+}
+
+function ScanProgressView({ target, scanStatus, scanStatusError, scanSteps, scanStepIndex }) {
+  const [scanLogs, setScanLogs] = useState([]);
+  const currentStep = scanSteps[scanStepIndex] || scanSteps[0];
+  const progress =
+    scanStatus?.progress?.percent ??
+    Math.round(((scanStepIndex + 1) / Math.max(scanSteps.length, 1)) * 100);
+  const currentEndpoint =
+    scanStatus?.progress?.url ||
+    scanStatus?.progress?.currentUrl ||
+    scanStatus?.endpoint ||
+    target ||
+    "-";
+
+  useEffect(() => {
+    const progressInfo = scanStatus?.progress || {};
+    const step = scanStatus?.step || currentStep?.id || "queued";
+    const label = scanSteps.find((item) => item.id === step)?.label || currentStep?.label || step;
+    const endpoint = progressInfo.url || progressInfo.currentUrl || scanStatus?.endpoint || target || "-";
+    const tag = progressInfo.tag ? String(progressInfo.tag).toUpperCase() : null;
+    const current = progressInfo.current ?? 0;
+    const total = progressInfo.total ?? scanSteps.length;
+    const detail = tag
+      ? `${tag} 템플릿으로 확인 중`
+      : scanStatus?.message || currentStep?.detail || "스캔 상태를 확인하는 중";
+    const key = `${step}|${endpoint}|${tag || ""}|${current}|${total}|${detail}`;
+
+    setScanLogs((prev) => {
+      if (prev[0]?.key === key) return prev;
+      const next = {
+        key,
+        time: new Date().toLocaleTimeString("ko-KR", { hour12: false }),
+        label,
+        endpoint,
+        detail,
+        count: total ? `${current}/${total}` : "--"
+      };
+      return [next, ...prev].slice(0, 24);
+    });
+  }, [
+    currentStep?.detail,
+    currentStep?.id,
+    currentStep?.label,
+    scanStatus?.endpoint,
+    scanStatus?.message,
+    scanStatus?.progress?.current,
+    scanStatus?.progress?.currentUrl,
+    scanStatus?.progress?.tag,
+    scanStatus?.progress?.total,
+    scanStatus?.progress?.url,
+    scanStatus?.step,
+    scanSteps,
+    target
+  ]);
+
+  return (
+    <div className="scan-entry scan-entry-progress">
+      <aside className="hl-control-panel scan-summary-panel">
+        <div className="section-label">Active Scan</div>
+        <h2>스캔 상태</h2>
+        <div className="summary-block">
+          <span>Target</span>
+          <strong>{target || "-"}</strong>
+        </div>
+        <div className="summary-block">
+          <span>Current Stage</span>
+          <strong>{scanStatus?.message || currentStep?.detail || "스캔 결과 정리 중"}</strong>
+        </div>
+        <div className="summary-block">
+          <span>Endpoint</span>
+          <strong>{currentEndpoint}</strong>
+        </div>
+        {scanStatus?.progress?.total > 0 && (
+          <div className="summary-block">
+            <span>Progress</span>
+            <strong>
+              {progress}% · {scanStatus.progress.current}/{scanStatus.progress.total}
+            </strong>
+          </div>
+        )}
+        {scanStatus?.updatedAt && (
+          <div className="summary-block muted">
+            <span>Updated</span>
+            <strong>{new Date(scanStatus.updatedAt * 1000).toLocaleString("ko-KR")}</strong>
+          </div>
+        )}
+        {scanStatusError && (
+          <div className="scan-warning">
+            <XCircle className="h-4 w-4" />
+            {scanStatusError}
+          </div>
+        )}
+      </aside>
+
+      <section className="workflow-panel">
+        <div className="workspace-header">
+          <div>
+            <div className="section-label">Live Diagnosis</div>
+            <h2>진단 진행 상황</h2>
+          </div>
+          <StatusPill state="running" />
+        </div>
+
+        <div className="progress-shell">
+          <div className="progress-meta">
+            <span>{currentStep?.label || "Running"}</span>
+            <strong>{progress}%</strong>
+          </div>
+          <div className="progress-track">
+            <motion.div
+              className="progress-bar"
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            />
+          </div>
+        </div>
+
+        <div className="stage-strip">
+          {scanSteps.map((step, index) => (
+            <span
+              key={step.id}
+              className={classNames(
+                "stage-chip",
+                index < scanStepIndex ? "done" : "",
+                index === scanStepIndex ? "active" : "",
+                index > scanStepIndex ? "ready" : ""
+              )}
+            >
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              {step.label}
+            </span>
+          ))}
+        </div>
+
+        <div className="active-stage-card">
+          <div>
+            <span>{currentStep?.id || "scan"}</span>
+            <h3>{currentStep?.label || "스캔 실행 중"}</h3>
+            <p>{scanStatus?.message || currentStep?.detail || "서버 상태를 기준으로 진행 단계를 표시합니다."}</p>
+          </div>
+          <div className="duration">LIVE</div>
+        </div>
+
+        <EndpointLogPanel logs={scanLogs} />
+      </section>
+    </div>
+  );
+}
+
+function EndpointLogPanel({ logs, idle = false }) {
+  const activeLog = logs[0] || {
+    label: "Ready",
+    endpoint: "-",
+    detail: "스캔 실행을 기다리는 중",
+    count: "--"
+  };
+  const activeTool = String(activeLog.label || "").toLowerCase();
+  const flow = [
+    { id: "url", label: "URL Set", Icon: Globe },
+    { id: "wapiti", label: "Wapiti", Icon: ShieldAlert },
+    { id: "nuclei", label: "Nuclei", Icon: Bug },
+    { id: "merge", label: "Report", Icon: FileText },
+  ];
+
+  return (
+    <div className="endpoint-log-panel" aria-label="Endpoint scan log">
+      <div className="endpoint-visual">
+        <div className="scan-radar" aria-hidden="true">
+          <span className="radar-ring ring-one" />
+          <span className="radar-ring ring-two" />
+          <span className="radar-sweep" />
+          <span className="radar-core">
+            {idle ? <ShieldCheck className="h-5 w-5" /> : <Activity className="h-5 w-5" />}
+          </span>
+        </div>
+
+        <div className="scan-flow">
+          {flow.map(({ id, label, Icon }, index) => {
+            const active =
+              activeTool.includes(id) ||
+              (id === "url" && activeTool.includes("url")) ||
+              (id === "merge" && ["merge", "cleanup", "complete", "report"].some((token) => activeTool.includes(token)));
+            const seen = logs.some((log) => String(log.label || "").toLowerCase().includes(id));
+
+            return (
+              <div className={classNames("scan-flow-step", active ? "active" : "", seen ? "seen" : "")} key={id}>
+                {index > 0 && <span className="scan-flow-line" />}
+                <div className="scan-flow-icon">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <span>{label}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="active-endpoint-card">
+          <span>{idle ? "Preview Endpoint" : "Current Endpoint"}</span>
+          <strong>{activeLog.endpoint}</strong>
+          <p>{activeLog.detail}</p>
+        </div>
+      </div>
+
+      <div className="endpoint-log-header">
+        <div>
+          <div className="section-label">Endpoint Trace</div>
+          <h3>탐색 로그</h3>
+        </div>
+        <span>{idle ? "Preview" : `${logs.length} events`}</span>
+      </div>
+      <div className="endpoint-log-list">
+        <AnimatePresence initial={false}>
+          {logs.map((log, index) => (
+            <motion.div
+              className={classNames("endpoint-log-row", index === 0 && !idle ? "active" : "")}
+              key={log.key}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+            >
+              <span className="endpoint-log-time">{log.time}</span>
+              <span className="endpoint-log-tool">{log.label}</span>
+              <code>{log.endpoint}</code>
+              <span className="endpoint-log-detail">{log.detail}</span>
+              <span className="endpoint-log-count">{log.count}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+function ScanGraph({ steps, activeIndex, running = false }) {
+  return (
+    <div className="scan-graph" aria-label="Scan workflow graph">
+      {steps.map((step, index) => {
+        const complete = activeIndex > index;
+        const active = activeIndex === index;
+        const Icon =
+          step.id === "discovery" ? Globe :
+          step.id === "wapiti" ? ShieldAlert :
+          step.id === "nuclei" ? Bug :
+          FileText;
+
+        return (
+          <div className="scan-node-wrap" key={step.id || step.label}>
+            {index > 0 && <span className={classNames("scan-link", complete || active ? "lit" : "")} />}
+            <div
+              className={classNames(
+                "scan-node",
+                complete ? "complete" : "",
+                active && running ? "active" : ""
+              )}
+            >
+              <div className="agent-icon">
+                <Icon className="h-4 w-4" />
+              </div>
+              <div>
+                <strong>{step.label}</strong>
+                <span>{step.detail}</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 
-function Stat({ icon: Icon, label, value, tone }) {
+function Stat({ icon: Icon, label, value, tone = "info" }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-4">
-      <div className={classNames("rounded-lg p-2", tone || "bg-slate-100")}>
+    <div className={classNames("stat-card", `stat-card-${tone}`)}>
+      <div className={classNames("stat-icon", `stat-icon-${tone}`)}>
         <Icon className="h-5 w-5" />
       </div>
       <div>
@@ -392,7 +834,7 @@ function Stat({ icon: Icon, label, value, tone }) {
 
 function SeverityBadge({ severity }) {
   return (
-    <span className={classNames("inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold", SEVERITY_COLORS[severity] || SEVERITY_COLORS.info)}>
+    <span className={classNames("severity-badge", SEVERITY_COLORS[severity] || SEVERITY_COLORS.info)}>
       {severity.toUpperCase()}
     </span>
   );
@@ -414,18 +856,23 @@ function FindingCard({ f, showEndpointGroup = false, target }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const SeverityIcon = ["critical", "high", "medium"].includes(f.severity)
+    ? ShieldAlert
+    : ShieldCheck;
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white">
+    <div className={classNames("finding-card", `finding-card-${f.severity || "info"}`)}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full text-left p-4 flex items-center justify-between hover:bg-slate-50"
       >
         <div className="flex items-center gap-3 flex-1">
-          {f.severity === "high" || f.severity === "critical" ? (
-            <ShieldAlert className="h-5 w-5 text-red-600 flex-shrink-0" />
-          ) : (
-            <ShieldCheck className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-          )}
+          <SeverityIcon
+            className={classNames(
+              "h-5 w-5 flex-shrink-0 finding-severity-icon",
+              `finding-severity-${f.severity || "info"}`
+            )}
+          />
           <div className="flex-1 min-w-0">
             <div className="font-medium truncate">{f.title}</div>
             <div className="text-xs text-slate-500 flex items-center gap-2 flex-wrap min-w-0">
@@ -680,7 +1127,7 @@ function ResultsListView({ onSelectResult, onBack }) {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
+    <div className="report-screen mx-auto max-w-6xl px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold">스캔 결과 목록</h2>
@@ -752,7 +1199,7 @@ function AiReportView({ markdown, onBack }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
+    <div className="report-screen ai-report-screen mx-auto max-w-5xl px-6 py-8">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -872,6 +1319,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
   const [endpointFilter, setEndpointFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [groupByEndpoint, setGroupByEndpoint] = useState(false);
+  const [sortBySeverity, setSortBySeverity] = useState(false);
 
   // AI 보고서 states
   const [aiReportMarkdown, setAiReportMarkdown] = useState(null);
@@ -949,17 +1397,29 @@ function ReportView({ data, noResults, resultFile, onReset }) {
     });
   }, [findings, severityFilter, toolFilter, endpointFilter, searchQuery]);
 
+  const orderedFindings = useMemo(() => {
+    if (!sortBySeverity) return filteredFindings;
+
+    return filteredFindings
+      .map((finding, index) => ({ finding, index }))
+      .sort((a, b) => {
+        const severityDiff = getSeverityRank(a.finding.severity) - getSeverityRank(b.finding.severity);
+        return severityDiff || a.index - b.index;
+      })
+      .map(({ finding }) => finding);
+  }, [filteredFindings, sortBySeverity]);
+
   // Group by endpoint
   const groupedFindings = useMemo(() => {
-    if (!groupByEndpoint) return { all: filteredFindings };
+    if (!groupByEndpoint) return { all: orderedFindings };
 
-    return filteredFindings.reduce((acc, f) => {
+    return orderedFindings.reduce((acc, f) => {
       const key = f.endpoint || 'Unknown';
       if (!acc[key]) acc[key] = [];
       acc[key].push(f);
       return acc;
     }, {});
-  }, [filteredFindings, groupByEndpoint]);
+  }, [orderedFindings, groupByEndpoint]);
 
   const counts = useMemo(() => {
     const c = { total: filteredFindings.length };
@@ -1109,7 +1569,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
+    <div className="report-screen mx-auto max-w-6xl px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold">진단 보고서</h2>
@@ -1267,12 +1727,12 @@ function ReportView({ data, noResults, resultFile, onReset }) {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        <Stat icon={Bug} label="총 이슈" value={counts.total} />
-        <Stat icon={ShieldAlert} label="Critical" value={counts.critical} tone="bg-red-100" />
-        <Stat icon={ShieldAlert} label="High" value={counts.high} tone="bg-orange-100" />
-        <Stat icon={ShieldAlert} label="Medium" value={counts.medium} tone="bg-amber-100" />
-        <Stat icon={ShieldCheck} label="Low" value={counts.low} tone="bg-emerald-100" />
-        <Stat icon={ShieldCheck} label="Info" value={counts.info} tone="bg-slate-100" />
+        <Stat icon={Bug} label="총 이슈" value={counts.total} tone="total" />
+        <Stat icon={ShieldAlert} label="Critical" value={counts.critical} tone="critical" />
+        <Stat icon={ShieldAlert} label="High" value={counts.high} tone="high" />
+        <Stat icon={ShieldAlert} label="Medium" value={counts.medium} tone="medium" />
+        <Stat icon={ShieldCheck} label="Low" value={counts.low} tone="low" />
+        <Stat icon={ShieldCheck} label="Info" value={counts.info} tone="info" />
       </div>
 
       <div className="mb-6 space-y-4">
@@ -1320,6 +1780,16 @@ function ReportView({ data, noResults, resultFile, onReset }) {
               <option key={ep} value={ep}>{ep}</option>
             ))}
           </select>
+
+          <button
+            type="button"
+            onClick={() => setSortBySeverity((value) => !value)}
+            className={classNames("severity-sort-button", sortBySeverity ? "active" : "")}
+            title="Critical부터 Info까지 정렬"
+          >
+            <ShieldAlert className="h-4 w-4" />
+            Severity 순
+          </button>
 
           <button
             onClick={() => setGroupByEndpoint(!groupByEndpoint)}
@@ -1384,8 +1854,8 @@ export default function HacklipseApp() {
   const scanSteps = [
     {
       id: "discovery",
-      label: "Discovery",
-      detail: "FFUF/크롤러로 URL 수집"
+      label: "URL Load",
+      detail: "urls.txt 엔드포인트 로드"
     },
     {
       id: "wapiti",
@@ -1614,146 +2084,29 @@ export default function HacklipseApp() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="hl-app">
       <Header onHomeClick={reset} />
 
-      <main className="mx-auto max-w-6xl px-6">
+      <main className="hl-main">
         <AnimatePresence mode="wait">
           {phase === "form" && (
             <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div className="text-center mt-12 mb-6">
-                <h1 className="text-3xl font-extrabold tracking-tight">Secure AI Project</h1>
-              </div>
               {error && (
-                <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-rose-700">{error}</div>
+                <div className="hl-error">{error}</div>
               )}
-              <UrlForm onSubmit={handleSubmit} />
-
-              <div className="mx-auto max-w-2xl mt-6 text-center">
-                <button
-                  onClick={showResultsList}
-                  className="inline-flex items-center gap-2 rounded-lg bg-slate-100 hover:bg-slate-200 px-4 py-2 text-sm"
-                >
-                  <Upload className="h-4 w-4" />
-                  이전 스캔 결과 보기
-                </button>
-              </div>
-
-              <section className="mx-auto max-w-2xl mt-6 text-xs text-slate-500">
-                <details className="rounded-lg border p-3 bg-white">
-                  <summary className="cursor-pointer select-none">JSON 수동 업로드 (개발 편의)</summary>
-                  <p className="mt-2 mb-2">nuclei JSONL 배열 또는 wapiti JSON을 붙여넣으면 클라이언트에서 정규화합니다.</p>
-                  <textarea
-                    id="manual-json"
-                    className="w-full h-40 rounded-md border p-2 font-mono text-xs"
-                    placeholder="여기에 JSON 붙여넣기"
-                  />
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
-                      onClick={() => {
-                        try {
-                          const raw = document.getElementById("manual-json").value;
-                          const parsed = JSON.parse(raw);
-                          const normalized = normalizeMixedPayload(parsed, "manual://paste");
-                          setData(normalized);
-                          setNoResults(false);
-                          setPhase("report");
-                          setResultFile(null);
-                          setScanTarget(normalized?.target || "manual://paste");
-                          navigate("/report");
-                        } catch (e) {
-                          setError("JSON 파싱 실패: 형식을 확인하세요.");
-                        }
-                      }}
-                    >
-                      <Upload className="h-4 w-4" /> 표시하기
-                    </button>
-                    <button
-                      className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
-                      onClick={() => {
-                        const normalized = normalizeMixedPayload(demoPayload, demoPayload.target);
-                        setData(normalized);
-                        setNoResults(false);
-                        setPhase("report");
-                        setResultFile(null);
-                        setScanTarget(normalized?.target || demoPayload.target);
-                        navigate("/report");
-                      }}
-                    >
-                      데모 보기
-                    </button>
-                  </div>
-                </details>
-              </section>
+              <UrlForm onSubmit={handleSubmit} onShowResults={showResultsList} />
             </motion.div>
           )}
 
           {phase === "scanning" && (
-            <motion.div key="loading" className="min-h-[60vh] grid place-items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div className="flex flex-col items-center gap-4 text-slate-700 w-full">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <p>스캔 결과 정리 중…</p>
-                <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6">
-                  <div className="text-sm text-slate-600">
-                    스캔 대상: <span className="font-medium text-slate-800">{scanTarget || "-"}</span>
-                  </div>
-                  {scanStatus?.message && (
-                    <div className="mt-2 text-xs text-slate-500">
-                      현재 단계: <span className="font-medium text-slate-700">{scanStatus.message}</span>
-                    </div>
-                  )}
-                  {scanStatus?.progress?.total > 0 && (
-                    <div className="mt-1 text-xs text-slate-500">
-                      진행률:{" "}
-                      <span className="font-medium text-slate-700">
-                        {scanStatus.progress.percent ?? Math.round((scanStatus.progress.current / scanStatus.progress.total) * 100)}%
-                      </span>
-                      <span className="text-slate-400 ml-2">
-                        ({scanStatus.progress.current}/{scanStatus.progress.total})
-                      </span>
-                    </div>
-                  )}
-                  {scanStatus?.updatedAt && (
-                    <div className="mt-1 text-[11px] text-slate-400">
-                      마지막 업데이트: {new Date(scanStatus.updatedAt * 1000).toLocaleString("ko-KR")}
-                    </div>
-                  )}
-                  {scanStatusError && (
-                    <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                      {scanStatusError}
-                    </div>
-                  )}
-                  <div className="mt-4 space-y-3">
-                    {scanSteps.map((step, index) => (
-                      <div key={step.id} className="flex items-start gap-3">
-                        <div
-                          className={classNames(
-                            "mt-1 h-2 w-2 rounded-full",
-                            index < scanStepIndex
-                              ? "bg-emerald-500"
-                              : index === scanStepIndex
-                              ? "bg-sky-500"
-                              : "bg-slate-300"
-                          )}
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">{step.label}</span>
-                            <span className="text-xs text-slate-500">
-                              {index < scanStepIndex ? "완료" : index === scanStepIndex ? "진행 중" : "대기"}
-                            </span>
-                          </div>
-                          <div className="text-xs text-slate-500 mt-1">{step.detail}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="mt-4 text-xs text-slate-400">
-                    단계 표시는 서버 상태 기준으로 표시됩니다.
-                  </p>
-                </div>
-              </div>
+            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <ScanProgressView
+                target={scanTarget}
+                scanStatus={scanStatus}
+                scanStatusError={scanStatusError}
+                scanSteps={scanSteps}
+                scanStepIndex={scanStepIndex}
+              />
             </motion.div>
           )}
 
@@ -1771,9 +2124,6 @@ export default function HacklipseApp() {
         </AnimatePresence>
       </main>
 
-      <footer className="mx-auto max-w-6xl px-6 py-10 text-xs text-slate-500">
-        © {new Date().getFullYear()} Hacklipse. For internal testing only.
-      </footer>
     </div>
   );
 }

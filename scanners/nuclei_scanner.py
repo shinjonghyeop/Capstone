@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 import re
+from urllib.parse import urlparse
 
 RESULTS_DIR = "nuclei_results"
 STATUS_FILE = os.getenv("SCAN_STATUS_FILE")
@@ -37,6 +38,70 @@ def _update_scan_status(step: str, message: str, progress=None) -> None:
             json.dump(payload, f, ensure_ascii=False)
     except Exception:
         pass
+
+
+def _origin_from_url(url: str) -> str:
+    parsed = urlparse(url)
+    if not parsed.scheme or not parsed.netloc:
+        return url
+    return f"{parsed.scheme}://{parsed.netloc}/"
+
+
+def _append_headers_and_cookies(command, headers: str = "", cookies: str = "") -> None:
+    if headers:
+        header_pairs = headers.split(";")
+        for header_pair in header_pairs:
+            header_pair = header_pair.strip()
+            if header_pair and ":" in header_pair:
+                key, value = header_pair.split(":", 1)
+                command.extend(["-H", f"{key.strip()}: {value.strip()}"])
+
+    if cookies:
+        command.extend(["-H", f"Cookie: {cookies}"])
+
+
+def _run_nuclei_command(command, output_file: str) -> bool:
+    print(f"[Nuclei] 명령어 실행: {' '.join(command)}")
+
+    try:
+        proc = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        stdout, stderr = proc.communicate(timeout=900)
+
+        if proc.returncode == 0:
+            print(f"[Nuclei] 스캔 완료: {output_file}")
+            if os.path.exists(output_file) and os.path.getsize(output_file) > 2:
+                print(f"[Nuclei] 발견사항 있음: {output_file}")
+                return True
+
+            print(f"[Nuclei] 취약점 없음: {output_file}")
+            if os.path.exists(output_file):
+                os.remove(output_file)
+            return False
+
+        print(f"[Nuclei] 오류 발생 (코드: {proc.returncode}): {output_file}")
+        if stderr:
+            print(f"[Nuclei stderr]\n{stderr.strip()[:1000]}")
+        return False
+
+    except subprocess.TimeoutExpired:
+        print(f"[Nuclei] 타임아웃 (15분 초과): {output_file}")
+        proc.kill()
+        try:
+            proc.communicate(timeout=5)
+        except Exception:
+            pass
+    except FileNotFoundError:
+        print("[Nuclei] 'nuclei' 명령을 찾을 수 없습니다. 설치되었는지 확인하세요.")
+        raise
+    except Exception as e:
+        print(f"[Nuclei] 스캔 중 예상치 못한 오류: {e}")
+
+    return False
       
 
 def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "", rate=None) -> None:
@@ -48,7 +113,7 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "",
         url_file: 스캔 대상 URL 파일 경로
         headers: 헤더 문자열 (예: "User-Agent:curl/7.0; Accept:*/*")
         cookies: 쿠키 문자열 (예: "sess=abc; uid=1")
-        rate: 초당 요청 수(-rate-limit). None이면 기본값 150 유지.
+        rate: Nuclei 초당 요청 수 제한(-rate-limit). None이면 기본값 사용.
     """
     print("\n[Nuclei] 스캔 시작...")
     
@@ -73,6 +138,9 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "",
     if not urls:
         print(f"[Nuclei] URL 파일에서 유효한 URL을 찾을 수 없습니다: {url_file}")
         return
+
+    prepass_rate_limit = str(rate) if rate is not None else "50"
+    scan_rate_limit = str(rate) if rate is not None else "150"
         
     # rce, lfi, file, file-upload, ssrf 등 태그 추가 예정
     tags_to_scan = ["xss", "sqli", "cve"]
@@ -82,10 +150,64 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "",
         f"Nuclei 진행: 0/{total_urls}",
         {"current": 0, "total": total_urls, "percent": 0}
     )
+
+    # 로컬 데모 사이트의 CVE 시그니처는 템플릿 루트 전체 스캔에서 선택되지 않는 경우가 있어
+    # 별도 pre-pass로 한 번 실행합니다. 실제 공격 동작 없이 demo marker만 매칭합니다.
+    local_demo_templates = os.path.join(templates_path, "http", "cves", "local-demo")
+    if os.path.isdir(local_demo_templates):
+        origins = sorted({_origin_from_url(url) for url in urls})
+        for origin in origins:
+            _update_scan_status(
+                "nuclei",
+                "Nuclei 로컬 CVE 데모 템플릿 확인 중",
+                {
+                    "current": 0,
+                    "total": total_urls,
+                    "percent": 0,
+                    "url": origin,
+                    "tag": "cve"
+                }
+            )
+            sanitized_origin = re.sub(r'https?://', '', origin).replace('/', '_').replace(':', '_')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_file = os.path.join(
+                RESULTS_DIR,
+                f"nuclei_scan_{sanitized_origin}_localdemo_cve_{timestamp}.json"
+            )
+            command = [
+                "nuclei",
+                "-u", origin,
+                "-je", output_file,
+                "-t", local_demo_templates,
+                "-silent",
+                "-rate-limit", prepass_rate_limit,
+                "-concurrency", "10",
+                "-retries", "1",
+                "-timeout", "10",
+                "-tags", "cve"
+            ]
+            _append_headers_and_cookies(command, headers, cookies)
+            try:
+                _run_nuclei_command(command, output_file)
+            except FileNotFoundError:
+                return
+
     # 각 URL에 대해 동기로 Nuclei 스캔 실행
     for index, url in enumerate(urls, start=1):
 
         for tag in tags_to_scan:
+            _update_scan_status(
+                "nuclei",
+                f"Nuclei 엔드포인트 확인 중: {index}/{total_urls}",
+                {
+                    "current": index,
+                    "total": total_urls,
+                    "percent": int(((index - 1) / total_urls) * 100) if total_urls else 0,
+                    "url": url,
+                    "tag": tag
+                }
+            )
+
             # 출력 파일명 생성 (URL과 태그 포함)
             sanitized_url = re.sub(r'https?://', '', url).replace('/', '_').replace(':', '_')
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -100,67 +222,27 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "",
                 "-t", templates_path,           # 템플릿 경로
                 "-silent",                      # 조용한 실행
                 #"-debug",                       # 디버그 모드
-                "-rate-limit", rate_limit,      # 초당 요청 제한 (사용자 지정 또는 기본 150)
+                "-rate-limit", scan_rate_limit, # 초당 요청 제한
                 "-concurrency", "20",           # 동시 실행
                 "-retries", "2",                # 재시도 횟수
                 "-timeout", "10",               # 타임아웃
                 "-tags", tag                   # 개별 태그
             ]
             
-            # 헤더 처리
-            if headers:
-                header_pairs = headers.split(";")
-                for header_pair in header_pairs:
-                    header_pair = header_pair.strip()
-                    if header_pair and ":" in header_pair:
-                        key, value = header_pair.split(":", 1)
-                        command.extend(["-H", f"{key.strip()}: {value.strip()}"])
-            
-            # 쿠키 처리
-            if cookies:
-                command.extend(["-H", f"Cookies: {cookies}"])
-            
-            print(f"[Nuclei] 명령어 실행: {' '.join(command)}")
-            
-            # Nuclei 프로세스 시작
+            _append_headers_and_cookies(command, headers, cookies)
+
             try:
-                proc = subprocess.Popen(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True
-                )
-                stdout, stderr = proc.communicate(timeout=900) # 태그 하나당 최대 15분 대기
-
-                if proc.returncode == 0:
-                    print(f"[Nuclei] 스캔 완료: {output_file}")
-                    if os.path.exists(output_file) and os.path.getsize(output_file) > 2:
-                        print(f"[Nuclei] 발견사항 있음: {output_file}")
-                    else:
-                        print(f"[Nuclei] 취약점 없음: {output_file}")
-                        os.remove(output_file)  # 빈 결과 파일 삭제
-                else:
-                    print(f"[Nuclei] 오류 발생 (코드: {proc.returncode}): {output_file}")
-
-            except subprocess.TimeoutExpired:
-                print(f"[Nuclei] 타임아웃 (15분 초과): {output_file}")
-                proc.kill()
-                try:
-                    stdout, stderr = proc.communicate(timeout=5)
-                except:
-                    pass
+                _run_nuclei_command(command, output_file)
             except FileNotFoundError:
-                print("[Nuclei] 'nuclei' 명령을 찾을 수 없습니다. 설치되었는지 확인하세요.")
                 return
-            except Exception as e:
-                print(f"[Nuclei] 스캔 중 예상치 못한 오류: {e}")
         _update_scan_status(
             "nuclei",
-            f"Nuclei 진행: {index}/{total_urls}",
+            f"Nuclei 엔드포인트 완료: {index}/{total_urls}",
             {
                 "current": index,
                 "total": total_urls,
-                "percent": int((index / total_urls) * 100) if total_urls else 0
+                "percent": int((index / total_urls) * 100) if total_urls else 0,
+                "url": url
             }
         )
                 

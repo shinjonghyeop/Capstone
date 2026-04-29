@@ -91,6 +91,10 @@ def extract_domain_from_filename(filename: str) -> str:
         # IP 주소 유효성 검증
         octets = ip_part.split('.')
         if all(0 <= int(octet) <= 255 for octet in octets):
+            rest = name[ip_match.end():]
+            port_match = re.match(r'^(\d+)(?:_|$)', rest)
+            if port_match:
+                return f"{ip_part}_{port_match.group(1)}"
             return ip_part
 
     # 기존 도메인 로직 (호스트명인 경우)

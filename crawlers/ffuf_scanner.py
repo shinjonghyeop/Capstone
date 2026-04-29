@@ -23,7 +23,7 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=', rate: Optional[in
         url: Target URL to scan (e.g., http://localhost)
         output_dir: Directory to save JSON results
         cookies: Cookie string for authentication (default: 'test=')
-        rate: Optional requests per second cap (FFUF -rate). None keeps default.
+        rate: Optional requests-per-second cap forwarded as `-rate <N>`.
 
     Returns:
         List of discovered URLs or empty list if failed
