@@ -23,7 +23,7 @@ cd scanners/wapiti || {
 
 # 의존성 설치
 echo "[+] Installing Python dependencies..."
-python3 -m pip install -r requirements.txt
+python3 -m pip install --break-system-packages -r requirements.txt
 
 # PATH에 추가
 cd bin

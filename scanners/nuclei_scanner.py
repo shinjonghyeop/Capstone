@@ -39,15 +39,16 @@ def _update_scan_status(step: str, message: str, progress=None) -> None:
         pass
       
 
-def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "") -> None:
+def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "", rate=None) -> None:
     """
     Nuclei 스캔을 병렬로 실행하고 결과를 저장합니다.
     urls.txt 파일에서 URL을 읽어 각 URL에 대해 xss, sql, cve 태그를 사용하여 스캔합니다.
-    
+
     Args:
         url_file: 스캔 대상 URL 파일 경로
         headers: 헤더 문자열 (예: "User-Agent:curl/7.0; Accept:*/*")
         cookies: 쿠키 문자열 (예: "sess=abc; uid=1")
+        rate: 초당 요청 수(-rate-limit). None이면 기본값 150 유지.
     """
     print("\n[Nuclei] 스캔 시작...")
     
@@ -91,6 +92,7 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "")
             output_file = os.path.join(RESULTS_DIR, f"nuclei_scan_{sanitized_url}_{tag}_{timestamp}.json")
             
             # 기본 명령어 구성
+            rate_limit = str(rate) if rate is not None else "150"
             command = [
                 "nuclei",
                 "-u", url,                      # 개별 URL
@@ -98,7 +100,7 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "")
                 "-t", templates_path,           # 템플릿 경로
                 "-silent",                      # 조용한 실행
                 #"-debug",                       # 디버그 모드
-                "-rate-limit", "150",           # 초당 요청 제한
+                "-rate-limit", rate_limit,      # 초당 요청 제한 (사용자 지정 또는 기본 150)
                 "-concurrency", "20",           # 동시 실행
                 "-retries", "2",                # 재시도 횟수
                 "-timeout", "10",               # 타임아웃

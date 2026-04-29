@@ -116,14 +116,17 @@ const demoPayload = {
 };
 
 async function fetchScanResults(url, extras = {}) {
-  const { cookie, headers } = extras || {};
+  const { cookie, headers, rate } = extras || {};
+  const hasRate = rate !== undefined && rate !== null && rate !== "";
   try {
-    if ((cookie && cookie.trim()) || (headers && headers.trim())) {
+    if ((cookie && cookie.trim()) || (headers && headers.trim()) || hasRate) {
       try {
+        const body = { url, cookies: cookie, headers };
+        if (hasRate) body.rate = Number(rate);
         const res = await fetch(`${API_BASE_URL}/api/scan`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, cookies: cookie, headers }),
+          body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error("non-200");
         const data = await res.json();
@@ -136,7 +139,10 @@ async function fetchScanResults(url, extras = {}) {
       }
     }
 
-    const res = await fetch(`${API_BASE_URL}/api/scan?url=${encodeURIComponent(url)}`);
+    const getUrl = hasRate
+      ? `${API_BASE_URL}/api/scan?url=${encodeURIComponent(url)}&rate=${encodeURIComponent(rate)}`
+      : `${API_BASE_URL}/api/scan?url=${encodeURIComponent(url)}`;
+    const res = await fetch(getUrl);
     if (!res.ok) throw new Error("non-200");
     const data = await res.json();
     if (!data.findings && (Array.isArray(data) || data.nuclei || data.wapiti)) {
@@ -271,13 +277,15 @@ function UrlForm({ onSubmit }) {
   const [touched, setTouched] = useState(false);
   const [cookie, setCookie] = useState("");
   const [headers, setHeaders] = useState("");
+  const [rate, setRate] = useState("");
   const valid = isValidUrl(url);
+  const rateValid = rate === "" || (/^\d+$/.test(rate) && Number(rate) >= 1 && Number(rate) <= 500);
 
   function handleSubmit(e) {
     e.preventDefault();
     setTouched(true);
-    if (!valid) return;
-    onSubmit(url, { cookie, headers });
+    if (!valid || !rateValid) return;
+    onSubmit(url, { cookie, headers, rate: rate === "" ? undefined : Number(rate) });
   }
 
   return (
@@ -338,6 +346,28 @@ function UrlForm({ onSubmit }) {
               onChange={(e) => setHeaders(e.target.value)}
               spellCheck={false}
             />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">(선택) 요청 Rate (req/s, 1~500)</label>
+            <input
+              type="number"
+              min={1}
+              max={500}
+              className={classNames(
+                "mt-1 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2",
+                rateValid ? "border-slate-300 ring-slate-300" : "border-rose-300 ring-rose-300"
+              )}
+              placeholder="비워두면 각 도구 기본값 사용"
+              value={rate}
+              onChange={(e) => setRate(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              FFUF/Nuclei는 초당 요청 수로 적용. Wapiti는 운영 영향 보호를 위해 로그 스케일로 동시 작업 수(--tasks)를 산출하며 최대 8까지만 사용합니다.
+            </p>
+            {!rateValid && (
+              <p className="mt-1 text-xs text-rose-600">1~500 사이 정수를 입력하세요.</p>
+            )}
           </div>
         </div>
       </motion.form>

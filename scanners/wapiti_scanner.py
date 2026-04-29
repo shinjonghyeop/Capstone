@@ -2,6 +2,7 @@ import subprocess
 import os
 import shutil
 import json
+import math
 import time
 from typing import List, Optional, Dict, Any
 from urllib.parse import urlparse
@@ -86,6 +87,16 @@ def _slug_from_url(parsed) -> str:
     # 너무 길어지지 않도록 제한(윈도 경로 등 고려)
     return slug[:60]
 
+def _rate_to_tasks(rate: int) -> int:
+    """
+    사용자 입력 rate(req/s, 1~500)를 Wapiti --tasks 값으로 매핑.
+    공공기관 등 운영 서비스 영향을 최소화하기 위해 로그 스케일로 압축하고
+    최대 8(Wapiti 기본 동시성 상한)을 넘기지 않는다.
+    예: 1→1, 10→4, 100→7, 500→8
+    """
+    return max(1, min(8, math.ceil(math.log2(rate + 1))))
+
+
 def _unique_path(results_dir: str, stem: str, ext: str) -> str:
     """
     같은 파일명이 이미 있으면 -1, -2 ... 를 붙여 충돌 없이 경로 반환
@@ -104,7 +115,8 @@ def run_scan(
     url_file: str = "./urls.txt",          # URL 목록 파일 경로
     output_basename: str = "wapiti",   # 파일명 기본 (파일명만 — 디렉토리 아님)
     cookies: Optional[str] = None,     # -C "name=value; ..."
-    headers: Optional[str] = None      # "Name1: Value1; Name2: Value2"
+    headers: Optional[str] = None,     # "Name1: Value1; Name2: Value2"
+    rate: Optional[int] = None         # 동시 요청 수(--tasks). None이면 wapiti 기본값 유지
 ) -> None:
     """
     url_file: URL 목록 파일 경로
@@ -155,7 +167,12 @@ def run_scan(
         output_file = _unique_path(RESULTS_DIR, filename, ".json")
 
         # Wapiti 명령 조립
-        cmd = ["wapiti", "-u", url, "--scope", "domain", "-f", "json", "-o", output_file] # 
+        cmd = ["wapiti", "-u", url, "--scope", "domain", "-f", "json", "-o", output_file] #
+
+        if rate is not None:
+            tasks = _rate_to_tasks(rate)
+            print(f"[Wapiti] rate={rate} → --tasks {tasks} (로그 스케일, 최대 8)")
+            cmd += ["--tasks", str(tasks)]
 
         if cookies:
             cmd += ["-C", cookies]
