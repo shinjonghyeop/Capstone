@@ -1177,15 +1177,20 @@ function ResultsListView({ onSelectResult, onBack }) {
 }
 
 // AI 보고서 뷰 컴포넌트
-function AiReportView({ markdown, onBack }) {
+function AiReportView({ markdown, onBack, provider }) {
   const [copied, setCopied] = useState(false);
+  const providerLabel =
+    provider === 'hacklipse'
+      ? 'Powered by Hacklipse Local Model'
+      : 'Powered by Google Gemini';
+  const downloadSuffix = provider || 'ai';
 
   function downloadMarkdown() {
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `hacklipse-ai-report-${Date.now()}.md`;
+    a.download = `hacklipse-${downloadSuffix}-report-${Date.now()}.md`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1209,7 +1214,7 @@ function AiReportView({ markdown, onBack }) {
           <div>
             <h2 className="text-2xl font-bold">AI 보안 진단 보고서</h2>
             <p className="text-sm text-slate-600 mt-1">
-              Powered by Google Gemini
+              {providerLabel}
             </p>
           </div>
         </div>
@@ -1321,13 +1326,14 @@ function ReportView({ data, noResults, resultFile, onReset }) {
   const [groupByEndpoint, setGroupByEndpoint] = useState(false);
   const [sortBySeverity, setSortBySeverity] = useState(false);
 
-  // AI 보고서 states
+  // AI 보고서 states (provider별로 분리해 모델별 보고서를 동시에 보관/열람 가능)
   const [aiReportMarkdown, setAiReportMarkdown] = useState(null);
   const [aiReportLoading, setAiReportLoading] = useState(false);
   const [aiReportError, setAiReportError] = useState(null);
-  const [existingReport, setExistingReport] = useState(null); // 기존 보고서 정보
+  const [existingReports, setExistingReports] = useState({ gemini: null, hacklipse: null });
   const [checkingReport, setCheckingReport] = useState(true); // 보고서 확인 중
   const [showAiProviderModal, setShowAiProviderModal] = useState(false);
+  const [activeProvider, setActiveProvider] = useState(null);
 
   const reportTimestamp = useMemo(() => {
     if (!resultFile) return null;
@@ -1335,7 +1341,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
     return match ? match[1] : null;
   }, [resultFile]);
 
-  // 컴포넌트 마운트 시 기존 보고서 확인
+  // 컴포넌트 마운트 시 기존 보고서 확인 (provider별로 매칭)
   React.useEffect(() => {
     async function checkExistingReport() {
       try {
@@ -1354,16 +1360,33 @@ function ReportView({ data, noResults, resultFile, onReset }) {
 
         const { reports } = await res.json();
 
-        // 현재 target과 일치하는 보고서 찾기
-        const matchingReport = reportTimestamp && targetName
-          ? reports.find(r =>
-            r.filename === `${targetName}_report_${reportTimestamp}.md`
-          )
-          : reports.find(r => targetName && r.target === targetName);
-
-        if (matchingReport) {
-          setExistingReport(matchingReport);
+        function pickReport(provider) {
+          if (!targetName) return null;
+          // 1) provider + target + reportTimestamp 정확 매칭
+          if (reportTimestamp) {
+            const exact = reports.find(r =>
+              r.target === targetName &&
+              r.provider === provider &&
+              r.timestamp === reportTimestamp
+            );
+            if (exact) return exact;
+          }
+          // 2) provider + target 최신순(서버에서 modified desc 정렬됨)
+          const latest = reports.find(r =>
+            r.target === targetName && r.provider === provider
+          );
+          if (latest) return latest;
+          // 3) 레거시 파일(provider 없음)은 gemini로 간주(과거 호환)
+          if (provider === 'gemini') {
+            return reports.find(r => r.target === targetName && !r.provider) || null;
+          }
+          return null;
         }
+
+        setExistingReports({
+          gemini: pickReport('gemini'),
+          hacklipse: pickReport('hacklipse')
+        });
       } catch (e) {
         console.error('보고서 확인 실패:', e);
       } finally {
@@ -1372,7 +1395,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
     }
 
     checkExistingReport();
-  }, [target]);
+  }, [target, reportTimestamp]);
 
   // Get unique endpoints
   const endpoints = useMemo(() => {
@@ -1477,15 +1500,17 @@ function ReportView({ data, noResults, resultFile, onReset }) {
     downloadFile("hacklipse-findings.csv", csv);
   }
 
-  // 기존 보고서 불러오기 함수
-  async function loadExistingReport() {
-    if (!existingReport) return;
+  // 특정 provider의 기존 보고서 불러오기
+  async function loadExistingReport(provider) {
+    const report = existingReports[provider];
+    if (!report) return;
 
     setAiReportLoading(true);
     setAiReportError(null);
+    setActiveProvider(provider);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/reports/${existingReport.filename}`);
+      const res = await fetch(`${API_BASE_URL}/api/reports/${report.filename}`);
 
       if (!res.ok) {
         throw new Error('보고서를 불러올 수 없습니다.');
@@ -1510,6 +1535,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
   async function generateAiReport(provider) {
     setAiReportLoading(true);
     setAiReportError(null);
+    setActiveProvider(provider);
 
     try {
       if (!provider) {
@@ -1545,11 +1571,17 @@ function ReportView({ data, noResults, resultFile, onReset }) {
 
       setAiReportMarkdown(result.markdown);
 
-      // 생성 후 existingReport 상태 업데이트
-      setExistingReport({
-        filename: result.report_path.split('/').pop(),
-        target: target.replace(':', '_')
-      });
+      // 생성 후 해당 provider의 existingReports 항목 업데이트
+      const newFilename = result.report_path.split('/').pop();
+      const safeTarget = target ? target.replace(':', '_') : null;
+      setExistingReports((prev) => ({
+        ...prev,
+        [provider]: {
+          filename: newFilename,
+          target: safeTarget,
+          provider
+        }
+      }));
 
     } catch (e) {
       setAiReportError(e.message);
@@ -1563,6 +1595,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
     return (
       <AiReportView
         markdown={aiReportMarkdown}
+        provider={activeProvider}
         onBack={() => setAiReportMarkdown(null)}
       />
     );
@@ -1579,7 +1612,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
           <p className="text-xs text-slate-500">시작: {startedAt || "-"} · 종료: {finishedAt || "-"}</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* AI 보고서 버튼 - 조건부 렌더링 */}
+          {/* AI 보고서 버튼 - 모달에서 모델별 보기/생성 분기 */}
           {checkingReport ? (
             <button
               disabled
@@ -1588,32 +1621,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
               <Loader2 className="h-4 w-4 animate-spin" />
               확인 중...
             </button>
-          ) : existingReport ? (
-            // 기존 보고서가 있으면 "보기" 버튼
-            <button
-              onClick={loadExistingReport}
-              disabled={aiReportLoading}
-              className={classNames(
-                "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium",
-                aiReportLoading
-                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                  : "bg-slate-100 hover:bg-slate-200"
-              )}
-            >
-              {aiReportLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  로딩 중...
-                </>
-              ) : (
-                <>
-                  <FileText className="h-4 w-4" />
-                  AI 보고서 보기
-                </>
-              )}
-            </button>
           ) : (
-            // 보고서가 없으면 "생성" 버튼
             <button
               onClick={() => setShowAiProviderModal(true)}
               disabled={aiReportLoading}
@@ -1627,7 +1635,12 @@ function ReportView({ data, noResults, resultFile, onReset }) {
               {aiReportLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  생성 중...
+                  {activeProvider ? `${activeProvider === 'gemini' ? 'Gemini' : '로컬'} 처리 중...` : '처리 중...'}
+                </>
+              ) : (existingReports.gemini || existingReports.hacklipse) ? (
+                <>
+                  <FileText className="h-4 w-4" />
+                  AI 보고서
                 </>
               ) : (
                 <>
@@ -1672,48 +1685,71 @@ function ReportView({ data, noResults, resultFile, onReset }) {
             className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-lg font-semibold">AI 보고서 생성 방식</div>
+            <div className="text-lg font-semibold">AI 보고서</div>
             <p className="mt-1 text-sm text-slate-600">
-              원하는 생성 방식을 선택하세요.
+              모델별로 보고서를 생성·열람할 수 있습니다. 이미 생성된 모델은 "보기"로 표시됩니다.
             </p>
             <div className="mt-4 grid gap-3">
-              <button
-                onClick={() => {
+              {[
+                { key: 'gemini', label: 'Gemini API', sub: '전체 보고서', primary: true },
+                { key: 'hacklipse', label: '로컬 모델', sub: '전체 보고서', primary: false }
+              ].map(({ key, label, sub, primary }) => {
+                const has = !!existingReports[key];
+                const busy = aiReportLoading && activeProvider === key;
+                const onClick = () => {
                   setShowAiProviderModal(false);
-                  generateAiReport('gemini');
-                }}
-                disabled={aiReportLoading}
-                className={classNames(
-                  "rounded-lg px-4 py-2 text-sm font-medium",
-                  aiReportLoading
-                    ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-                    : "bg-slate-900 text-white hover:bg-slate-800"
-                )}
-              >
-                Gemini API (전체 보고서)
-              </button>
-              <button
-                onClick={() => {
-                  setShowAiProviderModal(false);
-                  generateAiReport('hacklipse');
-                }}
-                disabled={aiReportLoading}
-                className={classNames(
-                  "rounded-lg px-4 py-2 text-sm font-medium",
-                  aiReportLoading
-                    ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-                    : "border border-slate-200 text-slate-700 hover:bg-slate-50"
-                )}
-              >
-                로컬 모델 (취약점별)
-              </button>
+                  if (has) loadExistingReport(key);
+                  else generateAiReport(key);
+                };
+                return (
+                  <button
+                    key={key}
+                    onClick={onClick}
+                    disabled={aiReportLoading}
+                    className={classNames(
+                      "rounded-lg px-4 py-3 text-sm font-medium flex items-center justify-between gap-3",
+                      aiReportLoading
+                        ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                        : primary
+                          ? "bg-slate-900 text-white hover:bg-slate-800"
+                          : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                    )}
+                  >
+                    <span className="flex flex-col items-start">
+                      <span>{label}</span>
+                      <span className={classNames(
+                        "text-xs font-normal",
+                        primary && !aiReportLoading ? "text-slate-300" : "text-slate-500"
+                      )}>{sub}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      {busy ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          처리 중...
+                        </>
+                      ) : has ? (
+                        <>
+                          <FileText className="h-4 w-4" />
+                          보기
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          생성
+                        </>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => setShowAiProviderModal(false)}
                 className="text-sm text-slate-600 hover:text-slate-900"
               >
-                취소
+                닫기
               </button>
             </div>
           </div>

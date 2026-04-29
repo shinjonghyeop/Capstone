@@ -1,0 +1,15 @@
+  File "/root/secure_ai_project/scanners/wapiti/wapitiCore/attack/active_scanner.py", line 191, in load_and_attack
+    await attack_module.attack(original_request, original_response)
+  File "/root/secure_ai_project/scanners/wapiti/wapitiCore/attack/mod_file.py", line 295, in attack
+    file_warning = find_warning_message(response.content, payload_info.payload)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/secure_ai_project/scanners/wapiti/wapitiCore/attack/mod_file.py", line 83, in find_warning_message
+    for match in warning_regex.finditer(data):
+  File "/root/secure_ai_project/scanners/wapiti/wapitiCore/attack/active_scanner.py", line 225, in handle_user_interruption
+    self._user_choice = UserChoice(input("? ").strip().lower())
+                                   ^^^^^^^^^^^
+  File "/root/secure_ai_project/scanners/wapiti/wapitiCore/attack/active_scanner.py", line 225, in handle_user_interruption
+    self._user_choice = UserChoice(input("? ").strip().lower())
+                                   ^^^^^^^^^^^
+RuntimeError: can't re-enter readline
+Occurred in file on GET http://10.48.185.62/spip/IMG/jpg/self-publishing-copy.jpg?1703099115 (2)

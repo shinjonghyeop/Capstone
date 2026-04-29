@@ -5,11 +5,12 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import re
 import subprocess
 import os
 import json
 import time
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from urllib.parse import urlparse
 
 app = Flask(__name__)
@@ -20,6 +21,25 @@ MERGED_RESULTS_DIR = 'merged_results'
 SCAN_TIMEOUT = None 
 SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info']
 SCAN_STATUS_DIR = 'scan_status'
+REPORT_PROVIDERS = ('gemini', 'hacklipse')
+REPORT_FILENAME_RE = re.compile(
+    r'^(?P<target>.+)_report_'
+    r'(?:(?P<provider>gemini|hacklipse)_)?'
+    r'(?P<timestamp>\d{8}_\d{6})\.md$'
+)
+
+
+def _parse_report_filename(filename: str) -> Tuple[str, Optional[str], Optional[str]]:
+    """
+    보고서 파일명에서 (target, provider, timestamp)를 추출.
+    레거시 파일명(provider 없음)도 지원하며, 이 경우 provider=None.
+    """
+    match = REPORT_FILENAME_RE.match(filename)
+    if match:
+        return match.group('target'), match.group('provider'), match.group('timestamp')
+    # 매칭 실패 시 기존 로직(target만 추정)
+    legacy_target = filename.replace('_report_', '|||').split('|||')[0]
+    return legacy_target, None, None
 SCAN_STATE = {
     "status_file": None,
     "target": None,
@@ -586,16 +606,19 @@ def list_reports():
 
             stat = os.stat(filepath)
 
-            # 파일명에서 target 추출
-            # 형식: {target}_report_{timestamp}.md
-            target = filename.replace('_report_', '|||').split('|||')[0]
+            # 파일명에서 target/provider/timestamp 추출
+            # 신규 형식: {target}_report_{provider}_{timestamp}.md
+            # 레거시 형식: {target}_report_{timestamp}.md (provider=None)
+            target, provider, timestamp = _parse_report_filename(filename)
 
             reports.append({
                 "filename": filename,
                 "size": stat.st_size,
                 "created": stat.st_ctime,
                 "modified": stat.st_mtime,
-                "target": target
+                "target": target,
+                "provider": provider,
+                "timestamp": timestamp
             })
 
         # 최신순 정렬
@@ -637,12 +660,14 @@ def get_report(filename: str):
             markdown = f.read()
 
         stat = os.stat(filepath)
-        target = filename.replace('_report_', '|||').split('|||')[0]
+        target, provider, timestamp = _parse_report_filename(filename)
 
         return jsonify({
             "filename": filename,
             "markdown": markdown,
             "target": target,
+            "provider": provider,
+            "timestamp": timestamp,
             "created": stat.st_ctime,
             "modified": stat.st_mtime
         }), 200
