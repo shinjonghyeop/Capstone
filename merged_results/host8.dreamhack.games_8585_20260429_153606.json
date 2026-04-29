@@ -1,0 +1,117 @@
+{
+  "target": "host8.dreamhack.games:8585",
+  "startedAt": "2026-04-29T15:36:06.377599",
+  "finishedAt": "2026-04-29T15:36:06.377939",
+  "tools": [
+    "wapiti"
+  ],
+  "findings": [
+    {
+      "id": "wapiti-Content Security Policy Configuration-0",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://host8.dreamhack.games:8585/",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://host8.dreamhack.games:8585/\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-1",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://host8.dreamhack.games:8585/\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-2",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://host8.dreamhack.games:8585/\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-3",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://host8.dreamhack.games:8585/\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-4",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "Sensitive data (POST data) was sent over an unencrypted HTTP connection to http://host8.dreamhack.games:8585/login. The server did not enforce HTTPS.",
+      "endpoint": "/login",
+      "fullUrl": "/login",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://host8.dreamhack.games:8585/login\" -e \"http://host8.dreamhack.games:8585/login\" -d \"uid=default&upw=default\""
+    }
+  ]
+}

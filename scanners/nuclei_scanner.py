@@ -108,7 +108,7 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "",
     """
     Nuclei 스캔을 병렬로 실행하고 결과를 저장합니다.
     urls.txt 파일에서 URL을 읽어 각 URL에 대해 xss, sql, cve 태그를 사용하여 스캔합니다.
-    
+
     Args:
         url_file: 스캔 대상 URL 파일 경로
         headers: 헤더 문자열 (예: "User-Agent:curl/7.0; Accept:*/*")
@@ -214,6 +214,7 @@ def run_scan(url_file: str = "./urls.txt", headers: str = "", cookies: str = "",
             output_file = os.path.join(RESULTS_DIR, f"nuclei_scan_{sanitized_url}_{tag}_{timestamp}.json")
             
             # 기본 명령어 구성
+            rate_limit = str(rate) if rate is not None else "150"
             command = [
                 "nuclei",
                 "-u", url,                      # 개별 URL

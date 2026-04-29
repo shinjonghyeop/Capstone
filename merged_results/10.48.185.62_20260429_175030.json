@@ -1,0 +1,289 @@
+{
+  "target": "10.48.185.62",
+  "startedAt": "2026-04-29T17:50:30.959512",
+  "finishedAt": "2026-04-29T17:50:30.959830",
+  "tools": [
+    "nuclei",
+    "wapiti"
+  ],
+  "findings": [
+    {
+      "id": "nuclei-sqli-0",
+      "tool": "nuclei",
+      "category": "SQLI",
+      "severity": "critical",
+      "title": "Time-based SQL Injection (BENCHMARK Function)",
+      "description": "Detects Time-based SQL Injection using MySQL BENCHMARK function.\nUseful when SLEEP function is filtered but BENCHMARK is allowed.\nBENCHMARK(count, expr) executes the expression count times, causing measurable delay.\n",
+      "impact": "N/A",
+      "endpoint": "http://10.48.185.62",
+      "fullUrl": "http://10.48.185.62",
+      "method": "GET",
+      "cve": null,
+      "evidence": "",
+      "recommendation": "",
+      "references": [],
+      "request": "POST / HTTP/1.1\r\nHost: 10.48.185.62\r\nUser-Agent: Mozilla/5.0 (SS; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36\r\nContent-Length: 58\r\nAccept: */*\r\nAccept-Language: en\r\nContent-Type: application/x-www-form-urlencoded\r\nAccept-Encoding: gzip\r\n\r\nusername=' OR  BENCHMARK(10000000,MD5(1))-- &password=test",
+      "response": "HTTP/1.1 200 OK\r\nConnection: close\r\nAccept-Ranges: bytes\r\nContent-Type: text/html\r\nDate: Wed, 29 Apr 2026 08:41:24 GMT\r\nEtag: \"21ee-60cf5aa5ef7f4-gzip\"\r\nLast-Modified: Wed, 20 Dec 2023 19:05:25 GMT\r\nServer: Apache/2.4.41 (Ubuntu)\r\nVary: Accept-Encoding\r\n\r\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n<head>\r\n<title>Publisher's Pulse: SPIP Insights & Tips</title>\r\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\r\n<link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\" />\r\n</head>\r\n<body>\r\n<div id=\"header_panel\">\r\n  <div id=\"header_section\">\r\n    <div id=\"title_section\">Community Magazine</div>\r\n    <div id=\"tagline\">Publish articles, success stories,</div>\r\n    <div id=\"tagline\">tutorials and opinions about SPIP</div>\r\n  </div>\r\n</div>\r\n<!-- end of haeder -->\r\n<div id=\"menu_panel\">\r\n  <div id=\"menu_section\">\r\n    <ul>\r\n      <li><a href=\"#\" class=\"current\">Home</a></li>\r\n      <li><a href=\"#\">Gallery</a></li>\r\n      <li><a href=\"#\">Tutorials</a></li>\r\n      <li><a href=\"#\">Freebies</a></li>\r\n      <li><a href=\"#\">About Us</a></li>\r\n      <li><a href=\"#\" class=\"last\">Contact Us</a></li>\r\n    </ul>\r\n  </div>\r\n</div>\r\n<!-- end of menu -->\r\n<div id=\"content\">\r\n  <div id=\"content_column_one\">\r\n    <div class=\"column_one_section\">\r\n      <h1>Related Blogs</h1>\r\n      <ul>\r\n        <li><a href=\"https://blog.spip.net/Rencontre-SPIP-du-8-au-10-septembre-2023.html\">Rencontre SPIP</a></li>\r\n        <li><a href=\"https://blog.spip.net/Mise-a-jour-critique-de-securite-sortie-de-SPIP-4-1-5-SPIP-4-0-8-et-SPIP-3-2-16.html\">Mise à jour critique de sécurité : sortie de SPIP 4.1.5, SPIP 4.0.8 et SPIP 3.2.16</a></li>\r\n        <li><a href=\"https://blog.spip.net/Spip-Luz-Days.html\">Spip Luz Days</a></li>\r\n        <li><a href=\"https://blog.spip.net/?lang=fr\">Gazette de septembre 2023</a></li>\r\n        <li><a href=\"https://blog.spip.net/Gazette-de-Juin-2023.html?lang=fr\">Piratages de SPIP</a></li>\r\n        <li><a href=\"https://blog.spip.net/Gazette-de-Juin-2023.html?lang=fr\">Nouveaux plugins</a></li>\r\n        <li><a href=\"https://blog.spip.net/Gazette-de-Juin-2023.html?lang=fr\">SPIP5 et l’avenir de SPIP</a></li>\r\n        <li><a href=\"https://blog.spip.net/Gazette-de-Juin-2023.html?lang=fr\">API SQL, SPIP 5 et PHP 8.1</a></li>\r\n      </ul>\r\n    </div>\r\n    <div class=\"cleaner_with_divider\">&nbsp;</div>\r\n    <div class=\"column_one_section\">\r\n      <h1>Archives</h1>\r\n      <ul>\r\n        <li><a href=\"#\">June 2024</a></li>\r\n        <li><a href=\"#\">May 2024</a></li>\r\n        <li><a href=\"#\">April 2024</a></li>\r\n        <li><a href=\"#\">March 2024</a></li>\r\n        <li><a href=\"#\">February 2024</a></li>\r\n        <li><a href=\"#\">January 2024</a></li>\r\n        <li><a href=\"#\">December 2023</a></li>\r\n        <li><a href=\"#\">November 2023</a></li>\r\n        <li><a href=\"#\">October 2023</a></li>\r\n        <li><a href=\"#\">September 2023</a></li>\r\n      </ul>\r\n    </div>\r\n    <div class=\"cleaner_with_divider\">&nbsp;</div>\r\n    <div class=\"column_one_section\">\r\n      <h1>Popular Posts</h1>\r\n      <ul>\r\n        <li><a href=\"#\">Pellentesque dolor</a></li>\r\n        <li><a href=\"#\">Suspendisse a nibh</a></li>\r\n        <li><a href=\"#\">Maecenas scelerisque</a></li>\r\n        <li><a href=\"#\">Cura bitur mauris</a></li>\r\n        <li><a href=\"#\">Proin vel libero id</a></li>\r\n      </ul>\r\n    </div>\r\n    <div class=\"cleaner_with_divider\">&nbsp;</div>\r\n    <div class=\"column_one_section\">\r\n      <h1>Cool Links</h1>\r\n      <ul>\r\n        <li><a href=\"#\">Free CSS Templates</a></li>\r\n        <li><a href=\"#\">Flash Source Files</a></li>\r\n        <li><a href=\"#\">Web Design</a></li>\r\n        <li><a href=\"#\">Free Photos</a></li>\r\n      </ul>\r\n    </div>\r\n  </div>\r\n  <!-- end of column one -->\r\n  <div id=\"content_column_two\">\r\n    <div class=\"column_two_section\">\r\n      <h1><a href=\"#\">Embracing Diversity in Tech: A Journey with SPIP</a></h1>\r\n      <div class=\"post_info\"> Posted by <a href=\"#\">Admin</a>, December 8, 2024 at 10:45 am, in <a href=\"#\">Web Design</a></div>\r\n      <img src=\"images/image_01.jpg\" alt=\"\" />\r\n      <p>In this article, the author explores the significance of diversity and inclusivity in the tech industry. They reflect on their journey with SPIP and how the software embodies values that prioritize an open and welcoming environment for all contributors. They share personal experiences and insights on how SPIP's ethos aligns with the global movement towards more inclusive technology communities.</p> \r\n      <p>Credit goes to photovaco.com for photos.</p>\r\n      <div class=\"post_comment\"> <a href=\"#\"><span class=\"comment\">18 comments</span></a> </div>\r\n    </div>\r\n    <div class=\"column_two_section\">\r\n      <h1><a href=\"#\">The Power of Collaboration: A Success Story with SPIP</a></h1>\r\n      <div class=\"post_info\"> Posted by <a href=\"#\">Free Web Templates</a>, December 2, 2024 at 11:24 am, in <a href=\"#\">Web Template</a></div>\r\n      <img src=\"images/image_02.jpg\" alt=\"\" />\r\n      <p>This piece delves into a real-world success story achieved through collaborative efforts within the SPIP community. The author shares a project or case study where SPIP's flexibility, support, and community engagement played a pivotal role. This narrative highlights how SPIP's open-source nature empowered a team to achieve their goals while fostering a sense of shared accomplishment.</p> \r\n      <div class=\"post_comment\"> <a href=\"#\"><span class=\"comment\">24 comments</span></a> </div>\r\n    </div>\r\n  </div>\r\n  <!-- end of column two -->\r\n  <div id=\"content_column_three\">\r\n    <div id=\"ad_section\">\r\n      <h1>Sponsors</h1>\r\n      <div class=\"ad_125x125_box\"> <a href=\"#\"><img src=\"images/ads.jpg\" alt=\"\" /></a> </div>\r\n      <div class=\"ad_125x125_box\"> <a href=\"#\"><img src=\"images/ads.jpg\" alt=\"\" /></a> </div>\r\n      <div class=\"ad_125x125_box\"> <a href=\"#\"><img src=\"images/ads.jpg\" alt=\"\" /></a> </div>\r\n      <div class=\"ad_125x125_box\"> <a href=\"#\"><img src=\"images/ads.jpg\" alt=\"\" /></a> </div>\r\n      <div class=\"cleaner\">&nbsp;</div>\r\n    </div>\r\n    <!-- end of ads section -->\r\n    <div class=\"column_three_section\">\r\n      <h1>Popular Posts</h1>\r\n      <ul class=\"popular_post\">\r\n        <li><a href=\"#\">Freedom of Expression and SPIP: Advocating for Digital Rights</a><br />\r\n          Author name - Oct 21, 2024 <span class=\"comment\"><a href=\"#\">(63)</a></span></li>\r\n        <li><a href=\"#\">Nurturing a Welcoming Community: SPIP's Code of Conduct</a><br />\r\n          Author name - Sep 15, 2024<span class=\"comment\"><a href=\"#\">(45)</a></span></li>\r\n        <li><a href=\"#\">Embracing Diversity in Tech: A Journey with SPIP</a><br />\r\n          Author name - Aug 21, 2024<span class=\"comment\"><a href=\"#\">(36</a></span><a href=\"#\">)</a></li>\r\n        <li><a href=\"#\">The Power of Collaboration: A Success Story with SPIP</a><br />\r\n          Author name - July 19, 2024<span class=\"comment\"><a href=\"#\">(18)</a></span></li>\r\n        <li><a href=\"#\">Welcome to our SPIP Community Blog</a><br />\r\n          Author name - May 16, 2024<span class=\"comment\"><a href=\"#\">(27</a></span><a href=\"#\">)</a></li>\r\n      </ul>\r\n    </div>\r\n    <div class=\"cleaner_with_divider\">&nbsp;</div>\r\n    <div class=\"column_three_section\">\r\n      <h1>About This Blog</h1>\r\n      <p>Welcome to our SPIP Community Blog, a space dedicated to celebrating the spirit of collaboration, creativity, and inclusivity within the world of open-source software. Here, we invite community members to share their insights, experiences, and stories related to SPIP and the values that drive our community forward.<a href=\"#\">read more</a></p>\r\n    </div>\r\n  </div>\r\n  <!-- end of column three -->\r\n  <div class=\"cleaner\">&nbsp;</div>\r\n</div>\r\n<!-- end of content -->\r\n<div id=\"bottom_panel\">\r\n  <div class=\"bottom_panel_section\"> <a href=\"#\">Home</a> | <a href=\"#\">Gallery</a> | <a href=\"#\"> Tutorials</a> | <a href=\"#\">Freebies </a>| <a href=\"#\">About Us</a> | <a href=\"#\">Contact Us</a><br />\r\n    <br />\r\n    Copyright &copy; 2024 <a href=\"#\"><strong>Publisher</strong></a> | Designed by TemplateMo</div>\r\n  <div class=\"bottom_panel_section\">\r\n    <h1>Usage Rights</h1>\r\n    <p>Sed consectetur, lacus et dictum tristique, odio neque elementum ante, nec eleifend leo dolor vel tortor. Vivamus vulputate felis. Etiam luctus. Quisque facilisis suscipit elit.</p>\r\n    <p><a href=\"http://validator.w3.org/check?uri=referer\"><img style=\"border:0;width:88px;height:31px\" src=\"http://www.w3.org/Icons/valid-xhtml10\" alt=\"\" width=\"88\" height=\"31\" vspace=\"8\" border=\"0\" /></a> <a href=\"http://jigsaw.w3.org/css-validator/check/referer\"><img style=\"border:0;width:88px;height:31px\"  src=\"http://jigsaw.w3.org/css-validator/images/vcss-blue\" alt=\"\" vspace=\"8\" border=\"0\" /></a> </p>\r\n  </div>\r\n  <div class=\"cleaner\">&nbsp;</div>\r\n</div>\r\n<!-- end of bottom panel -->\r\n</body>\r\n</html>\r\n",
+      "curlCommand": "curl -X 'POST' -d 'username='\\'' OR  BENCHMARK(10000000,MD5(1))-- &password=test' -H 'Accept: */*' -H 'Accept-Language: en' -H 'Content-Type: application/x-www-form-urlencoded' -H 'User-Agent: Mozilla/5.0 (SS; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36' 'http://10.48.185.62'",
+      "ip": "10.48.185.62"
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-1",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://10.48.185.62/",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-2",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-3",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-4",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-5",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://10.48.185.62/text/css",
+      "endpoint": "/text/css",
+      "fullUrl": "/text/css",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/text/css\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-6",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/text/css",
+      "fullUrl": "/text/css",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/text/css\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-7",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/text/css",
+      "fullUrl": "/text/css",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/text/css\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-8",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/text/css",
+      "fullUrl": "/text/css",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/text/css\""
+    },
+    {
+      "id": "wapiti-Content Security Policy Configuration-9",
+      "tool": "wapiti",
+      "category": "Content Security Policy Configuration",
+      "severity": "low",
+      "title": "Content Security Policy Configuration",
+      "description": "CSP is not set for URL: http://10.48.185.62/",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CONF-12",
+        "OSHP-Content-Security-Policy"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CONF-12",
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-Content-Security-Policy"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/\""
+    },
+    {
+      "id": "wapiti-Clickjacking Protection-10",
+      "tool": "wapiti",
+      "category": "Clickjacking Protection",
+      "severity": "low",
+      "title": "Clickjacking Protection",
+      "description": "X-Frame-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Frame-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Frame-Options"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/\""
+    },
+    {
+      "id": "wapiti-MIME Type Confusion-11",
+      "tool": "wapiti",
+      "category": "MIME Type Confusion",
+      "severity": "low",
+      "title": "MIME Type Confusion",
+      "description": "X-Content-Type-Options is not set",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "OSHP-X-Content-Type-Options"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/OSHP-X-Content-Type-Options"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/\""
+    },
+    {
+      "id": "wapiti-Unencrypted Channels-12",
+      "tool": "wapiti",
+      "category": "Unencrypted Channels",
+      "severity": "low",
+      "title": "Unencrypted Channels",
+      "description": "No HTTPS redirection for this host. All HTTP requests are served in clear text.",
+      "endpoint": "/",
+      "fullUrl": "/",
+      "method": "",
+      "parameter": "",
+      "evidence": "",
+      "recommendation": "",
+      "wstg": [
+        "WSTG-CRYP-03"
+      ],
+      "references": [
+        "https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/WSTG-CRYP-03"
+      ],
+      "curlCommand": "curl \"http://10.48.185.62/\""
+    }
+  ]
+}

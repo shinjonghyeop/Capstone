@@ -29,7 +29,7 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=', rate: Optional[in
         List of discovered URLs or empty list if failed
     """
 
-    # Create output directory 
+    # Create output directory
     # **해당 동작이 필요한지 확인하고 필요 없을 시 디렉터리 생성 과정 생략 필요**
     os.makedirs(output_dir, exist_ok=True)
 

@@ -638,7 +638,13 @@ def generate_local_report(
     )
 
 
-def save_report(content: str, target: str, output_dir: str, timestamp: Optional[str] = None) -> str:
+def save_report(
+    content: str,
+    target: str,
+    output_dir: str,
+    timestamp: Optional[str] = None,
+    provider: Optional[str] = None
+) -> str:
     """
     보고서를 파일로 저장
 
@@ -646,6 +652,9 @@ def save_report(content: str, target: str, output_dir: str, timestamp: Optional[
         content: 마크다운 보고서 내용
         target: 스캔 대상 (파일명에 사용)
         output_dir: 출력 디렉토리
+        timestamp: 파일명에 사용할 타임스탬프
+        provider: AI 제공자 식별자(gemini/hacklipse). 지정 시 파일명에 포함되어
+                  모델별로 보고서를 동시에 보관할 수 있다.
 
     Returns:
         str: 저장된 파일의 전체 경로
@@ -653,12 +662,15 @@ def save_report(content: str, target: str, output_dir: str, timestamp: Optional[
     # reports 디렉토리 생성
     os.makedirs(output_dir, exist_ok=True)
 
-    # 파일명 생성: {target}_report_{timestamp}.md
+    # 파일명 생성: {target}_report_{provider}_{timestamp}.md
     # target에서 특수문자 제거 (파일명으로 사용 불가능한 문자)
     safe_target = target.replace(':', '_').replace('/', '_').replace('\\', '_')
     if not timestamp:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f"{safe_target}_report_{timestamp}.md"
+    if provider:
+        filename = f"{safe_target}_report_{provider}_{timestamp}.md"
+    else:
+        filename = f"{safe_target}_report_{timestamp}.md"
 
     filepath = os.path.join(output_dir, filename)
 
@@ -767,7 +779,7 @@ def generate_report(
         timestamp = _extract_timestamp_from_filename(json_file_path)
         if not timestamp:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        report_path = save_report(markdown, target, output_dir, timestamp=timestamp)
+        report_path = save_report(markdown, target, output_dir, timestamp=timestamp, provider=provider)
 
         print(f"\n{'='*60}")
         print(f"[+] 보고서 생성 완료!")

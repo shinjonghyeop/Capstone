@@ -165,7 +165,7 @@ async def run_vulnerability_scanners_sync(headers: str, cookies: str, rate: Opti
 
 async def main_async(url: str = None, cookies: str = "", headers: str = "", rate: Optional[int] = None):
     """메인 실행 함수 (비동기)"""
-    
+
     # url이 있으면 input() 건너뛰기
     if url:
         print(f"[INFO] 명령줄 모드로 실행")
@@ -182,10 +182,10 @@ async def main_async(url: str = None, cookies: str = "", headers: str = "", rate
     update_status("scanning", "discovery", "Discovery 단계 시작")
 
     # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
-    if not await run_discovery_stage(url, cookies, headers, rate=rate):
-        print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
-        update_status("error", "discovery", "Discovery 단계 실패")
-        sys.exit(1)
+    #if not await run_discovery_stage(url, cookies, headers, rate=rate):
+    #    print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
+    #    update_status("error", "discovery", "Discovery 단계 실패")
+    #    sys.exit(1)
 
     # urls.txt 파일 확인
     if not os.path.exists(RESULTS_FILE):
