@@ -30,12 +30,17 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname}:3000`;
 const SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"];
 const SEVERITY_COLORS = {
-  critical: "bg-red-600 text-white",
-  high: "bg-orange-500 text-white",
-  medium: "bg-amber-400 text-black",
-  low: "bg-emerald-400 text-black",
-  info: "bg-slate-300 text-black",
+  critical: "severity-badge-critical",
+  high: "severity-badge-high",
+  medium: "severity-badge-medium",
+  low: "severity-badge-low",
+  info: "severity-badge-info",
 };
+
+function getSeverityRank(severity) {
+  const index = SEVERITY_ORDER.indexOf(String(severity || "info").toLowerCase());
+  return index === -1 ? SEVERITY_ORDER.length : index;
+}
 
 function isValidUrl(u) {
   try {
@@ -813,10 +818,10 @@ function ScanGraph({ steps, activeIndex, running = false }) {
 }
 
 
-function Stat({ icon: Icon, label, value, tone }) {
+function Stat({ icon: Icon, label, value, tone = "info" }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-4">
-      <div className={classNames("rounded-lg p-2", tone || "bg-slate-100")}>
+    <div className={classNames("stat-card", `stat-card-${tone}`)}>
+      <div className={classNames("stat-icon", `stat-icon-${tone}`)}>
         <Icon className="h-5 w-5" />
       </div>
       <div>
@@ -829,7 +834,7 @@ function Stat({ icon: Icon, label, value, tone }) {
 
 function SeverityBadge({ severity }) {
   return (
-    <span className={classNames("inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold", SEVERITY_COLORS[severity] || SEVERITY_COLORS.info)}>
+    <span className={classNames("severity-badge", SEVERITY_COLORS[severity] || SEVERITY_COLORS.info)}>
       {severity.toUpperCase()}
     </span>
   );
@@ -851,18 +856,23 @@ function FindingCard({ f, showEndpointGroup = false, target }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const SeverityIcon = ["critical", "high", "medium"].includes(f.severity)
+    ? ShieldAlert
+    : ShieldCheck;
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white">
+    <div className={classNames("finding-card", `finding-card-${f.severity || "info"}`)}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full text-left p-4 flex items-center justify-between hover:bg-slate-50"
       >
         <div className="flex items-center gap-3 flex-1">
-          {f.severity === "high" || f.severity === "critical" ? (
-            <ShieldAlert className="h-5 w-5 text-red-600 flex-shrink-0" />
-          ) : (
-            <ShieldCheck className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-          )}
+          <SeverityIcon
+            className={classNames(
+              "h-5 w-5 flex-shrink-0 finding-severity-icon",
+              `finding-severity-${f.severity || "info"}`
+            )}
+          />
           <div className="flex-1 min-w-0">
             <div className="font-medium truncate">{f.title}</div>
             <div className="text-xs text-slate-500 flex items-center gap-2 flex-wrap min-w-0">
@@ -1309,6 +1319,7 @@ function ReportView({ data, noResults, resultFile, onReset }) {
   const [endpointFilter, setEndpointFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [groupByEndpoint, setGroupByEndpoint] = useState(false);
+  const [sortBySeverity, setSortBySeverity] = useState(false);
 
   // AI 보고서 states
   const [aiReportMarkdown, setAiReportMarkdown] = useState(null);
@@ -1386,17 +1397,29 @@ function ReportView({ data, noResults, resultFile, onReset }) {
     });
   }, [findings, severityFilter, toolFilter, endpointFilter, searchQuery]);
 
+  const orderedFindings = useMemo(() => {
+    if (!sortBySeverity) return filteredFindings;
+
+    return filteredFindings
+      .map((finding, index) => ({ finding, index }))
+      .sort((a, b) => {
+        const severityDiff = getSeverityRank(a.finding.severity) - getSeverityRank(b.finding.severity);
+        return severityDiff || a.index - b.index;
+      })
+      .map(({ finding }) => finding);
+  }, [filteredFindings, sortBySeverity]);
+
   // Group by endpoint
   const groupedFindings = useMemo(() => {
-    if (!groupByEndpoint) return { all: filteredFindings };
+    if (!groupByEndpoint) return { all: orderedFindings };
 
-    return filteredFindings.reduce((acc, f) => {
+    return orderedFindings.reduce((acc, f) => {
       const key = f.endpoint || 'Unknown';
       if (!acc[key]) acc[key] = [];
       acc[key].push(f);
       return acc;
     }, {});
-  }, [filteredFindings, groupByEndpoint]);
+  }, [orderedFindings, groupByEndpoint]);
 
   const counts = useMemo(() => {
     const c = { total: filteredFindings.length };
@@ -1704,12 +1727,12 @@ function ReportView({ data, noResults, resultFile, onReset }) {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        <Stat icon={Bug} label="총 이슈" value={counts.total} />
-        <Stat icon={ShieldAlert} label="Critical" value={counts.critical} tone="bg-red-100" />
-        <Stat icon={ShieldAlert} label="High" value={counts.high} tone="bg-orange-100" />
-        <Stat icon={ShieldAlert} label="Medium" value={counts.medium} tone="bg-amber-100" />
-        <Stat icon={ShieldCheck} label="Low" value={counts.low} tone="bg-emerald-100" />
-        <Stat icon={ShieldCheck} label="Info" value={counts.info} tone="bg-slate-100" />
+        <Stat icon={Bug} label="총 이슈" value={counts.total} tone="total" />
+        <Stat icon={ShieldAlert} label="Critical" value={counts.critical} tone="critical" />
+        <Stat icon={ShieldAlert} label="High" value={counts.high} tone="high" />
+        <Stat icon={ShieldAlert} label="Medium" value={counts.medium} tone="medium" />
+        <Stat icon={ShieldCheck} label="Low" value={counts.low} tone="low" />
+        <Stat icon={ShieldCheck} label="Info" value={counts.info} tone="info" />
       </div>
 
       <div className="mb-6 space-y-4">
@@ -1757,6 +1780,16 @@ function ReportView({ data, noResults, resultFile, onReset }) {
               <option key={ep} value={ep}>{ep}</option>
             ))}
           </select>
+
+          <button
+            type="button"
+            onClick={() => setSortBySeverity((value) => !value)}
+            className={classNames("severity-sort-button", sortBySeverity ? "active" : "")}
+            title="Critical부터 Info까지 정렬"
+          >
+            <ShieldAlert className="h-4 w-4" />
+            Severity 순
+          </button>
 
           <button
             onClick={() => setGroupByEndpoint(!groupByEndpoint)}
