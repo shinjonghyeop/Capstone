@@ -10,6 +10,7 @@ import asyncio
 import os
 import sys
 import argparse
+import json
 import shutil
 import time
 from typing import Optional, Tuple
@@ -112,11 +113,12 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument('--url', type=str, help='스캔 대상 URL')
     parser.add_argument('--cookies', type=str, default='', help='쿠키 문자열 (예: session=abc; uid=1)')
     parser.add_argument('--headers', type=str, default='', help='헤더 문자열 (예: User-Agent:curl)')
+    parser.add_argument('--rate', type=int, default=None, help='초당 요청 수 제한 (1~500). 미지정 시 각 도구 기본값 사용')
     parser.add_argument('--json', action='store_true', help='결과를 JSON 형태로 출력')
 
     return parser.parse_args()
 
-async def run_vulnerability_scanners_sync(headers: str, cookies: str) -> None:
+async def run_vulnerability_scanners_sync(headers: str, cookies: str, rate: Optional[int] = None) -> None:
     """
     Wapiti와 Nuclei 스캐너를 순차적으로 실행합니다.
 
@@ -124,6 +126,7 @@ async def run_vulnerability_scanners_sync(headers: str, cookies: str) -> None:
         url_file: 스캔 대상 URL 목록이 저장된 파일 경로
         headers: HTTP 헤더 문자열
         cookies: 쿠키 문자열
+        rate: 사용자 지정 초당 요청 수 제한
     """
     print(f"\n[+] 취약점 스캐너 순차 실행 시작: {RESULTS_FILE}")
 
@@ -134,7 +137,8 @@ async def run_vulnerability_scanners_sync(headers: str, cookies: str) -> None:
         wapiti_scan(
             RESULTS_FILE,
             cookies=cookies,
-            headers=headers if headers else None
+            headers=headers if headers else None,
+            rate=rate
         )
         print("[+] Wapiti 스캔 완료.")
     except Exception as e:
@@ -149,7 +153,8 @@ async def run_vulnerability_scanners_sync(headers: str, cookies: str) -> None:
             nuclei_scan,
             RESULTS_FILE,
             headers=headers,
-            cookies=cookies
+            cookies=cookies,
+            rate=rate
         )
         print("[+] Nuclei 스캔 완료.")
     except Exception as e:
@@ -158,7 +163,7 @@ async def run_vulnerability_scanners_sync(headers: str, cookies: str) -> None:
     print("[+] 모든 취약점 스캐너 실행 완료.")
 
 
-async def main_async(url: str = None, cookies: str = "", headers: str = ""):
+async def main_async(url: str = None, cookies: str = "", headers: str = "", rate: Optional[int] = None):
     """메인 실행 함수 (비동기)"""
     
     # url이 있으면 input() 건너뛰기
@@ -172,13 +177,15 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
 
     global CURRENT_TARGET
     CURRENT_TARGET = url
+    if rate is not None:
+        print(f"[INFO] 요청 rate 적용: {rate} req/s")
     update_status("scanning", "discovery", "Discovery 단계 시작")
 
     # 1단계: Discovery (FFUF + 크롤러 병렬 실행)
-    # if not await run_discovery_stage(url, cookies, headers):
-    #     print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
-    #     update_status("error", "discovery", "Discovery 단계 실패")
-    #     sys.exit(1)
+    if not await run_discovery_stage(url, cookies, headers, rate=rate):
+        print("[!] Discovery 단계 실패. 프로그램을 종료합니다.")
+        update_status("error", "discovery", "Discovery 단계 실패")
+        sys.exit(1)
 
     # urls.txt 파일 확인
     if not os.path.exists(RESULTS_FILE):
@@ -187,7 +194,7 @@ async def main_async(url: str = None, cookies: str = "", headers: str = ""):
         sys.exit(1)
 
     # 2단계: 취약점 스캐너 실행 (순차 실행)
-    await run_vulnerability_scanners_sync(headers, cookies)
+    await run_vulnerability_scanners_sync(headers, cookies, rate=rate)
 
     print("\n[+] 모든 스캔 완료!")
 
@@ -273,6 +280,10 @@ def main() -> None:
     """메인 진입점"""
     try:
         args = parse_arguments()
+        rate = args.rate
+        if rate is not None and not (1 <= rate <= 500):
+            print("[!] 오류: --rate 값은 1~500 사이여야 합니다.")
+            sys.exit(1)
 
         if args.url:
             if not validate_url(args.url):
@@ -282,10 +293,11 @@ def main() -> None:
             asyncio.run(main_async(
                 url=args.url,
                 cookies=args.cookies,
-                headers=args.headers
+                headers=args.headers,
+                rate=rate
             ))
         else:
-            asyncio.run(main_async())
+            asyncio.run(main_async(rate=rate))
     except KeyboardInterrupt:
         print("\n[!] 사용자에 의해 중단되었습니다.")
         sys.exit(0)

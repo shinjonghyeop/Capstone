@@ -15,7 +15,7 @@ THREADS = 100
 OUTPUT_DIR="./ffuf_output"
 
 
-def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> List[str]:
+def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=', rate: Optional[int] = None) -> List[str]:
     """
     Execute FFUF unified scan (directories + files) and return URLs
 
@@ -23,6 +23,7 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> List[str]:
         url: Target URL to scan (e.g., http://localhost)
         output_dir: Directory to save JSON results
         cookies: Cookie string for authentication (default: 'test=')
+        rate: Optional requests-per-second cap forwarded as `-rate <N>`.
 
     Returns:
         List of discovered URLs or empty list if failed
@@ -43,7 +44,7 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> List[str]:
         print(f"[FFUF] Running scan ")
         if os.path.exists(json_file):
             os.remove(json_file)
-        cmd = build_ffuf_command(url, wordlist, json_file, cookies)
+        cmd = build_ffuf_command(url, wordlist, json_file, cookies, rate)
         execute_ffuf(cmd, "unified")
 
         # Parse JSON to URLs (returns list)
@@ -66,7 +67,7 @@ def run_ffuf(url: str, output_dir=OUTPUT_DIR, cookies='test=') -> List[str]:
     return result
 
 
-def build_ffuf_command(url: str, wordlist: str, output_path: str, cookie: str) -> list:
+def build_ffuf_command(url: str, wordlist: str, output_path: str, cookie: str, rate: Optional[int] = None) -> list:
     """
     Build FFUF command for unified scan with recursion
 
@@ -74,6 +75,7 @@ def build_ffuf_command(url: str, wordlist: str, output_path: str, cookie: str) -
         url: Target URL
         wordlist: Path to wordlist file
         output_path: Path to save JSON output
+        rate: Optional requests-per-second cap forwarded as `-rate <N>`.
 
     Returns:
         Command list for subprocess
@@ -91,6 +93,8 @@ def build_ffuf_command(url: str, wordlist: str, output_path: str, cookie: str) -
         '-o', output_path,
         '-of', 'json'
     ]
+    if rate is not None:
+        command += ['-rate', str(rate)]
     return command
 
 

@@ -144,14 +144,25 @@ def scan():
             url = request.args.get('url')
             cookies = request.args.get('cookies', '')
             headers = request.args.get('headers', '')
+            rate_raw = request.args.get('rate')
         else:
             data = request.get_json() or {}
             url = data.get('url')
             cookies = data.get('cookies', '')
             headers = data.get('headers', '')
+            rate_raw = data.get('rate')
         
         if not url:
             return jsonify({"error": "URL이 필요합니다"}), 400
+
+        rate = None
+        if rate_raw not in (None, "", "null"):
+            try:
+                rate = int(rate_raw)
+            except (TypeError, ValueError):
+                return jsonify({"error": "rate는 정수여야 합니다"}), 400
+            if not (1 <= rate <= 500):
+                return jsonify({"error": "rate는 1~500 사이여야 합니다"}), 400
         
         print(f"\n{'='*60}")
         print(f" 스캔 시작: {url}")
@@ -173,6 +184,8 @@ def scan():
             cmd.extend(['--cookies', cookies])
         if headers:
             cmd.extend(['--headers', headers])
+        if rate is not None:
+            cmd.extend(['--rate', str(rate)])
         
         print(f"[명령어] {' '.join(cmd)}")
         print(f"[작업 디렉토리] {os.getcwd()}")

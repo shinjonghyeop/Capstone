@@ -39,7 +39,7 @@ def merge_and_deduplicate(ffuf_urls: List[str], crawler_urls: List[str]) -> List
     return sorted(list(unique_urls))
 
 
-async def run_discovery_stage(url: str, cookies: str, headers: str = "") -> bool:
+async def run_discovery_stage(url: str, cookies: str, headers: str = "", rate: int = None) -> bool:
     """
     FFUF와 웹 크롤러를 병렬로 실행하여 URL을 발견하고 urls.txt로 저장합니다.
 
@@ -47,6 +47,7 @@ async def run_discovery_stage(url: str, cookies: str, headers: str = "") -> bool
         url: 스캔 대상 URL
         cookies: 인증용 쿠키 문자열
         headers: 인증용 헤더 문자열
+        rate: FFUF 초당 요청 수 제한. None이면 기본값 사용.
 
     Returns:
         성공 여부
@@ -56,7 +57,7 @@ async def run_discovery_stage(url: str, cookies: str, headers: str = "") -> bool
 
     try:
         ffuf_urls, crawler_urls = await asyncio.gather(
-            asyncio.to_thread(run_ffuf, url, OUTPUT_DIR, cookies),
+            asyncio.to_thread(run_ffuf, url, OUTPUT_DIR, cookies, rate),
             asyncio.to_thread(crawl_website, url, cookies, headers),
             return_exceptions=True
         )
