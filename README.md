@@ -215,6 +215,55 @@ python3 -m utils.build_train_dataset \
 
 이후 LoRA / QLoRA 등 임의의 학습 프레임워크로 EXAONE 4.0 1.2B 베이스 모델을 파인튜닝합니다. 결과 어댑터를 Hugging Face Hub 에 업로드하면 `LOCAL_MODEL_NAME` 만 교체해 바로 사용 가능합니다.
 
+### 8.1 학습 데이터셋 정책
+
+본 저장소에는 **학습 데이터(`train/input/`, `train/output/`)가 포함되어 있지 않습니다.**
+
+- 데이터는 교내·사내 점검 환경에서 수집된 실제 스캔 결과로 구성되며, 내부망 IP·취약 호스트 정보·재현 페이로드를 포함하므로 보안상 공개하지 않습니다.
+- 파인튜닝 완료된 가중치는 별도로 공개되어 있어, **단순 사용(추론)에는 데이터셋이 필요하지 않습니다.** → [`INUHacklipse/Hacklipse-EXAONE-4.0-1.2B-Vulnreport`](https://huggingface.co/INUHacklipse/Hacklipse-EXAONE-4.0-1.2B-Vulnreport)
+- 학술적 재현·평가가 필요한 경우 별도 문의해 주세요.
+
+### 8.2 데이터셋 형식 (예시)
+
+각 학습 샘플은 **취약점 단위**로 `input/`(원시 스캔 항목)과 `output/`(작성된 보고서 블록) 한 쌍으로 구성됩니다.
+
+파일명 규칙:
+
+```
+train/input/<target>_<YYYYMMDD>_<HHMMSS>_<NNN>.txt
+train/output/<target>_<YYYYMMDD>_<HHMMSS>_<NNN>.md
+```
+
+**`input/` 샘플 (`.txt`)**
+
+```text
+입력:
+제목: XSS Filter Bypass Detection (script/on/javascript)
+심각도: HIGH
+카테고리: XSS
+엔드포인트: http://<target>:8000, http://<target>:8000/ 외 1개
+CVE: N/A
+설명: Detects XSS vulnerability with filter bypass for "script", "on", "javascript:" keywords
+영향: N/A
+증거:
+재현: curl -X 'GET' 'http://<target>:8000?q=<body+oonload=alert(1)>'
+대응/조치 힌트:
+```
+
+**`output/` 샘플 (`.md`)**
+
+```markdown
+## XSS Filter Bypass Detection (script/on/javascript)
+- **End-Point**: `http://<target>:8000`, `http://<target>:8000/` 외 1개
+- **영향**: 악성 스크립트 실행으로 세션 쿠키 탈취, 페이지 변조, 피싱 및 개인정보 유출 가능.
+- **설명**: "script", "on", "javascript:" 등 XSS 방어 키워드 필터링을 우회해 임의의 스크립트를 실행할 수 있는 취약점.
+- **근거**: `curl ... 'http://<target>:8000?q=<body+oonload=alert(1)>'` 로 `q` 파라미터에 필터 우회 페이로드 주입이 가능함을 확인.
+- **대응**: 사용자 입력값에 대해 화이트리스트 기반 검증을 수행하고, 모든 출력 지점에 HTML 엔티티 인코딩 적용.
+- **조치**: `htmlspecialchars` 등 보안 함수로 특수 문자 치환, `Content-Security-Policy` 헤더로 인라인/원격 스크립트 실행 제한.
+```
+
+위 예시에서 `<target>` 부분에는 실제 학습 데이터에서 IP/호스트가 들어갑니다. 동일한 형식으로 직접 수집한 스캔 결과를 정리하면 자신만의 데이터셋으로 재학습할 수 있습니다.
+
 ---
 
 ## 9. 로드맵
