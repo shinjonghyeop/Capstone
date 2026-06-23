@@ -73,21 +73,23 @@ def _generate_text(
     temperature: float
 ) -> str:
     messages = [{"role": "user", "content": prompt}]
-    input_ids = tokenizer.apply_chat_template(
+    encoded = tokenizer.apply_chat_template(
         messages,
         tokenize=True,
         add_generation_prompt=True,
-        return_tensors="pt"
+        return_tensors="pt",
+        return_dict=True,
     )
+    encoded = {k: v.to(model.device) for k, v in encoded.items()}
+    input_len = encoded["input_ids"].shape[-1]
 
     with torch.no_grad():
         outputs = model.generate(
-            input_ids.to(model.device),
+            **encoded,
             max_new_tokens=max_new_tokens,
             do_sample=False,
-            temperature=temperature
         )
-    generated_tokens = outputs[0][input_ids.shape[-1]:]
+    generated_tokens = outputs[0][input_len:]
     return tokenizer.decode(generated_tokens, skip_special_tokens=True)
 
 

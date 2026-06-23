@@ -1,305 +1,260 @@
-# Hacklipse - Integrated Web Vulnerability Scanner
+# Hacklipse — AI 기반 웹 취약점 자동 진단 및 보고서 생성 시스템
 
-<div align="center">
+> 2026 캡스톤 디자인 프로젝트  
+> 다중 스캐너로 수집한 결과를 자체 파인튜닝한 sLLM 으로 분석해, 보안 진단 보고서를 자동 생성하는 통합 플랫폼.
 
-```
-    __  _____   ________ __ __    ________  _____ ______
-   / / / /   | / ____/ //_// /   /  _/ __ \/ ___// ____/
-  / /_/ / /| |/ /   / ,<  / /    / // /_/ /\__ \/ __/
- / __  / ___ / /___/ /| |/ /____/ // ____/___/ / /___
-/_/ /_/_/  |_\____/_/ |_/_____/___/_/    /____/_____/
-
-  ___  ___ ___ _  _ _____   ___ _           _ _
- / _ \/ __|_ _| \| |_   _| | _ (_)_ __  ___| (_)_ _  ___
-| (_) \__ \| || .` | | |   |  _/ | '_ \/ -_) | | ' \/ -_)
- \___/|___/___|_|\_| |_|   |_| |_| .__/\___|_|_|_||_\___|
-                                 |_|
-```
-
-**Integrated Web Application Vulnerability Scanner**
-
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
+[![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev)
+[![Flask](https://img.shields.io/badge/Backend-Flask-000000.svg)](https://flask.palletsprojects.com)
+[![Model](https://img.shields.io/badge/LLM-EXAONE--4.0--1.2B%20%28FT%29-orange.svg)](https://huggingface.co/INUHacklipse/Hacklipse-EXAONE-4.0-1.2B-Vulnreport)
 [![License](https://img.shields.io/badge/License-Educational-green.svg)](#license)
-[![Security](https://img.shields.io/badge/Security-Defensive%20Only-red.svg)](#security-notice)
-[![Tools](https://img.shields.io/badge/Tools-FFUF%20%7C%20Wapiti%20%7C%20Nuclei-orange.svg)](#tools)
-
-</div>
 
 ---
 
-##  Overview
+## 1. 프로젝트 개요
 
-**Hacklipse** is an integrated web application vulnerability scanner that combines FFUF, Wapiti, and Nuclei into a streamlined two-stage pipeline. This framework automates directory discovery and comprehensive vulnerability scanning with parallel execution for maximum efficiency.
+기존 웹 취약점 스캐너(FFUF, Wapiti, Nuclei 등)는 결과 형식이 제각각이고, 보고서 작성에는 분석가의 수작업이 필요합니다. **Hacklipse** 는 이 두 단계를 하나의 파이프라인으로 연결합니다.
 
-###  Key Features
+1. **다중 스캐너 통합 실행** — 디렉터리 탐색부터 취약점 탐지까지 자동화
+2. **결과 정규화 & 병합** — 스캐너별 JSON 출력을 공통 스키마로 통일
+3. **AI 보고서 생성** — 자체 파인튜닝한 EXAONE 4.0 sLLM 또는 Gemini API 로 한국어 보고서 자동 작성
+4. **웹 대시보드** — React 기반 UI 로 스캔 진행 상황·이력·보고서 열람
 
-- **Two-Stage Pipeline**: Directory discovery (FFUF) → Vulnerability scanning (Wapiti + Nuclei)
-- **Parallel Processing**: Async execution of multiple scanners simultaneously
-- **Interactive CLI**: User-friendly input with validation
-- **Cookie/Header Support**: Authentication-aware scanning
-- **Comprehensive Scanning**: Multiple vulnerability detection engines
-- **Organized Output**: Separate directories for each tool's results
+### 핵심 차별점
+
+- **온프레미스 가능한 sLLM**: `INUHacklipse/Hacklipse-EXAONE-4.0-1.2B-Vulnreport` — 취약점 보고서 도메인으로 파인튜닝한 1.2B 경량 모델. 외부 API 없이도 동작.
+- **이중 백엔드**: 로컬 모델(`hacklipse`) ↔ Gemini API(`gemini`) 환경변수로 전환.
+- **근거 기반 필터링**: 증거(Evidence) 가 부족한 항목은 보고서에서 자동 제외해 환각(Hallucination) 위험을 낮춤.
 
 ---
 
-## 🏗️ Architecture
+## 2. 시스템 아키텍처
 
 ```mermaid
 graph TB
-    A[User Input] --> B[URL + Headers + Cookies]
-    B --> C[Stage 1: FFUF Directory Scan]
-    C --> D[urls.txt Generation]
-    D --> E{Parallel Execution}
-    E --> F[Wapiti Scanner]
-    E --> G[Nuclei Scanner]
-    F --> H[wapiti_results/]
-    G --> I[nuclei_results/]
-    H --> J[Comprehensive Report]
-    I --> J
+    U[사용자] --> FE[React Dashboard<br/>front/]
+    FE -->|REST| API[Flask Server<br/>server.py]
+
+    API --> S1[Stage 1: URL Discovery<br/>crawlers/discover_urls.py<br/>FFUF + Custom Crawler]
+    S1 --> S2[Stage 2: Vulnerability Scan<br/>scanners/]
+    S2 --> W[Wapiti]
+    S2 --> N[Nuclei]
+
+    W --> F[utils/wapiti_filter.py]
+    N --> F2[utils/nuclei_filter.py]
+    F --> M[utils/merge_scan_results.py<br/>→ merged_results/*.json]
+    F2 --> M
+
+    M --> R[utils/generate_reports.py]
+    R -->|provider=hacklipse| L[utils/local_model.py<br/>EXAONE 4.0 FT]
+    R -->|provider=gemini| G[Google Gemini API]
+    L --> RPT[reports/*.md]
+    G --> RPT
+    RPT --> FE
 ```
 
 ---
 
-##  Installation
+## 3. 기술 스택
 
-### Prerequisites
+| 영역 | 사용 기술 |
+|---|---|
+| Backend | Python 3.10+, Flask, Flask-CORS, asyncio |
+| Frontend | React 19, Vite, react-markdown, framer-motion |
+| Scanners | FFUF, Wapiti, Nuclei (+ SecLists wordlist) |
+| AI / ML | Hugging Face Transformers, PyTorch, Google Generative AI SDK |
+| Fine-tuned Model | LG EXAONE 4.0 1.2B (LoRA 파인튜닝, `train/` 파이프라인) |
+
+---
+
+## 4. 디렉터리 구조
+
+```
+secure_ai_project/
+├── main.py                       # CLI 진입점 (스캔 → 병합)
+├── server.py                     # Flask API + 보고서 생성 엔드포인트
+├── crawlers/
+│   ├── discover_urls.py          # 1단계: URL 디스커버리
+│   ├── ffuf_scanner.py           # FFUF 래퍼
+│   ├── web_crawler.py            # 정적 크롤러
+│   └── wordlist.txt
+├── scanners/
+│   ├── wapiti_scanner.py         # Wapiti 실행 및 결과 파싱
+│   ├── nuclei_scanner.py         # Nuclei 실행 및 결과 파싱
+│   └── nuclei-templates/         # Nuclei 템플릿 (subtree)
+├── utils/
+│   ├── wapiti_filter.py          # Wapiti 결과 정규화/필터링
+│   ├── nuclei_filter.py          # Nuclei 결과 정규화/필터링
+│   ├── merge_scan_results.py     # 스캐너별 결과 → 통합 JSON
+│   ├── generate_reports.py       # AI 보고서 생성 (Gemini / Local)
+│   ├── local_model.py            # 로컬 sLLM 호출 (HF Transformers)
+│   └── build_train_dataset.py    # 학습 데이터셋 빌더
+├── train/
+│   ├── input/                    # 원천 보고서/스캔 데이터
+│   └── output/                   # 학습용 JSONL
+├── front/                        # React + Vite 대시보드
+├── merged_results/               # 통합 스캔 결과(JSON)
+├── reports/                      # 생성된 보고서(Markdown)
+└── scan_status/                  # 스캔 진행 상태 파일
+```
+
+---
+
+## 5. 설치
+
+### 5.1 시스템 의존성
 
 ```bash
-# Install required tools
-sudo apt update && sudo apt install -y \
-    ffuf \
-    wapiti \
-    python3 \
-    python3-pip
+sudo apt update && sudo apt install -y ffuf wapiti python3 python3-pip
 
-# Install Nuclei
+# Nuclei
 ./install_nuclei.sh
 ```
 
-### Clone & Setup
+### 5.2 Python 의존성
 
 ```bash
-git clone https://github.com/yourusername/Hacklipse.git
-cd Hacklipse
+pip install -r requirements.txt
+# 로컬 모델을 쓰려면 추가
+pip install torch transformers accelerate
+```
 
-# Verify installation
-ffuf -V
-wapiti --version
-nuclei -version
+### 5.3 환경 변수 (`.env`)
+
+```dotenv
+# 보고서 생성기 선택: gemini | hacklipse
+AI_PROVIDER=hacklipse
+
+# Gemini 사용 시
+GEMINI_API_KEY=your_api_key_here
+
+# (선택) Hugging Face 가중치 다운로드 가속
+HF_TOKEN=your_hf_token
+```
+
+### 5.4 프론트엔드
+
+```bash
+cd front
+npm install
+npm run dev   # 개발 서버
+# 또는
+npm run build && npm run preview
 ```
 
 ---
 
-##  Usage
+## 6. 사용법
 
-### Interactive Mode
+### 6.1 통합 서버 실행 (권장)
+
+```bash
+python3 server.py
+# Flask API + 정적 프론트엔드 서빙
+```
+
+브라우저에서 대시보드 접속 → 대상 URL · 인증 정보 입력 → 스캔 시작 → 결과 확인 → **"AI 보고서 생성"** 클릭.
+
+### 6.2 CLI 모드
 
 ```bash
 python3 main.py
 ```
 
-The program will prompt you for:
-1. **Target URL** (e.g., `http://example.com/app`)
-2. **Cookies** (optional, e.g., `sess=abc123; uid=1`)
-3. **Headers** (optional, e.g., `User-Agent:curl/7.0; Accept:*/*`)
+대화형 프롬프트로 URL · 쿠키 · 헤더를 입력하면 디스커버리부터 병합 JSON 생성까지 자동 수행됩니다.
 
-### Example Session
-
-```
-URL 입력 (예: http://yc22469.iptime.org:9991/www/homepage.html): http://hacklipse.kr
-쿠키 입력 (예: sess=abc; uid=1) [없으면 엔터]: PHPSESSID=abc123
-헤더 입력 (예: User-Agent:curl/7.0; Accept:*/*) [없으면 엔터]:
-
-[INFO] 입력값 확인
-  URL     : http://hacklipse.kr
-  Headers : (없음)
-  Cookies : PHPSESSID=abc123
-
-이 값으로 실행하시겠습니까? (y/n): y
-
-[+] FFUF 디렉토리 스캔 시작...
-[+] 취약점 스캐너 실행 시작...
-[+] 모든 스캔 완료!
-```
-
----
-
-##  Output Examples
-
-### Generated Files
-
-```
-secure_ai_project/
-├── urls.txt                    # Discovered URLs from FFUF
-├── wapiti_results/             # Wapiti scan results
-│   ├── hacklipse.kr.html       # HTML report
-│   ├── hacklipse.kr.json       # JSON report
-│   └── hacklipse.kr.xml        # XML report
-└── nuclei_results/             # Nuclei scan results
-    ├── hacklipse.kr.json       # JSON report
-    └── hacklipse.kr.txt        # Text report
-```
-
-### Sample urls.txt
-
-```
-http://hacklipse.kr/api
-http://hacklipse.kr/config
-http://hacklipse.kr/admin
-http://hacklipse.kr/uploads
-http://hacklipse.kr/ping
-```
-
----
-
-##  Tools Integration
-
-### Stage 1: Directory Discovery
-- **FFUF**: Fast web fuzzer for directory and file discovery
-  - Multi-wordlist strategy (common.txt, directories.txt, etc.)
-  - Cookie and header support
-  - Status code filtering (200-299, 301, 302, 401, 403)
-  - Automatic URL generation to urls.txt
-
-### Stage 2: Vulnerability Scanning (Parallel)
-- **Wapiti**: Web application vulnerability scanner
-  - SQL injection, XSS, CRLF, XXE detection
-  - File inclusion vulnerabilities
-  - Cookie-based authentication
-  - Multiple output formats (HTML, JSON, XML)
-
-- **Nuclei**: Fast vulnerability scanner with template-based detection
-  - 7000+ vulnerability templates
-  - Custom header/cookie support
-  - Severity-based filtering (critical, high, medium, low)
-  - JSON and text output formats
-
----
-
-##  Use Cases
-
-###  Security Assessment
-- Comprehensive web application vulnerability scanning
-- Automated directory and endpoint discovery
-- Multi-engine vulnerability validation
-
-###  Penetration Testing
-- Reconnaissance automation
-- Authentication-aware scanning
-- Parallel scan execution for time efficiency
-
-###  Educational Purposes
-- Web security training
-- Vulnerability scanning methodology
-- Tool integration best practices
-
----
-
-##  Project Structure
-
-```
-secure_ai_project/
-├── main.py                    # Main entry point
-├── scanners/                  # Scanner modules
-│   ├── __init__.py
-│   ├── ffuf_scanner.py       # FFUF integration
-│   ├── wapiti_scanner.py     # Wapiti integration
-│   └── nuclei_scanner.py     # Nuclei integration
-├── install_nuclei.sh         # Nuclei installation script
-├── urls.txt                  # Discovered URLs (generated)
-├── wapiti_results/           # Wapiti output directory
-└── nuclei_results/           # Nuclei output directory
-```
-
----
-
-##  Development Roadmap
-
-- [x] **FFUF Integration**: Directory and file discovery
-- [x] **Wapiti Integration**: Web vulnerability scanning
-- [x] **Nuclei Integration**: Template-based scanning
-- [x] **Parallel Execution**: Async scanner execution
-- [ ] **Report Aggregation**: Unified vulnerability report
-- [ ] **Web UI Dashboard**: Real-time scan monitoring
-- [ ] **Additional Scanners**: Nikto, SQLmap integration
-- [ ] **API Mode**: REST API for automation
-
----
-
-##  Contributing
-
-We welcome contributions! Feel free to submit issues or pull requests.
-
-### Development Setup
+### 6.3 보고서만 별도 생성
 
 ```bash
-# Fork and clone
-git clone https://github.com/yourusername/Hacklipse.git
-cd secure_ai_project
-
-# Create feature branch
-git checkout -b feature/new-scanner
-
-# Make changes and test
-python3 main.py
-
-# Submit PR
-git push origin feature/new-scanner
+curl -X POST http://localhost:5000/api/generate-report/<merged_result_filename>.json
 ```
 
-### Adding New Scanners
-
-1. Create a new scanner module in `scanners/`
-2. Implement `run_scan()` function
-3. Add scanner to `main.py` parallel execution
-4. Update README.md
+`AI_PROVIDER` 값에 따라 Gemini 혹은 로컬 EXAONE 모델이 사용됩니다.
 
 ---
 
-##  License
+## 7. AI 보고서 생성 파이프라인
 
-This project is licensed under the **Educational Use License**.
+```
+merged_results/<target>_<timestamp>.json
+        │
+        ▼
+근거(Evidence) 기반 필터  ─ 증거 부족 항목 제외
+        │
+        ▼
+심각도/위험 점수 산출 (Critical / High / Medium / Low)
+        │
+        ▼
+프롬프트 구성 (취약점 단위 블록 + 전체 요약)
+        │
+        ├─ provider=hacklipse → utils/local_model.py (EXAONE 4.0 FT)
+        └─ provider=gemini    → google-generativeai SDK
+        │
+        ▼
+reports/<target>_report_<provider>_<timestamp>.md
+```
 
-###  Security Notice
+### 로컬 모델 호출 흐름
 
-**Hacklipse is designed exclusively for:**
-- ✅ Authorized security testing
-- ✅ Educational purposes
-- ✅ Defensive security research
-- ✅ Bug bounty programs
-
-**NOT for:**
-- ❌ Unauthorized access attempts
-- ❌ Malicious activities
-- ❌ Illegal penetration testing
-- ❌ Network disruption
-
-**Always obtain proper authorization before scanning any target.**
-
----
-
-##  Acknowledgments
-
-- **FFUF** - Fast web fuzzer by ffuf
-- **Wapiti** - Web application vulnerability scanner
-- **Nuclei** - Fast and customizable vulnerability scanner by ProjectDiscovery
-- **SecLists** - Comprehensive wordlist collection by Daniel Miessler
+- `apply_chat_template(..., return_dict=True)` 로 인코딩 후 `model.generate(**encoded)` 호출
+- 토크나이저의 `model_max_length` 를 기준으로 입력이 초과되면 **자동 분할 → 요약 → 재조립** (`_compact_prompt`)
+- 출력은 마크다운 규칙(헤딩 ## 만, 한 줄 불릿, 코드성 텍스트는 코드블록) 강제
 
 ---
 
-##  Contact & Support
+## 8. 모델 학습 (선택)
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/Hacklipse/issues)
-- **Email**: inuhacklipse@gmail.com
+`train/` 에는 보고서 도메인 파인튜닝을 위한 데이터셋 빌더가 포함되어 있습니다.
+
+```bash
+# 학습용 JSONL 생성
+python3 -m utils.build_train_dataset \
+    --input train/input \
+    --output train/output/dataset.jsonl
+```
+
+이후 LoRA / QLoRA 등 임의의 학습 프레임워크로 EXAONE 4.0 1.2B 베이스 모델을 파인튜닝합니다. 결과 어댑터를 Hugging Face Hub 에 업로드하면 `LOCAL_MODEL_NAME` 만 교체해 바로 사용 가능합니다.
 
 ---
 
-<div align="center">
+## 9. 로드맵
 
-**Built for defensive security research and authorized testing**
+- [x] 다중 스캐너 통합 파이프라인
+- [x] 결과 정규화 / 병합
+- [x] Gemini 기반 보고서 생성
+- [x] 로컬 sLLM(EXAONE 4.0 FT) 기반 보고서 생성
+- [x] React 대시보드 (스캔 / 보고서 열람)
+- [ ] 보고서 품질 평가 지표(BLEU / 자체 Rubric) 자동화
+- [ ] 멀티 타겟 동시 스캔 / 큐
+- [ ] 권한 기반 인증 (대시보드 로그인)
+- [ ] PDF / DOCX 보고서 내보내기
 
-*"Comprehensive vulnerability scanning through tool integration"*
+---
 
-⭐ **Star this repo if you find it useful!** ⭐
+## 10. 보안 고지
 
-</div>
+본 시스템은 다음 용도로만 사용해야 합니다.
+
+- 인가된 환경에서의 보안 점검
+- 학술·교육 목적
+- 자체 운영 자산에 대한 진단
+
+**스캔 대상에 대한 사전 동의 없이 본 도구를 사용하는 것은 관련 법령 위반이며, 그에 따른 모든 책임은 사용자에게 있습니다.**
+
+---
+
+## 11. 라이선스 & 크레딧
+
+- License: Educational Use
+- Base Model: [LG AI Research — EXAONE 4.0 1.2B](https://huggingface.co/LGAI-EXAONE)
+- Fine-tuned Weights: [INUHacklipse/Hacklipse-EXAONE-4.0-1.2B-Vulnreport](https://huggingface.co/INUHacklipse/Hacklipse-EXAONE-4.0-1.2B-Vulnreport)
+- Scanners: [FFUF](https://github.com/ffuf/ffuf), [Wapiti](https://wapiti-scanner.github.io/), [Nuclei](https://github.com/projectdiscovery/nuclei)
+- Wordlist: [SecLists](https://github.com/danielmiessler/SecLists)
+
+---
+
+## 12. 팀 / 문의
+
+- Repository: <https://github.com/shinjonghyeop/Capstone>
+- Hugging Face Org: <https://huggingface.co/INUHacklipse>
+- Contact: inuhacklipse@gmail.com

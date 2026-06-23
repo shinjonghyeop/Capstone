@@ -103,9 +103,7 @@ http:
       - type: dsl
         name: ssti-math-evaluation
         dsl:
-          - 'contains(body, "49")'
-          - 'contains(body, "7777777")'
-          - 'contains(body, "98")'
+          - 'contains(body, "49") || contains(body, "7777777") || contains(body, "98")'
           - 'status_code >= 200 && status_code < 500'
         condition: and
 
